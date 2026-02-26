@@ -6,18 +6,16 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static \SocialSync\PostBuilder post()
- * @method static \SocialSync\Contracts\SocialDriverInterface driver(string $name = null)
- * @method static array publish(int $accountId, array $data)
- * @method static string getAuthorizationUrl(string $redirectUri)
- * @method static array handleCallback(string $code, string $redirectUri)
- * @method static array refreshToken(array $credentials)
- * @method static bool verifyCredentials(array $credentials)
+ * @method static \SocialSync\Contracts\SocialDriverInterface driver(string|null $name = null)
+ * @method static array publish(int $accountId, array $payload)
+ * @method static array supportedPlatforms()
+ * @method static string defaultPlatform()
  *
  * @see \SocialSync\SocialMediaManager
  */
 class SocialMedia extends Facade
 {
-    protected static function getFacadeAccessor()
+    protected static function getFacadeAccessor(): string
     {
         return 'social-media';
     }

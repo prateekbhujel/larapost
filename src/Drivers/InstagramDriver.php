@@ -3,160 +3,148 @@
 namespace SocialSync\Drivers;
 
 use GuzzleHttp\Client;
-use SocialSync\Contracts\SocialDriverInterface;
+use SocialSync\Exceptions\SocialSyncException;
 use SocialSync\Models\SocialAccount;
 
-class InstagramDriver implements SocialDriverInterface
+class InstagramDriver extends AbstractDriver
 {
-    protected $config;
-    protected $client;
-    protected $apiVersion = 'v18.0';
+    protected string $apiVersion;
 
-    public function __construct(array $config)
+    public function __construct(array $config, ?Client $client = null)
     {
-        $this->config = $config;
-        $this->client = new Client([
-            'base_uri' => "https://graph.facebook.com/{$this->apiVersion}/",
+        $this->apiVersion = $config['api_version'] ?? 'v20.0';
+
+        parent::__construct($config, $client ?? new Client([
+            'base_uri' => sprintf('https://graph.facebook.com/%s/', $this->apiVersion),
             'timeout' => 30,
-        ]);
+        ]));
     }
 
-    public function publish(int $accountId, array $data): array
+    public function publish(SocialAccount $account, array $payload): array
     {
-        $account = SocialAccount::findOrFail($accountId);
-        $credentials = json_decode($account->credentials, true);
+        $credentials = $this->credentials($account);
+        $instagramAccountId = $this->credentialValue($credentials, 'instagram_business_account_id');
+        $accessToken = $this->credentialValue($credentials, 'access_token');
 
-        $igAccountId = $credentials['instagram_business_account_id'];
-        $accessToken = $credentials['access_token'];
-
-        // Instagram requires a two-step process: create container, then publish
-
-        // Step 1: Create media container
         $containerData = [
-            'caption' => $data['content'],
+            'caption' => $payload['content'] ?? '',
             'access_token' => $accessToken,
         ];
 
-        if (!empty($data['media'])) {
-            $media = $data['media'][0];
+        if (!empty($payload['media'][0])) {
+            $media = $payload['media'][0];
+            $mediaUrl = $this->prepareMediaUrl((string) ($media['path'] ?? ''));
 
-            if ($media['type'] === 'image') {
-                $containerData['image_url'] = $this->getMediaUrl($media['path']);
-            } elseif ($media['type'] === 'video') {
+            if (($media['type'] ?? 'image') === 'video') {
                 $containerData['media_type'] = 'VIDEO';
-                $containerData['video_url'] = $this->getMediaUrl($media['path']);
+                $containerData['video_url'] = $mediaUrl;
+            } else {
+                $containerData['image_url'] = $mediaUrl;
             }
         }
 
-        $containerResponse = $this->client->post("{$igAccountId}/media", [
+        $container = $this->requestJson('POST', sprintf('%s/media', $instagramAccountId), [
             'form_params' => $containerData,
         ]);
 
-        $container = json_decode($containerResponse->getBody(), true);
-        $creationId = $container['id'];
+        $creationId = $container['id'] ?? null;
 
-        // Wait for container to be ready (for videos especially)
-        sleep(2);
+        if (!$creationId) {
+            throw new SocialSyncException('Instagram media container creation failed.');
+        }
 
-        // Step 2: Publish the container
-        $publishResponse = $this->client->post("{$igAccountId}/media_publish", [
+        return $this->requestJson('POST', sprintf('%s/media_publish', $instagramAccountId), [
             'form_params' => [
                 'creation_id' => $creationId,
                 'access_token' => $accessToken,
             ],
         ]);
-
-        $result = json_decode($publishResponse->getBody(), true);
-
-        // Update account last used
-        $account->update(['last_used_at' => now()]);
-
-        return $result;
-    }
-
-    protected function getMediaUrl(string $path): string
-    {
-        // Instagram requires publicly accessible URLs
-        if (filter_var($path, FILTER_VALIDATE_URL)) {
-            return $path;
-        }
-
-        // For local files, you'd need to upload to a CDN or temporary public URL
-        // This is a simplified version - in production, use S3, Cloudinary, etc.
-        throw new \Exception('Instagram requires publicly accessible image URLs. Please provide a URL or upload to a CDN first.');
     }
 
     public function getAuthorizationUrl(string $redirectUri): string
     {
         $params = http_build_query([
-            'client_id' => $this->config['app_id'],
+            'client_id' => $this->configValue('app_id'),
             'redirect_uri' => $redirectUri,
             'scope' => 'instagram_basic,instagram_content_publish,pages_show_list',
             'response_type' => 'code',
         ]);
 
-        return "https://www.facebook.com/{$this->apiVersion}/dialog/oauth?{$params}";
+        return sprintf('https://www.facebook.com/%s/dialog/oauth?%s', $this->apiVersion, $params);
     }
 
     public function handleCallback(string $code, string $redirectUri): array
     {
-        // Same as Facebook for getting access token
-        $response = $this->client->get('oauth/access_token', [
+        $tokenData = $this->requestJson('GET', 'oauth/access_token', [
             'query' => [
-                'client_id' => $this->config['app_id'],
-                'client_secret' => $this->config['app_secret'],
+                'client_id' => $this->configValue('app_id'),
+                'client_secret' => $this->configValue('app_secret'),
                 'redirect_uri' => $redirectUri,
                 'code' => $code,
             ],
         ]);
 
-        $data = json_decode($response->getBody(), true);
-        $accessToken = $data['access_token'];
+        $accessToken = $tokenData['access_token'] ?? null;
 
-        // Get Instagram Business Account
-        $pagesResponse = $this->client->get('me/accounts', [
+        if (!$accessToken) {
+            throw new SocialSyncException('Instagram did not return an access token.');
+        }
+
+        $pagesData = $this->requestJson('GET', 'me/accounts', [
             'query' => [
                 'access_token' => $accessToken,
-                'fields' => 'instagram_business_account,name',
+                'fields' => 'id,name,instagram_business_account',
             ],
         ]);
 
-        $pages = json_decode($pagesResponse->getBody(), true)['data'] ?? [];
+        $pages = $pagesData['data'] ?? [];
+        $instagramBusinessAccountId = $pages[0]['instagram_business_account']['id'] ?? null;
 
         return [
             'access_token' => $accessToken,
+            'instagram_business_account_id' => $instagramBusinessAccountId,
             'pages' => $pages,
         ];
     }
 
     public function refreshToken(array $credentials): array
     {
-        $response = $this->client->get('oauth/access_token', [
+        return $this->requestJson('GET', 'refresh_access_token', [
             'query' => [
-                'grant_type' => 'fb_exchange_token',
-                'client_id' => $this->config['app_id'],
-                'client_secret' => $this->config['app_secret'],
-                'fb_exchange_token' => $credentials['access_token'],
+                'grant_type' => 'ig_refresh_token',
+                'access_token' => $this->credentialValue($credentials, 'access_token'),
             ],
         ]);
-
-        return json_decode($response->getBody(), true);
     }
 
     public function verifyCredentials(array $credentials): bool
     {
         try {
-            $igAccountId = $credentials['instagram_business_account_id'];
-            $response = $this->client->get($igAccountId, [
+            $this->requestJson('GET', (string) $this->credentialValue($credentials, 'instagram_business_account_id'), [
                 'query' => [
                     'fields' => 'id,username',
-                    'access_token' => $credentials['access_token'],
+                    'access_token' => $this->credentialValue($credentials, 'access_token'),
                 ],
             ]);
 
-            return $response->getStatusCode() === 200;
-        } catch (\Exception $e) {
+            return true;
+        } catch (SocialSyncException) {
             return false;
         }
+    }
+
+    protected function prepareMediaUrl(string $path): string
+    {
+        if ($path === '') {
+            throw new SocialSyncException('Media path cannot be empty for Instagram posts.');
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $path;
+        }
+
+        throw new SocialSyncException(
+            'Instagram requires public media URLs. Upload your file to public storage (S3/CDN) and pass the URL.'
+        );
     }
 }

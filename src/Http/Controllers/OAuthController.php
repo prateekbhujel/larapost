@@ -2,140 +2,89 @@
 
 namespace SocialSync\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\View\View;
 use SocialSync\Facades\SocialMedia;
 use SocialSync\Models\SocialAccount;
+use SocialSync\Support\AccountDataResolver;
 
 class OAuthController extends Controller
 {
-    public function connect($platform)
+    public function connect(string $platform): RedirectResponse|JsonResponse
     {
         try {
             $driver = SocialMedia::driver($platform);
             $callbackUrl = route('social-sync.callback', ['platform' => $platform]);
-            $authUrl = $driver->getAuthorizationUrl($callbackUrl);
 
-            return redirect($authUrl);
-        } catch (\Exception $e) {
+            return redirect()->away($driver->getAuthorizationUrl($callbackUrl));
+        } catch (\Throwable $exception) {
             return response()->json([
-                'error' => 'Failed to initiate OAuth: ' . $e->getMessage()
-            ], 500);
+                'message' => 'Failed to initiate OAuth flow.',
+                'error' => $exception->getMessage(),
+            ], 422);
         }
     }
 
-    public function callback(Request $request, $platform)
+    public function callback(Request $request, string $platform): View|JsonResponse
     {
         try {
-            if ($request->has('error')) {
-                throw new \Exception($request->get('error_description', 'OAuth authorization failed'));
+            if ($request->filled('error')) {
+                throw new \RuntimeException((string) $request->input('error_description', $request->input('error')));
             }
 
-            $code = $request->get('code');
-            if (!$code) {
-                throw new \Exception('No authorization code received');
+            $code = (string) $request->input('code', '');
+
+            if ($code === '') {
+                throw new \RuntimeException('Missing OAuth authorization code.');
             }
 
             $driver = SocialMedia::driver($platform);
             $callbackUrl = route('social-sync.callback', ['platform' => $platform]);
-
             $credentials = $driver->handleCallback($code, $callbackUrl);
+            $accountData = AccountDataResolver::fromCredentials($platform, $credentials);
 
-            // Prepare account data
-            $accountData = $this->prepareAccountData($platform, $credentials);
-
-            // Check if account already exists
-            $existingAccount = SocialAccount::where('platform', $platform)
-                ->where('account_id_on_platform', $accountData['id'])
-                ->first();
-
-            if ($existingAccount) {
-                // Update existing account
-                $existingAccount->update([
-                    'credentials' => $credentials,
-                    'is_active' => true,
-                    'account_name' => $accountData['name'],
-                    'account_username' => $accountData['username'] ?? null,
-                ]);
-                $account = $existingAccount;
-                $message = 'Account reconnected successfully!';
-            } else {
-                // Create new account
-                $account = SocialAccount::create([
+            $account = SocialAccount::query()->updateOrCreate(
+                [
                     'platform' => $platform,
-                    'account_name' => $accountData['name'],
-                    'account_username' => $accountData['username'] ?? null,
                     'account_id_on_platform' => $accountData['id'],
+                ],
+                [
+                    'account_name' => $accountData['name'],
+                    'account_username' => $accountData['username'],
                     'credentials' => $credentials,
-                    'is_active' => true,
                     'metadata' => $accountData['metadata'] ?? [],
+                    'is_active' => true,
+                ]
+            );
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Account connected successfully.',
+                    'platform' => $platform,
+                    'account_id' => $account->id,
                 ]);
-                $message = 'Account connected successfully!';
             }
 
-            // Return success view or redirect
             return view('social-sync::oauth-success', [
                 'platform' => $platform,
                 'account' => $account,
-                'message' => $message,
+                'message' => 'Account connected successfully.',
             ]);
+        } catch (\Throwable $exception) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Account connection failed.',
+                    'error' => $exception->getMessage(),
+                ], 422);
+            }
 
-        } catch (\Exception $e) {
             return view('social-sync::oauth-error', [
                 'platform' => $platform,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
-        }
-    }
-
-    protected function prepareAccountData(string $platform, array $credentials): array
-    {
-        switch ($platform) {
-            case 'facebook':
-                return [
-                    'id' => $credentials['pages'][0]['id'] ?? 'unknown',
-                    'name' => $credentials['pages'][0]['name'] ?? 'Facebook Page',
-                    'username' => null,
-                    'metadata' => ['pages' => $credentials['pages']],
-                ];
-
-            case 'instagram':
-                $page = $credentials['pages'][0] ?? [];
-                $igAccount = $page['instagram_business_account'] ?? [];
-
-                return [
-                    'id' => $igAccount['id'] ?? 'unknown',
-                    'name' => $page['name'] ?? 'Instagram Account',
-                    'username' => null,
-                    'metadata' => ['facebook_page' => $page],
-                ];
-
-            case 'twitter':
-                return [
-                    'id' => $credentials['user']['id'] ?? 'unknown',
-                    'name' => $credentials['user']['name'] ?? 'Twitter Account',
-                    'username' => $credentials['user']['username'] ?? null,
-                    'metadata' => ['user' => $credentials['user']],
-                ];
-
-            case 'linkedin':
-                $profile = $credentials['profile'] ?? [];
-                $firstName = $profile['localizedFirstName'] ?? '';
-                $lastName = $profile['localizedLastName'] ?? '';
-
-                return [
-                    'id' => $profile['id'] ?? 'unknown',
-                    'name' => trim("{$firstName} {$lastName}") ?: 'LinkedIn Profile',
-                    'username' => null,
-                    'metadata' => ['profile' => $profile],
-                ];
-
-            default:
-                return [
-                    'id' => 'unknown',
-                    'name' => ucfirst($platform) . ' Account',
-                    'username' => null,
-                ];
         }
     }
 }

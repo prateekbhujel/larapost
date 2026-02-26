@@ -5,98 +5,78 @@ namespace SocialSync\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use SocialSync\Models\ScheduledPost;
 
 class RateLimitPosts
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @return mixed
-     */
     public function handle(Request $request, Closure $next)
     {
-        $platforms = $request->input('platforms', []);
+        $platforms = (array) $request->input('platforms', []);
 
         foreach ($platforms as $platform) {
-            if (!$this->checkRateLimit($platform)) {
-                return back()->with('error',
-                    "Rate limit exceeded for {$platform}. Please try again later."
-                );
+            if (!$this->checkRateLimit((string) $platform)) {
+                return back()->with('error', sprintf(
+                    'Rate limit exceeded for %s. Please try again later.',
+                    $platform
+                ));
             }
         }
 
         return $next($request);
     }
 
-    /**
-     * Check if rate limit is exceeded for platform
-     *
-     * @param string $platform
-     * @return bool
-     */
-    protected function checkRateLimit($platform)
+    protected function checkRateLimit(string $platform): bool
     {
-        $limits = config("social-sync.rate_limits.{$platform}", [
+        $limits = config('social-sync.rate_limits.' . $platform, [
             'posts_per_hour' => 30,
             'posts_per_day' => 200,
         ]);
 
-        // Check hourly limit
-        $hourKey = "social_sync_rate_limit:{$platform}:hour:" . now()->format('YmdH');
-        $hourlyCount = Cache::get($hourKey, 0);
+        $hourKey = 'social_sync_rate_limit:' . $platform . ':hour:' . now()->format('YmdH');
+        $dayKey = 'social_sync_rate_limit:' . $platform . ':day:' . now()->format('Ymd');
 
-        if ($hourlyCount >= $limits['posts_per_hour']) {
+        $hourlyCount = (int) Cache::get($hourKey, 0);
+        $dailyCount = (int) Cache::get($dayKey, 0);
+
+        if ($hourlyCount >= (int) $limits['posts_per_hour'] || $dailyCount >= (int) $limits['posts_per_day']) {
             return false;
         }
 
-        // Check daily limit
-        $dayKey = "social_sync_rate_limit:{$platform}:day:" . now()->format('Ymd');
-        $dailyCount = Cache::get($dayKey, 0);
-
-        if ($dailyCount >= $limits['posts_per_day']) {
-            return false;
-        }
-
-        // Increment counters
-        Cache::increment($hourKey, 1);
-        Cache::put($hourKey, Cache::get($hourKey), now()->addHour());
-
-        Cache::increment($dayKey, 1);
-        Cache::put($dayKey, Cache::get($dayKey), now()->addDay());
+        $this->incrementWithTtl($hourKey, now()->addHour());
+        $this->incrementWithTtl($dayKey, now()->addDay());
 
         return true;
     }
 
-    /**
-     * Get current rate limit status
-     *
-     * @param string $platform
-     * @return array
-     */
-    public static function getRateLimitStatus($platform)
+    public static function getRateLimitStatus(string $platform): array
     {
-        $limits = config("social-sync.rate_limits.{$platform}", [
+        $limits = config('social-sync.rate_limits.' . $platform, [
             'posts_per_hour' => 30,
             'posts_per_day' => 200,
         ]);
 
-        $hourKey = "social_sync_rate_limit:{$platform}:hour:" . now()->format('YmdH');
-        $dayKey = "social_sync_rate_limit:{$platform}:day:" . now()->format('Ymd');
+        $hourKey = 'social_sync_rate_limit:' . $platform . ':hour:' . now()->format('YmdH');
+        $dayKey = 'social_sync_rate_limit:' . $platform . ':day:' . now()->format('Ymd');
+
+        $hourlyUsed = (int) Cache::get($hourKey, 0);
+        $dailyUsed = (int) Cache::get($dayKey, 0);
 
         return [
             'hourly' => [
-                'used' => Cache::get($hourKey, 0),
-                'limit' => $limits['posts_per_hour'],
-                'remaining' => max(0, $limits['posts_per_hour'] - Cache::get($hourKey, 0)),
+                'used' => $hourlyUsed,
+                'limit' => (int) $limits['posts_per_hour'],
+                'remaining' => max(0, (int) $limits['posts_per_hour'] - $hourlyUsed),
             ],
             'daily' => [
-                'used' => Cache::get($dayKey, 0),
-                'limit' => $limits['posts_per_day'],
-                'remaining' => max(0, $limits['posts_per_day'] - Cache::get($dayKey, 0)),
+                'used' => $dailyUsed,
+                'limit' => (int) $limits['posts_per_day'],
+                'remaining' => max(0, (int) $limits['posts_per_day'] - $dailyUsed),
             ],
         ];
+    }
+
+    protected function incrementWithTtl(string $key, \DateTimeInterface $ttl): void
+    {
+        Cache::add($key, 0, $ttl);
+        Cache::increment($key);
     }
 }

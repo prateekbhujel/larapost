@@ -1,98 +1,173 @@
 <?php
 
-namespace SocialSync\Console\Commands;
+namespace SocialSync\Drivers;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
+use GuzzleHttp\Client;
+use SocialSync\Exceptions\SocialSyncException;
+use SocialSync\Models\SocialAccount;
 
-class InstallCommand extends Command
+class TwitterDriver extends AbstractDriver
 {
-    protected $signature = 'social-sync:install';
-    protected $description = 'Install Social Sync package';
+    protected string $apiVersion;
 
-    public function handle()
+    public function __construct(array $config, ?Client $client = null)
     {
-        $this->info('Installing Social Sync...');
+        $this->apiVersion = (string) ($config['api_version'] ?? '2');
 
-        // Publish configuration
-        $this->call('vendor:publish', [
-            '--tag' => 'social-sync-config',
-            '--force' => true,
-        ]);
-
-        // Publish migrations
-        $this->call('vendor:publish', [
-            '--tag' => 'social-sync-migrations',
-            '--force' => true,
-        ]);
-
-        // Run migrations
-        if ($this->confirm('Do you want to run migrations now?', true)) {
-            $this->call('migrate');
-        }
-
-        // Create storage directories
-        $this->createStorageDirectories();
-
-        // Display environment variables needed
-        $this->displayEnvVariables();
-
-        $this->newLine();
-        $this->info('✓ Social Sync installed successfully!');
-        $this->newLine();
-        $this->line('Next steps:');
-        $this->line('1. Add the required environment variables to your .env file');
-        $this->line('2. Run: php artisan social-sync:add-account {platform}');
-        $this->line('3. Start posting: SocialMedia::post()->content("Hello World!")->platforms(["facebook"])->publish()');
-        $this->newLine();
+        parent::__construct($config, $client ?? new Client([
+            'base_uri' => sprintf('https://api.twitter.com/%s/', $this->apiVersion),
+            'timeout' => 30,
+        ]));
     }
 
-    protected function createStorageDirectories()
+    public function publish(SocialAccount $account, array $payload): array
     {
-        $directories = [
-            storage_path('app/social-sync'),
-            storage_path('app/social-sync/temp'),
+        $credentials = $this->credentials($account);
+        $accessToken = $this->credentialValue($credentials, 'access_token');
+
+        $body = [
+            'text' => $payload['content'] ?? '',
         ];
 
-        foreach ($directories as $directory) {
-            if (!File::exists($directory)) {
-                File::makeDirectory($directory, 0755, true);
-                $this->info("✓ Created directory: {$directory}");
-            }
+        $firstMedia = $payload['media'][0] ?? null;
+
+        if ($firstMedia && !empty($firstMedia['path']) && ctype_digit((string) $firstMedia['path'])) {
+            $body['media'] = [
+                'media_ids' => [(string) $firstMedia['path']],
+            ];
+        }
+
+        return $this->requestJson('POST', 'tweets', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $accessToken,
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $body,
+        ]);
+    }
+
+    public function getAuthorizationUrl(string $redirectUri): string
+    {
+        $clientId = $this->configValue('client_id');
+        $state = bin2hex(random_bytes(16));
+        $codeVerifier = $this->codeVerifier();
+
+        if (function_exists('session')) {
+            session([
+                'twitter_oauth_state' => $state,
+                'twitter_code_verifier' => $codeVerifier,
+            ]);
+        }
+
+        $params = http_build_query([
+            'response_type' => 'code',
+            'client_id' => $clientId,
+            'redirect_uri' => $redirectUri,
+            'scope' => 'tweet.read tweet.write users.read offline.access',
+            'state' => $state,
+            'code_challenge' => $this->codeChallenge($codeVerifier),
+            'code_challenge_method' => 'S256',
+        ]);
+
+        return 'https://twitter.com/i/oauth2/authorize?' . $params;
+    }
+
+    public function handleCallback(string $code, string $redirectUri): array
+    {
+        $codeVerifier = function_exists('session') ? session('twitter_code_verifier') : null;
+
+        if (!$codeVerifier) {
+            throw new SocialSyncException('Missing Twitter PKCE code verifier in session. Start OAuth again.');
+        }
+
+        $client = new Client(['timeout' => 30]);
+
+        $tokenData = $this->requestToken($client, [
+            'grant_type' => 'authorization_code',
+            'code' => $code,
+            'redirect_uri' => $redirectUri,
+            'code_verifier' => $codeVerifier,
+            'client_id' => $this->configValue('client_id'),
+        ]);
+
+        $accessToken = $tokenData['access_token'] ?? null;
+
+        if (!$accessToken) {
+            throw new SocialSyncException('Twitter did not return an access token.');
+        }
+
+        $user = $this->requestJson('GET', 'users/me', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $accessToken,
+            ],
+            'query' => [
+                'user.fields' => 'id,name,username',
+            ],
+        ]);
+
+        return [
+            'access_token' => $accessToken,
+            'refresh_token' => $tokenData['refresh_token'] ?? null,
+            'expires_in' => $tokenData['expires_in'] ?? null,
+            'user_id' => $user['data']['id'] ?? null,
+            'user' => $user['data'] ?? [],
+        ];
+    }
+
+    public function refreshToken(array $credentials): array
+    {
+        $refreshToken = $this->credentialValue($credentials, 'refresh_token');
+        $client = new Client(['timeout' => 30]);
+
+        return $this->requestToken($client, [
+            'grant_type' => 'refresh_token',
+            'refresh_token' => $refreshToken,
+            'client_id' => $this->configValue('client_id'),
+        ]);
+    }
+
+    public function verifyCredentials(array $credentials): bool
+    {
+        try {
+            $this->requestJson('GET', 'users/me', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->credentialValue($credentials, 'access_token'),
+                ],
+            ]);
+
+            return true;
+        } catch (SocialSyncException) {
+            return false;
         }
     }
 
-    protected function displayEnvVariables()
+    protected function requestToken(Client $client, array $params): array
     {
-        $this->newLine();
-        $this->warn('Add these to your .env file:');
-        $this->newLine();
+        $response = $client->post('https://api.twitter.com/2/oauth2/token', [
+            'form_params' => $params,
+        ]);
 
-        $envVars = [
-            '# Facebook',
-            'FACEBOOK_APP_ID=your_app_id',
-            'FACEBOOK_APP_SECRET=your_app_secret',
-            '',
-            '# Instagram (uses same Facebook app)',
-            'INSTAGRAM_APP_ID=your_app_id',
-            'INSTAGRAM_APP_SECRET=your_app_secret',
-            '',
-            '# Twitter/X',
-            'TWITTER_API_KEY=your_api_key',
-            'TWITTER_API_SECRET=your_api_secret',
-            'TWITTER_BEARER_TOKEN=your_bearer_token',
-            '',
-            '# LinkedIn',
-            'LINKEDIN_CLIENT_ID=your_client_id',
-            'LINKEDIN_CLIENT_SECRET=your_client_secret',
-            '',
-            '# Queue Configuration (optional)',
-            'SOCIAL_SYNC_QUEUE_ENABLED=true',
-            'SOCIAL_SYNC_QUEUE_CONNECTION=database',
-        ];
+        $contents = (string) $response->getBody();
+        $decoded = json_decode($contents, true);
 
-        foreach ($envVars as $var) {
-            $this->line($var);
+        if (!is_array($decoded)) {
+            throw new SocialSyncException('Twitter returned an invalid token response.');
         }
+
+        if (isset($decoded['error'])) {
+            throw new SocialSyncException('Twitter OAuth error: ' . json_encode($decoded));
+        }
+
+        return $decoded;
+    }
+
+    protected function codeVerifier(): string
+    {
+        return rtrim(strtr(base64_encode(random_bytes(64)), '+/', '-_'), '=');
+    }
+
+    protected function codeChallenge(string $codeVerifier): string
+    {
+        return rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
     }
 }

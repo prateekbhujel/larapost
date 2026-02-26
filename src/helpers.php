@@ -8,7 +8,7 @@ if (!function_exists('social_sync_version')) {
      */
     function social_sync_version()
     {
-        return '1.0.0';
+        return '1.1.0';
     }
 }
 

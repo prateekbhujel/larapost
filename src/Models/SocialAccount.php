@@ -4,6 +4,9 @@ namespace SocialSync\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Crypt;
+use JsonException;
+use Throwable;
 
 class SocialAccount extends Model
 {
@@ -29,14 +32,53 @@ class SocialAccount extends Model
         return $this->hasMany(ScheduledPost::class, 'account_id');
     }
 
-    public function getCredentialsAttribute($value)
+    public function getCredentialsAttribute(mixed $value): ?array
     {
-        return $value ? json_decode(decrypt($value), true) : null;
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        $decoded = $this->decodeJsonString($value);
+
+        if ($decoded !== null) {
+            return $decoded;
+        }
+
+        try {
+            $decrypted = Crypt::decryptString((string) $value);
+
+            return $this->decodeJsonString($decrypted);
+        } catch (Throwable) {
+            return null;
+        }
     }
 
-    public function setCredentialsAttribute($value)
+    public function setCredentialsAttribute(mixed $value): void
     {
-        $this->attributes['credentials'] = encrypt(json_encode($value));
+        if ($value === null || $value === '') {
+            $this->attributes['credentials'] = null;
+
+            return;
+        }
+
+        if (is_string($value)) {
+            $decoded = $this->decodeJsonString($value);
+            $value = $decoded ?? ['token' => $value];
+        }
+
+        if (!is_array($value)) {
+            throw new \InvalidArgumentException('Credentials must be an array, JSON string, or null.');
+        }
+
+        try {
+            $this->attributes['credentials'] = Crypt::encryptString(json_encode($value, JSON_THROW_ON_ERROR));
+        } catch (JsonException $exception) {
+            throw new \InvalidArgumentException('Failed to encode credentials as JSON.', 0, $exception);
+        }
     }
 
     public function scopeActive($query)
@@ -47,5 +89,16 @@ class SocialAccount extends Model
     public function scopePlatform($query, string $platform)
     {
         return $query->where('platform', $platform);
+    }
+
+    protected function decodeJsonString(string $value): ?array
+    {
+        try {
+            $decoded = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return null;
+        }
+
+        return is_array($decoded) ? $decoded : null;
     }
 }

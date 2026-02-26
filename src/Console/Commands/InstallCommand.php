@@ -7,47 +7,40 @@ use Illuminate\Support\Facades\File;
 
 class InstallCommand extends Command
 {
-    protected $signature = 'social-sync:install';
-    protected $description = 'Install Social Sync package';
+    protected $signature = 'social-sync:install {--force : Overwrite published files}';
 
-    public function handle()
+    protected $description = 'Install Laravel Social Sync configuration, migrations, and storage directories.';
+
+    public function handle(): int
     {
-        $this->info('Installing Social Sync...');
+        $this->info('Installing Laravel Social Sync...');
 
-        // Publish configuration
         $this->call('vendor:publish', [
             '--tag' => 'social-sync-config',
-            '--force' => true,
+            '--force' => (bool) $this->option('force'),
         ]);
 
-        // Publish migrations
         $this->call('vendor:publish', [
             '--tag' => 'social-sync-migrations',
-            '--force' => true,
+            '--force' => (bool) $this->option('force'),
         ]);
 
-        // Run migrations
-        if ($this->confirm('Do you want to run migrations now?', true)) {
+        $this->createStorageDirectories();
+
+        if ($this->confirm('Run migrations now?', true)) {
             $this->call('migrate');
         }
 
-        // Create storage directories
-        $this->createStorageDirectories();
-
-        // Display environment variables needed
-        $this->displayEnvVariables();
+        $this->displayRequiredEnvVariables();
 
         $this->newLine();
-        $this->info('✓ Social Sync installed successfully!');
-        $this->newLine();
-        $this->line('Next steps:');
-        $this->line('1. Add the required environment variables to your .env file');
-        $this->line('2. Run: php artisan social-sync:add-account {platform}');
-        $this->line('3. Start posting: SocialMedia::post()->content("Hello World!")->platforms(["facebook"])->publish()');
-        $this->newLine();
+        $this->info('Social Sync installed successfully.');
+        $this->line('Next: connect an account with `php artisan social-sync:add-account facebook`.');
+
+        return self::SUCCESS;
     }
 
-    protected function createStorageDirectories()
+    protected function createStorageDirectories(): void
     {
         $directories = [
             storage_path('app/social-sync'),
@@ -57,42 +50,39 @@ class InstallCommand extends Command
         foreach ($directories as $directory) {
             if (!File::exists($directory)) {
                 File::makeDirectory($directory, 0755, true);
-                $this->info("✓ Created directory: {$directory}");
+                $this->line(sprintf('Created %s', $directory));
             }
         }
     }
 
-    protected function displayEnvVariables()
+    protected function displayRequiredEnvVariables(): void
     {
         $this->newLine();
-        $this->warn('Add these to your .env file:');
+        $this->line('Add the variables you need to `.env`:');
         $this->newLine();
 
-        $envVars = [
-            '# Facebook',
-            'FACEBOOK_APP_ID=your_app_id',
-            'FACEBOOK_APP_SECRET=your_app_secret',
+        $variables = [
+            '# Facebook + Instagram',
+            'FACEBOOK_APP_ID=',
+            'FACEBOOK_APP_SECRET=',
+            'FACEBOOK_API_VERSION=v20.0',
             '',
-            '# Instagram (uses same Facebook app)',
-            'INSTAGRAM_APP_ID=your_app_id',
-            'INSTAGRAM_APP_SECRET=your_app_secret',
-            '',
-            '# Twitter/X',
-            'TWITTER_API_KEY=your_api_key',
-            'TWITTER_API_SECRET=your_api_secret',
-            'TWITTER_BEARER_TOKEN=your_bearer_token',
+            '# Twitter/X OAuth2',
+            'TWITTER_CLIENT_ID=',
+            'TWITTER_CLIENT_SECRET=',
             '',
             '# LinkedIn',
-            'LINKEDIN_CLIENT_ID=your_client_id',
-            'LINKEDIN_CLIENT_SECRET=your_client_secret',
+            'LINKEDIN_CLIENT_ID=',
+            'LINKEDIN_CLIENT_SECRET=',
             '',
-            '# Queue Configuration (optional)',
+            '# Optional',
+            'SOCIAL_SYNC_DEFAULT_PLATFORM=facebook',
             'SOCIAL_SYNC_QUEUE_ENABLED=true',
-            'SOCIAL_SYNC_QUEUE_CONNECTION=database',
+            'SOCIAL_SYNC_MAX_RETRY_ATTEMPTS=3',
         ];
 
-        foreach ($envVars as $var) {
-            $this->line($var);
+        foreach ($variables as $variable) {
+            $this->line($variable);
         }
     }
 }

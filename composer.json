@@ -1,6 +1,6 @@
 {
     "name": "socialsync/laravel-social-sync",
-    "description": "Unified social media posting SDK for Laravel - Post to multiple platforms with a single API",
+    "description": "Unified social publishing tools for Laravel with account management and scheduled posting",
     "type": "library",
     "license": "MIT",
     "keywords": [
@@ -10,8 +10,7 @@
         "instagram",
         "twitter",
         "linkedin",
-        "scheduling",
-        "crm"
+        "scheduling"
     ],
     "authors": [
         {
@@ -32,7 +31,10 @@
     "autoload": {
         "psr-4": {
             "SocialSync\\": "src/"
-        }
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
@@ -49,6 +51,8 @@
             }
         }
     },
-    "minimum-stability": "dev",
+    "scripts": {
+        "test": "vendor/bin/phpunit"
+    },
     "prefer-stable": true
 }

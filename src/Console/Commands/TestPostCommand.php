@@ -9,18 +9,15 @@ use SocialSync\Models\SocialAccount;
 class TestPostCommand extends Command
 {
     protected $signature = 'social-sync:test
-                            {--platform= : Test specific platform}
-                            {--content= : Custom post content}';
+                            {--platform= : Limit to one platform}
+                            {--content= : Post content}
+                            {--schedule= : Schedule time (e.g. "+30 minutes")}';
 
-    protected $description = 'Test posting to social media platforms';
+    protected $description = 'Send a test post using connected accounts.';
 
-    public function handle()
+    public function handle(): int
     {
-        $this->info('Social Sync - Test Post');
-        $this->newLine();
-
-        // Get active accounts
-        $query = SocialAccount::active();
+        $query = SocialAccount::query()->active();
 
         if ($platform = $this->option('platform')) {
             $query->where('platform', $platform);
@@ -29,80 +26,30 @@ class TestPostCommand extends Command
         $accounts = $query->get();
 
         if ($accounts->isEmpty()) {
-            $this->error('No active accounts found.');
-            $this->info('Run: php artisan social-sync:add-account {platform}');
-            return 1;
+            $this->error('No active accounts found. Use `php artisan social-sync:add-account {platform}` first.');
+
+            return self::FAILURE;
         }
 
-        // Show available accounts
-        $this->info('Available accounts:');
-        $accounts->each(function ($account, $index) {
-            $this->line("  [{$index}] {$account->platform} - {$account->account_name}");
-        });
-        $this->newLine();
+        $platforms = $accounts->pluck('platform')->unique()->values()->all();
+        $content = (string) ($this->option('content') ?: 'Test post from Laravel Social Sync.');
 
-        // Get platforms to post to
-        $platforms = $accounts->pluck('platform')->unique()->toArray();
+        $builder = SocialMedia::post()->content($content)->platforms($platforms);
 
-        if (!$this->option('platform') && count($platforms) > 1) {
-            $selected = $this->choice(
-                'Select platforms to post to (comma-separated)',
-                array_merge(['all'], $platforms),
-                'all'
-            );
+        if ($schedule = $this->option('schedule')) {
+            $builder->scheduleFor($schedule);
+        }
 
-            if ($selected !== 'all') {
-                $platforms = explode(',', $selected);
+        $results = $builder->publish();
+
+        foreach ($results as $result) {
+            if (($result['success'] ?? false) === true) {
+                $this->info(sprintf('[OK] %s account #%d', $result['platform'] ?? 'unknown', $result['account_id'] ?? 0));
+            } else {
+                $this->error(sprintf('[FAILED] account #%d: %s', $result['account_id'] ?? 0, $result['error'] ?? 'unknown error'));
             }
         }
 
-        // Get content
-        $content = $this->option('content') ?: $this->ask(
-            'Enter post content',
-            'Test post from Social Sync! 🚀 #SocialSync #Laravel'
-        );
-
-        // Confirm
-        if (!$this->confirm('Post to ' . implode(', ', $platforms) . '?', true)) {
-            $this->warn('Cancelled.');
-            return 0;
-        }
-
-        // Post
-        $this->info('Posting...');
-        $this->newLine();
-
-        try {
-            $results = SocialMedia::post()
-                ->content($content)
-                ->platforms($platforms)
-                ->publish();
-
-            // Display results
-            $this->info('Results:');
-            $this->newLine();
-
-            foreach ($results as $result) {
-                if ($result['success']) {
-                    $this->line("  ✓ {$result['platform']} (Account #{$result['account_id']}): Success");
-                    if (isset($result['post_id'])) {
-                        $this->line("    Post ID: {$result['post_id']}");
-                    }
-                } else {
-                    $this->error("  ✗ {$result['platform']} (Account #{$result['account_id']}): Failed");
-                    $this->line("    Error: {$result['error']}");
-                }
-            }
-
-            $this->newLine();
-            $successCount = collect($results)->where('success', true)->count();
-            $this->info("Posted to {$successCount} of " . count($results) . " accounts.");
-
-        } catch (\Exception $e) {
-            $this->error('Failed to post: ' . $e->getMessage());
-            return 1;
-        }
-
-        return 0;
+        return self::SUCCESS;
     }
 }
