@@ -18,7 +18,7 @@ echo "✓ Laravel project detected"
 echo ""
 
 # Define base paths
-PACKAGE_PATH="packages/socialsync/laravel-social-sync"
+PACKAGE_PATH="packages/prateekbhujel/laravel-social-sync"
 SRC_PATH="$PACKAGE_PATH/src"
 
 echo "📁 Creating package directory structure..."
@@ -119,7 +119,7 @@ echo ""
 echo "📦 Creating composer.json..."
 cat > "$PACKAGE_PATH/composer.json" << 'EOF'
 {
-    "name": "socialsync/laravel-social-sync",
+    "name": "prateekbhujel/laravel-social-sync",
     "description": "Unified social media posting SDK for Laravel",
     "type": "library",
     "license": "MIT",
@@ -192,7 +192,7 @@ if ! grep -q '"repositories"' composer.json; then
     "repositories": [\
         {\
             "type": "path",\
-            "url": "./packages/socialsync/laravel-social-sync"\
+            "url": "./packages/prateekbhujel/laravel-social-sync"\
         }\
     ],' composer.json
     echo "✓ Added repositories section to composer.json"
@@ -236,11 +236,11 @@ echo "   (Refer to COMPLETE_FILE_LIST.md for artifact-to-file mapping)"
 echo ""
 echo "2. Update main composer.json require section:"
 echo "   \"require\": {"
-echo "       \"socialsync/laravel-social-sync\": \"@dev\""
+echo "       \"prateekbhujel/laravel-social-sync\": \"@dev\""
 echo "   }"
 echo ""
 echo "3. Install the package:"
-echo "   composer update socialsync/laravel-social-sync"
+echo "   composer update prateekbhujel/laravel-social-sync"
 echo ""
 echo "4. Run installation:"
 echo "   php artisan social-sync:install"

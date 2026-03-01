@@ -1,6 +1,6 @@
 # CRM Integration Examples
 
-## Lead created event
+## Lead Created Event
 
 ```php
 use SocialSync\Facades\SocialMedia;
@@ -11,7 +11,7 @@ SocialMedia::post()
     ->publish();
 ```
 
-## Scheduled campaign
+## Scheduled Campaign
 
 ```php
 SocialMedia::post()
@@ -21,7 +21,7 @@ SocialMedia::post()
     ->publish();
 ```
 
-## Handling results
+## Handle Result Payloads
 
 ```php
 $results = SocialMedia::post()

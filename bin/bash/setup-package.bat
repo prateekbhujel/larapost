@@ -20,7 +20,7 @@ echo [OK] Laravel project detected
 echo.
 
 REM Define base paths
-set PACKAGE_PATH=packages\socialsync\laravel-social-sync
+set PACKAGE_PATH=packages\prateekbhujel\laravel-social-sync
 set SRC_PATH=%PACKAGE_PATH%\src
 
 echo Creating package directory structure...
@@ -120,7 +120,7 @@ REM Create composer.json
 echo Creating composer.json...
 (
 echo {
-echo     "name": "socialsync/laravel-social-sync",
+echo     "name": "prateekbhujel/laravel-social-sync",
 echo     "description": "Unified social media posting SDK for Laravel",
 echo     "type": "library",
 echo     "license": "MIT",
@@ -218,19 +218,19 @@ echo    ^(Refer to COMPLETE_FILE_LIST.md for artifact-to-file mapping^)
 echo.
 echo 2. Update main composer.json require section:
 echo    "require": {
-echo        "socialsync/laravel-social-sync": "@dev"
+echo        "prateekbhujel/laravel-social-sync": "@dev"
 echo    }
 echo.
 echo 3. Add repository path in composer.json:
 echo    "repositories": [
 echo        {
 echo            "type": "path",
-echo            "url": "./packages/socialsync/laravel-social-sync"
+echo            "url": "./packages/prateekbhujel/laravel-social-sync"
 echo        }
 echo    ]
 echo.
 echo 4. Install the package:
-echo    composer update socialsync/laravel-social-sync
+echo    composer update prateekbhujel/laravel-social-sync
 echo.
 echo 5. Run installation:
 echo    php artisan social-sync:install

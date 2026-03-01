@@ -1,24 +1,33 @@
 # Laravel Social Sync
 
+[![CI](https://github.com/prateekbhujel/laravel-social-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/prateekbhujel/laravel-social-sync/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PHP](https://img.shields.io/badge/php-%5E8.1-777BB4.svg)](https://php.net)
 [![Laravel](https://img.shields.io/badge/laravel-10%20%7C%2011-FF2D20.svg)](https://laravel.com)
 
-Laravel package for publishing to multiple social platforms with one API, account storage, and scheduled posting.
+Production-ready Laravel package for publishing and scheduling social content across Facebook, Instagram, Twitter/X, and LinkedIn using one API.
 
-## What It Includes
+User documentation page: [GitHub Pages docs](https://prateekbhujel.github.io/laravel-social-sync/)
 
-- Unified `SocialMedia::post()` API
-- Platform drivers: Facebook, Instagram, Twitter/X, LinkedIn
-- Encrypted credential storage (`social_accounts` table)
-- Immediate or scheduled posting (`scheduled_posts` table)
-- Retry strategy for scheduled posts
-- Artisan commands for install, account connect, test post, and scheduled runner
+## Stability and Versions
+
+- Stable channel: `^1.0` (recommended for production)
+- Preview channel: `1.x-dev` (for testing upcoming changes)
+- Current documented release: `v1.0.1`
+
+## Why Teams Use It
+
+- One fluent API (`SocialMedia::post()`) for all supported platforms
+- Encrypted credential storage in your own database
+- Immediate and scheduled publishing with retry/backoff
+- OAuth connect flow for account onboarding
+- Artisan commands for installation, testing, and scheduled processing
+- Safe concurrent scheduled-runner behavior for multi-worker cron setups
 
 ## Installation
 
 ```bash
-composer require socialsync/laravel-social-sync
+composer require prateekbhujel/laravel-social-sync
 ```
 
 Run installer:
@@ -27,7 +36,7 @@ Run installer:
 php artisan social-sync:install
 ```
 
-If you prefer manual setup:
+Manual setup:
 
 ```bash
 php artisan vendor:publish --tag=social-sync-config
@@ -36,8 +45,6 @@ php artisan migrate
 ```
 
 ## Environment Variables
-
-Add platform credentials in `.env`:
 
 ```env
 SOCIAL_SYNC_DEFAULT_PLATFORM=facebook
@@ -53,11 +60,11 @@ LINKEDIN_CLIENT_ID=
 LINKEDIN_CLIENT_SECRET=
 ```
 
-Instagram defaults to Facebook app credentials unless you set dedicated `INSTAGRAM_*` values.
+Instagram falls back to Facebook credentials unless dedicated `INSTAGRAM_*` values are set.
 
-## Quick Usage
+## Quick Start
 
-### Publish now
+### Publish Now
 
 ```php
 use SocialSync\Facades\SocialMedia;
@@ -68,7 +75,7 @@ $results = SocialMedia::post()
     ->publish();
 ```
 
-### Schedule
+### Schedule a Post
 
 ```php
 SocialMedia::post()
@@ -78,7 +85,7 @@ SocialMedia::post()
     ->publish();
 ```
 
-Run scheduled posts (via cron):
+Run scheduled posts via cron:
 
 ```bash
 php artisan social-sync:run-scheduled
@@ -90,7 +97,7 @@ Example cron:
 * * * * * php /path/to/artisan social-sync:run-scheduled >> /dev/null 2>&1
 ```
 
-### Media
+### Post Media
 
 ```php
 SocialMedia::post()
@@ -102,20 +109,20 @@ SocialMedia::post()
 
 ## Account Management
 
-Connect account using CLI flow:
+CLI flow:
 
 ```bash
 php artisan social-sync:add-account facebook
 ```
 
-Or web flow endpoints:
+Web flow endpoints:
 
 - `GET /social-sync/connect/{platform}`
 - `GET /social-sync/callback/{platform}`
 
-You can customize route prefix/middleware in `config/social-sync.php`.
+Route prefix and middleware are configurable in `config/social-sync.php`.
 
-## Commands
+## Artisan Commands
 
 - `php artisan social-sync:install`
 - `php artisan social-sync:add-account {platform}`
@@ -124,10 +131,8 @@ You can customize route prefix/middleware in `config/social-sync.php`.
 
 ## Data Model
 
-Two tables are created:
-
 - `social_accounts`: account metadata + encrypted credentials
-- `scheduled_posts`: queue/schedule state, retry counters, publish responses
+- `scheduled_posts`: scheduling state, retries, and publish responses
 
 ## Testing
 
@@ -135,24 +140,25 @@ Two tables are created:
 composer test
 ```
 
-The package includes Testbench coverage for publish flow, scheduling, and scheduled command execution.
+## Production Checklist
 
-## Versioning and Releases
+- Configure all required OAuth credentials in `.env`
+- Run migrations in production before enabling scheduled jobs
+- Add the scheduled runner to cron (`social-sync:run-scheduled`)
+- Monitor failed posts and retry behavior
+- Keep package on latest `1.x` patch release
 
-Use semantic versioning:
+## Contributing
 
-- `MAJOR`: breaking API/config changes
-- `MINOR`: backward-compatible features
-- `PATCH`: backward-compatible fixes
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for setup, branching, testing, and PR standards.
 
-Release flow:
+## Security
 
-```bash
-git tag v1.1.0
-git push origin v1.1.0
-```
+Report vulnerabilities privately via [SECURITY.md](SECURITY.md).
 
-Packagist auto-updates when your webhook is configured. You can also trigger an update manually from Packagist.
+## Release Process
+
+Release guidance is documented in [CHANGELOG.md](CHANGELOG.md) and [RELEASE.md](RELEASE.md).
 
 ## License
 

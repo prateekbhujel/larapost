@@ -16,23 +16,28 @@ class RunScheduledPostsCommand extends Command
 
     public function handle(): int
     {
-        $limit = (int) $this->option('limit');
+        $limit = max(1, (int) $this->option('limit'));
 
-        $posts = ScheduledPost::query()
-            ->with('account')
+        $duePostIds = ScheduledPost::query()
             ->pending()
             ->scheduledBefore(now())
             ->orderBy('scheduled_for')
             ->limit($limit)
-            ->get();
+            ->pluck('id');
 
-        if ($posts->isEmpty()) {
+        if ($duePostIds->isEmpty()) {
             $this->line('No scheduled posts are due right now.');
 
             return self::SUCCESS;
         }
 
-        foreach ($posts as $post) {
+        foreach ($duePostIds as $postId) {
+            $post = $this->claimPost((int) $postId);
+
+            if ($post === null) {
+                continue;
+            }
+
             $account = $post->account;
 
             if (!$account || !$account->is_active) {
@@ -74,6 +79,22 @@ class RunScheduledPostsCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    protected function claimPost(int $postId): ?ScheduledPost
+    {
+        $claimed = ScheduledPost::query()
+            ->whereKey($postId)
+            ->pending()
+            ->update([
+                'status' => ScheduledPost::STATUS_PROCESSING,
+            ]);
+
+        if ($claimed === 0) {
+            return null;
+        }
+
+        return ScheduledPost::query()->with('account')->find($postId);
     }
 
     protected function applyFailureStrategy(ScheduledPost $post, string $error): void

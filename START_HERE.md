@@ -1,16 +1,26 @@
 # Start Here
 
-Use this package in 4 steps:
+Use this package in 5 steps:
 
 1. Install package
 
 ```bash
-composer require socialsync/laravel-social-sync
+composer require prateekbhujel/laravel-social-sync
 php artisan social-sync:install
 ```
 
-2. Add credentials to `.env` (see `README.md`)
-3. Connect at least one account (`php artisan social-sync:add-account facebook`)
-4. Publish or schedule via `SocialMedia::post()` API
+2. Add platform credentials to `.env`
+3. Connect at least one account:
 
-For full setup and release guidance, read `README.md`.
+```bash
+php artisan social-sync:add-account facebook
+```
+
+4. Publish immediately or schedule via `SocialMedia::post()`
+5. Add cron for scheduled processing:
+
+```cron
+* * * * * php /path/to/artisan social-sync:run-scheduled >> /dev/null 2>&1
+```
+
+For full setup, production guidance, and release details, read `README.md`.
