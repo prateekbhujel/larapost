@@ -3,7 +3,7 @@
     "description": "Production-grade social publishing and scheduling tools for Laravel",
     "type": "library",
     "license": "MIT",
-    "homepage": "https://github.com/prateekbhujel/laravel-social-sync",
+    "homepage": "https://github.com/prateekbhujel/larapost",
     "readme": "README.md",
     "keywords": [
         "laravel",
@@ -21,9 +21,9 @@
         }
     ],
     "support": {
-        "issues": "https://github.com/prateekbhujel/laravel-social-sync/issues",
-        "source": "https://github.com/prateekbhujel/laravel-social-sync",
-        "docs": "https://prateekbhujel.github.io/laravel-social-sync/"
+        "issues": "https://github.com/prateekbhujel/larapost/issues",
+        "source": "https://github.com/prateekbhujel/larapost",
+        "docs": "https://prateekbhujel.github.io/larapost/"
     },
     "require": {
         "php": "^8.1",

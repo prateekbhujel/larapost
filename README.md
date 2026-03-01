@@ -1,6 +1,6 @@
 # Laravel Social Sync
 
-[![CI](https://github.com/prateekbhujel/laravel-social-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/prateekbhujel/laravel-social-sync/actions/workflows/ci.yml)
+[![CI](https://github.com/prateekbhujel/larapost/actions/workflows/ci.yml/badge.svg)](https://github.com/prateekbhujel/larapost/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PHP](https://img.shields.io/badge/php-%5E8.1-777BB4.svg)](https://php.net)
 [![Laravel](https://img.shields.io/badge/laravel-10%20%7C%2011%20%7C%2012%20%7C%2013-FF2D20.svg)](https://laravel.com)
@@ -9,7 +9,7 @@ Production-ready Laravel package for publishing and scheduling social content ac
 
 Supports Laravel `10 | 11 | 12 | 13` and PHP `8.1+`.
 
-User documentation page (with light/dark mode): [GitHub Pages docs](https://prateekbhujel.github.io/laravel-social-sync/)
+User documentation page (with light/dark mode): [GitHub Pages docs](https://prateekbhujel.github.io/larapost/)
 
 ## Stability and Versions
 

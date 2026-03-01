@@ -12,7 +12,7 @@ Thanks for contributing.
 ## Local Setup
 
 ```bash
-git clone https://github.com/prateekbhujel/laravel-social-sync.git
+git clone https://github.com/prateekbhujel/larapost.git
 cd laravel-social-sync
 composer install
 composer test
