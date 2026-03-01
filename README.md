@@ -7,11 +7,13 @@
 
 Production-ready Laravel package for publishing and scheduling social content across Facebook, Instagram, Twitter/X, and LinkedIn using one API.
 
-User documentation page: [GitHub Pages docs](https://prateekbhujel.github.io/laravel-social-sync/)
+Supports Laravel `10 | 11 | 12 | 13` and PHP `8.1+`.
+
+User documentation page (with light/dark mode): [GitHub Pages docs](https://prateekbhujel.github.io/laravel-social-sync/)
 
 ## Stability and Versions
 
-- Stable channel: `^1.0` (recommended for production)
+- Stable channel: `^1.1` (recommended for production)
 - Preview channel: `1.x-dev` (for testing upcoming changes)
 - Current documented release: `v1.1.1`
 - Package migration: use `prateekbhujel/laravel-social-sync` (replaces `socialsync/laravel-social-sync`)
@@ -28,6 +30,13 @@ User documentation page: [GitHub Pages docs](https://prateekbhujel.github.io/lar
 ## Installation
 
 ```bash
+composer require prateekbhujel/laravel-social-sync
+```
+
+If you are migrating from the old vendor package:
+
+```bash
+composer remove socialsync/laravel-social-sync
 composer require prateekbhujel/laravel-social-sync
 ```
 
