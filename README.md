@@ -9,7 +9,7 @@ Production-ready Laravel package for publishing and scheduling social content ac
 
 Supports Laravel `10 | 11 | 12 | 13` and PHP `8.1+`.
 
-User documentation page: [GitHub Pages docs](https://prateekbhujel.github.io/larapost/)
+User documentation page: [Docs](https://prateekbhujel.github.io/larapost/)
 
 ## Stability and Versions
 
