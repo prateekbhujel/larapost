@@ -111,7 +111,7 @@ if (!function_exists('social_sync_can_retry')) {
      */
     function social_sync_can_retry($post)
     {
-        $maxRetries = config('social-sync.retry.max_attempts', 3);
+        $maxRetries = config('larapost.retry.max_attempts', 3);
         return $post->status === 'failed' && $post->retry_count < $maxRetries;
     }
 }

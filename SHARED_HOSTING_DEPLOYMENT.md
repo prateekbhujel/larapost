@@ -5,7 +5,7 @@ Laravel Social Sync works on shared hosting if your app can run Artisan commands
 ## Required cron jobs
 
 ```cron
-* * * * * php /path/to/artisan social-sync:run-scheduled >> /dev/null 2>&1
+* * * * * php /path/to/artisan larapost:run-scheduled >> /dev/null 2>&1
 * * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1
 ```
 

@@ -13,7 +13,7 @@ Thanks for contributing.
 
 ```bash
 git clone https://github.com/prateekbhujel/larapost.git
-cd laravel-social-sync
+cd larapost
 composer install
 composer test
 ```

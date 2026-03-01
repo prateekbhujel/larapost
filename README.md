@@ -16,7 +16,7 @@ User documentation page (with light/dark mode): [GitHub Pages docs](https://prat
 - Stable channel: `^1.1` (recommended for production)
 - Preview channel: `1.x-dev` (for testing upcoming changes)
 - Current documented release: `v1.1.1`
-- Package migration: use `prateekbhujel/laravel-social-sync` (replaces `socialsync/laravel-social-sync`)
+- Package migration target: `prateekbhujel/larapost`
 
 ## Why Teams Use It
 
@@ -30,34 +30,34 @@ User documentation page (with light/dark mode): [GitHub Pages docs](https://prat
 ## Installation
 
 ```bash
-composer require prateekbhujel/laravel-social-sync
+composer require prateekbhujel/larapost
 ```
 
 If you are migrating from the old vendor package:
 
 ```bash
 composer remove socialsync/laravel-social-sync
-composer require prateekbhujel/laravel-social-sync
+composer require prateekbhujel/larapost
 ```
 
 Run installer:
 
 ```bash
-php artisan social-sync:install
+php artisan larapost:install
 ```
 
 Manual setup:
 
 ```bash
-php artisan vendor:publish --tag=social-sync-config
-php artisan vendor:publish --tag=social-sync-migrations
+php artisan vendor:publish --tag=larapost-config
+php artisan vendor:publish --tag=larapost-migrations
 php artisan migrate
 ```
 
 ## Environment Variables
 
 ```env
-SOCIAL_SYNC_DEFAULT_PLATFORM=facebook
+LARAPOST_DEFAULT_PLATFORM=facebook
 
 FACEBOOK_APP_ID=
 FACEBOOK_APP_SECRET=
@@ -98,13 +98,13 @@ SocialMedia::post()
 Run scheduled posts via cron:
 
 ```bash
-php artisan social-sync:run-scheduled
+php artisan larapost:run-scheduled
 ```
 
 Example cron:
 
 ```cron
-* * * * * php /path/to/artisan social-sync:run-scheduled >> /dev/null 2>&1
+* * * * * php /path/to/artisan larapost:run-scheduled >> /dev/null 2>&1
 ```
 
 ### Post Media
@@ -122,22 +122,22 @@ SocialMedia::post()
 CLI flow:
 
 ```bash
-php artisan social-sync:add-account facebook
+php artisan larapost:add-account facebook
 ```
 
 Web flow endpoints:
 
-- `GET /social-sync/connect/{platform}`
-- `GET /social-sync/callback/{platform}`
+- `GET /larapost/connect/{platform}`
+- `GET /larapost/callback/{platform}`
 
-Route prefix and middleware are configurable in `config/social-sync.php`.
+Route prefix and middleware are configurable in `config/larapost.php`.
 
 ## Artisan Commands
 
-- `php artisan social-sync:install`
-- `php artisan social-sync:add-account {platform}`
-- `php artisan social-sync:test`
-- `php artisan social-sync:run-scheduled`
+- `php artisan larapost:install`
+- `php artisan larapost:add-account {platform}`
+- `php artisan larapost:test`
+- `php artisan larapost:run-scheduled`
 
 ## Data Model
 
@@ -154,7 +154,7 @@ composer test
 
 - Configure all required OAuth credentials in `.env`
 - Run migrations in production before enabling scheduled jobs
-- Add the scheduled runner to cron (`social-sync:run-scheduled`)
+- Add the scheduled runner to cron (`larapost:run-scheduled`)
 - Monitor failed posts and retry behavior
 - Keep package on latest `1.x` patch release
 

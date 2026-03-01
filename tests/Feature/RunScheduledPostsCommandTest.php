@@ -30,7 +30,7 @@ class RunScheduledPostsCommandTest extends TestCase
             'scheduled_for' => now()->subMinute(),
         ]);
 
-        $this->artisan('social-sync:run-scheduled')
+        $this->artisan('larapost:run-scheduled')
             ->expectsOutput('Published scheduled post #' . $post->id . '.')
             ->assertExitCode(0);
 
@@ -71,7 +71,7 @@ class RunScheduledPostsCommandTest extends TestCase
             'scheduled_for' => now()->subMinute(),
         ]);
 
-        $this->artisan('social-sync:run-scheduled --limit=0')
+        $this->artisan('larapost:run-scheduled --limit=0')
             ->expectsOutput('Published scheduled post #' . $firstPost->id . '.')
             ->assertExitCode(0);
 

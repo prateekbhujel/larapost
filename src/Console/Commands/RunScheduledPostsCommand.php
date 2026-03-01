@@ -10,7 +10,7 @@ use SocialSync\Models\ScheduledPost;
 
 class RunScheduledPostsCommand extends Command
 {
-    protected $signature = 'social-sync:run-scheduled {--limit=50 : Maximum posts to process in one run}';
+    protected $signature = 'larapost:run-scheduled {--limit=50 : Maximum posts to process in one run}';
 
     protected $description = 'Publish pending scheduled posts that are due.';
 
@@ -103,7 +103,7 @@ class RunScheduledPostsCommand extends Command
         $maxAttempts = max(1, (int) $post->max_attempts);
 
         if ($newRetryCount < $maxAttempts) {
-            $backoff = (array) config('social-sync.retry.backoff_minutes', [1, 5, 15]);
+            $backoff = (array) config('larapost.retry.backoff_minutes', [1, 5, 15]);
             $index = min($newRetryCount - 1, count($backoff) - 1);
             $minutes = (int) ($backoff[$index] ?? 1);
 

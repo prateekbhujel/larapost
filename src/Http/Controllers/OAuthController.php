@@ -17,7 +17,7 @@ class OAuthController extends Controller
     {
         try {
             $driver = SocialMedia::driver($platform);
-            $callbackUrl = route('social-sync.callback', ['platform' => $platform]);
+            $callbackUrl = route('larapost.callback', ['platform' => $platform]);
 
             return redirect()->away($driver->getAuthorizationUrl($callbackUrl));
         } catch (\Throwable $exception) {
@@ -42,7 +42,7 @@ class OAuthController extends Controller
             }
 
             $driver = SocialMedia::driver($platform);
-            $callbackUrl = route('social-sync.callback', ['platform' => $platform]);
+            $callbackUrl = route('larapost.callback', ['platform' => $platform]);
             $credentials = $driver->handleCallback($code, $callbackUrl);
             $accountData = AccountDataResolver::fromCredentials($platform, $credentials);
 
@@ -68,7 +68,7 @@ class OAuthController extends Controller
                 ]);
             }
 
-            return view('social-sync::oauth-success', [
+            return view('larapost::oauth-success', [
                 'platform' => $platform,
                 'account' => $account,
                 'message' => 'Account connected successfully.',
@@ -81,7 +81,7 @@ class OAuthController extends Controller
                 ], 422);
             }
 
-            return view('social-sync::oauth-error', [
+            return view('larapost::oauth-error', [
                 'platform' => $platform,
                 'error' => $exception->getMessage(),
             ]);

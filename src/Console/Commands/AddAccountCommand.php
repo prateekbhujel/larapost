@@ -10,7 +10,7 @@ use SocialSync\Support\AccountDataResolver;
 
 class AddAccountCommand extends Command
 {
-    protected $signature = 'social-sync:add-account {platform : facebook|instagram|twitter|linkedin}';
+    protected $signature = 'larapost:add-account {platform : facebook|instagram|twitter|linkedin}';
 
     protected $description = 'Connect a social account and store credentials securely.';
 
@@ -26,7 +26,7 @@ class AddAccountCommand extends Command
 
         try {
             $driver = SocialMedia::driver($platform);
-            $callbackUrl = route('social-sync.callback', ['platform' => $platform], false);
+            $callbackUrl = route('larapost.callback', ['platform' => $platform], false);
             $callbackUrl = url($callbackUrl);
             $authUrl = $driver->getAuthorizationUrl($callbackUrl);
 

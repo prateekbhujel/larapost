@@ -1,5 +1,5 @@
 {
-    "name": "prateekbhujel/laravel-social-sync",
+    "name": "prateekbhujel/larapost",
     "description": "Production-grade social publishing and scheduling tools for Laravel",
     "type": "library",
     "license": "MIT",
@@ -34,9 +34,6 @@
     "require-dev": {
         "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
         "phpunit/phpunit": "^10.0|^11.0|^12.0"
-    },
-    "replace": {
-        "socialsync/laravel-social-sync": "self.version"
     },
     "autoload": {
         "psr-4": {
