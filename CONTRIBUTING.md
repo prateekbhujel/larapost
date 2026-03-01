@@ -1,4 +1,4 @@
-# Contributing to Laravel Social Sync
+# Contributing to LaraPost
 
 Thanks for contributing.
 
@@ -6,7 +6,7 @@ Thanks for contributing.
 
 - Keep changes focused and small
 - Add or update tests for behavior changes
-- Preserve backward compatibility inside the `1.x` line unless discussed first
+- Avoid breaking behavior without documenting it in the PR and release notes
 - Do not commit secrets or API tokens
 
 ## Local Setup

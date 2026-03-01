@@ -6,13 +6,13 @@
     <title>LaraPost Documentation</title>
     <meta
       name="description"
-      content="Official LaraPost docs for Laravel: installation, configuration, OAuth, publishing, scheduling, deployment, and troubleshooting."
+      content="Official LaraPost docs: installation, configuration, OAuth onboarding, publishing API, scheduling, and production operations."
     />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
 
@@ -22,25 +22,26 @@
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Inter', 'ui-sans-serif', 'system-ui'],
-              mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
+              sans: ['Manrope', 'ui-sans-serif', 'system-ui'],
+              mono: ['JetBrains Mono', 'ui-monospace', 'monospace']
             },
             colors: {
-              larared: {
-                50: '#fff1f0',
-                100: '#ffe4e2',
-                200: '#ffc9c4',
-                300: '#ffa59d',
-                400: '#ff7a6e',
-                500: '#f55245',
-                600: '#e33c2d',
-                700: '#bf3023',
-                800: '#9f2c22',
-                900: '#842c24'
+              laravel: {
+                50: '#fff2ef',
+                100: '#ffe6df',
+                200: '#ffc8b9',
+                300: '#ffa083',
+                400: '#ff7249',
+                500: '#f7441f',
+                600: '#dc2f12',
+                700: '#b72611',
+                800: '#982313',
+                900: '#7c2215'
               }
             },
             boxShadow: {
-              soft: '0 10px 30px rgba(15, 23, 42, 0.07)'
+              glow: '0 25px 60px rgba(247, 68, 31, 0.14)',
+              panel: '0 14px 30px rgba(16, 24, 40, 0.07)'
             }
           }
         }
@@ -49,172 +50,207 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
 
-  <body class="bg-slate-50 text-slate-900 antialiased">
-    <header class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur">
+  <body class="bg-slate-100 text-slate-900 antialiased">
+    <div class="fixed inset-0 -z-10 overflow-hidden">
+      <div class="absolute -left-24 top-0 h-72 w-72 rounded-full bg-laravel-300/35 blur-3xl"></div>
+      <div class="absolute right-0 top-24 h-80 w-80 rounded-full bg-cyan-200/40 blur-3xl"></div>
+    </div>
+
+    <header class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
       <div class="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-        <a href="#top" class="inline-flex items-center gap-2 text-sm font-semibold tracking-wide sm:text-base">
-          <span class="inline-block h-2.5 w-2.5 rounded-full bg-larared-500"></span>
-          LaraPost Docs
+        <a href="#top" class="inline-flex items-center gap-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-laravel-600 text-sm font-extrabold text-white">LP</span>
+          <span class="text-sm font-extrabold tracking-wide sm:text-base">LaraPost Docs</span>
         </a>
 
-        <div class="flex items-center gap-2">
-          <a
-            href="https://github.com/prateekbhujel/larapost"
-            class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold hover:bg-slate-100 sm:text-sm"
-          >
-            GitHub
-          </a>
-          <a
-            href="https://packagist.org/packages/prateekbhujel/larapost"
-            class="rounded-lg bg-larared-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-larared-700 sm:text-sm"
-          >
-            Packagist
-          </a>
-        </div>
+        <nav class="hidden items-center gap-2 md:flex">
+          <a href="./contributing/" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">Contributing</a>
+          <a href="./release/" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">Release</a>
+          <a href="./security/" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">Security</a>
+          <a href="./code-of-conduct/" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">Code of Conduct</a>
+          <a href="https://github.com/prateekbhujel/larapost" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold hover:bg-slate-100">GitHub</a>
+        </nav>
       </div>
     </header>
 
-    <div id="top" class="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-8">
+    <div id="top" class="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8">
       <aside class="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] lg:overflow-y-auto">
-        <nav class="rounded-xl border border-slate-200 bg-white p-4 shadow-soft" aria-label="Docs navigation">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Getting Started</p>
-          <a href="#introduction" class="block rounded px-2 py-1.5 text-sm hover:bg-slate-100">Introduction</a>
-          <a href="#installation" class="block rounded px-2 py-1.5 text-sm hover:bg-slate-100">Installation</a>
-          <a href="#quickstart" class="block rounded px-2 py-1.5 text-sm hover:bg-slate-100">Quick Start</a>
-
-          <p class="mb-2 mt-5 text-xs font-semibold uppercase tracking-wider text-slate-500">Core</p>
-          <a href="#configuration" class="block rounded px-2 py-1.5 text-sm hover:bg-slate-100">Configuration</a>
-          <a href="#oauth" class="block rounded px-2 py-1.5 text-sm hover:bg-slate-100">OAuth</a>
-          <a href="#publishing" class="block rounded px-2 py-1.5 text-sm hover:bg-slate-100">Publishing</a>
-          <a href="#scheduler" class="block rounded px-2 py-1.5 text-sm hover:bg-slate-100">Scheduler</a>
-          <a href="#commands" class="block rounded px-2 py-1.5 text-sm hover:bg-slate-100">Commands</a>
-
-          <p class="mb-2 mt-5 text-xs font-semibold uppercase tracking-wider text-slate-500">Production</p>
-          <a href="#deployment" class="block rounded px-2 py-1.5 text-sm hover:bg-slate-100">Deployment</a>
-          <a href="#troubleshooting" class="block rounded px-2 py-1.5 text-sm hover:bg-slate-100">Troubleshooting</a>
-          <a href="#opensource" class="block rounded px-2 py-1.5 text-sm hover:bg-slate-100">Open Source</a>
-        </nav>
+        <details class="rounded-2xl border border-slate-200 bg-white p-4 shadow-panel lg:open">
+          <summary class="cursor-pointer list-none text-sm font-bold tracking-wide text-slate-800 lg:pointer-events-none">
+            Documentation
+          </summary>
+          <nav class="mt-3 space-y-4 text-sm" aria-label="Docs navigation">
+            <div>
+              <p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Getting Started</p>
+              <a href="#overview" class="block rounded px-2 py-1.5 hover:bg-slate-100">Overview</a>
+              <a href="#installation" class="block rounded px-2 py-1.5 hover:bg-slate-100">Installation</a>
+              <a href="#quick-start" class="block rounded px-2 py-1.5 hover:bg-slate-100">Quick Start</a>
+            </div>
+            <div>
+              <p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Core</p>
+              <a href="#configuration" class="block rounded px-2 py-1.5 hover:bg-slate-100">Configuration</a>
+              <a href="#oauth" class="block rounded px-2 py-1.5 hover:bg-slate-100">OAuth</a>
+              <a href="#publishing" class="block rounded px-2 py-1.5 hover:bg-slate-100">Publishing API</a>
+              <a href="#scheduler" class="block rounded px-2 py-1.5 hover:bg-slate-100">Scheduling</a>
+              <a href="#commands" class="block rounded px-2 py-1.5 hover:bg-slate-100">Commands</a>
+            </div>
+            <div>
+              <p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Operations</p>
+              <a href="#deployment" class="block rounded px-2 py-1.5 hover:bg-slate-100">Deployment</a>
+              <a href="#support" class="block rounded px-2 py-1.5 hover:bg-slate-100">Open Source Workflow</a>
+            </div>
+          </nav>
+        </details>
       </aside>
 
       <main class="space-y-5">
-        <section class="rounded-2xl border border-larared-200 bg-gradient-to-br from-larared-50 to-white p-6">
-          <p class="text-xs font-semibold uppercase tracking-wider text-larared-700">LaraPost for Laravel</p>
-          <h1 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">Ship social posts from one clean API</h1>
-          <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
-            LaraPost gives you a single publish pipeline for Facebook, Instagram, Twitter/X, and LinkedIn,
-            with account storage, scheduled posting, retry handling, and production-friendly command tooling.
+        <section class="relative overflow-hidden rounded-3xl border border-laravel-200 bg-gradient-to-br from-white via-white to-laravel-50 p-6 shadow-glow sm:p-8">
+          <div class="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-laravel-200/40 blur-3xl"></div>
+          <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-laravel-700">Production Package For Laravel</p>
+          <h1 class="mt-2 max-w-4xl text-3xl font-extrabold tracking-tight sm:text-5xl">Unified social publishing API with scheduler, retries, and account onboarding</h1>
+          <p class="mt-4 max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
+            LaraPost gives your Laravel app one publish workflow for Facebook, Instagram, Twitter/X, and LinkedIn.
+            It is built for real production usage: OAuth account connection, queued/scheduled posts, retry backoff,
+            and command tooling for operations.
           </p>
+
           <div class="mt-4 flex flex-wrap gap-2 text-xs">
             <span class="rounded-full border border-slate-300 bg-white px-3 py-1">Package: <strong class="ml-1">prateekbhujel/larapost</strong></span>
             <span class="rounded-full border border-slate-300 bg-white px-3 py-1">Laravel: <strong class="ml-1">10 / 11 / 12 / 13</strong></span>
             <span class="rounded-full border border-slate-300 bg-white px-3 py-1">PHP: <strong class="ml-1">8.1+</strong></span>
+            <span class="rounded-full border border-slate-300 bg-white px-3 py-1">Branch Alias: <strong class="ml-1">1.x-dev</strong></span>
+          </div>
+
+          <div class="mt-5 flex flex-wrap gap-2">
+            <a href="https://github.com/prateekbhujel/larapost" class="rounded-lg bg-laravel-600 px-4 py-2 text-sm font-bold text-white hover:bg-laravel-700">View Repository</a>
+            <a href="https://packagist.org/packages/prateekbhujel/larapost" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold hover:bg-slate-100">Packagist</a>
           </div>
         </section>
 
-        <section id="introduction" class="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h2 class="text-2xl font-bold tracking-tight">Introduction</h2>
-          <p class="mt-3 text-sm leading-7 text-slate-700 sm:text-base">
-            LaraPost is designed for teams who need reliable social publishing inside Laravel apps. It supports immediate publishes,
-            scheduled dispatches, OAuth account onboarding, and controlled retries for transient API failures.
-          </p>
+        <section id="overview" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel">
+          <h2 class="text-2xl font-extrabold tracking-tight">Overview</h2>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2">
+            <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-700">Single API</h3>
+              <p class="mt-2 text-sm text-slate-700">Use one fluent builder (`SocialMedia::post()`) for multiple providers.</p>
+            </article>
+            <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-700">Operational Safety</h3>
+              <p class="mt-2 text-sm text-slate-700">Scheduled runner atomically claims due jobs to avoid duplicate sends.</p>
+            </article>
+            <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-700">Contributor Friendly</h3>
+              <p class="mt-2 text-sm text-slate-700">Project includes release workflow, security policy, and contribution standards.</p>
+            </article>
+            <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-700">Production Tooling</h3>
+              <p class="mt-2 text-sm text-slate-700">CLI commands cover install, account linking, smoke tests, and scheduled execution.</p>
+            </article>
+          </div>
         </section>
 
-        <section id="installation" class="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h2 class="text-2xl font-bold tracking-tight">Installation</h2>
-          <pre class="mt-4 overflow-x-auto rounded-lg border border-slate-700 bg-slate-900 p-4 text-[13px] text-slate-100"><code>composer require prateekbhujel/larapost
+        <section id="installation" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel">
+          <h2 class="text-2xl font-extrabold tracking-tight">Installation</h2>
+          <pre class="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>composer require prateekbhujel/larapost
 php artisan larapost:install</code></pre>
-          <p class="mt-4 text-sm text-slate-700">Manual setup:</p>
-          <pre class="mt-2 overflow-x-auto rounded-lg border border-slate-700 bg-slate-900 p-4 text-[13px] text-slate-100"><code>php artisan vendor:publish --tag=larapost-config
+
+          <p class="mt-4 text-sm text-slate-700">Manual setup (if you do not run the installer):</p>
+          <pre class="mt-2 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>php artisan vendor:publish --tag=larapost-config
 php artisan vendor:publish --tag=larapost-migrations
 php artisan migrate</code></pre>
         </section>
 
-        <section id="quickstart" class="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h2 class="text-2xl font-bold tracking-tight">Quick Start</h2>
-          <ol class="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-7 text-slate-700 sm:text-base">
-            <li>Set provider credentials in <code class="font-mono text-[13px]">.env</code>.</li>
-            <li>Connect at least one social account.</li>
-            <li>Publish a test message.</li>
-            <li>Enable cron for scheduled posts.</li>
+        <section id="quick-start" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel">
+          <h2 class="text-2xl font-extrabold tracking-tight">Quick Start</h2>
+          <ol class="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-7 text-slate-700">
+            <li>Add provider credentials to <code class="font-mono text-[13px]">.env</code>.</li>
+            <li>Connect at least one provider account.</li>
+            <li>Publish test content.</li>
+            <li>Enable cron for scheduled jobs.</li>
           </ol>
-          <pre class="mt-4 overflow-x-auto rounded-lg border border-slate-700 bg-slate-900 p-4 text-[13px] text-slate-100"><code>php artisan larapost:add-account facebook
+
+          <pre class="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>php artisan larapost:add-account facebook
 php artisan larapost:test
 * * * * * php /path/to/artisan larapost:run-scheduled >> /dev/null 2>&1</code></pre>
         </section>
 
-        <section id="configuration" class="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h2 class="text-2xl font-bold tracking-tight">Configuration</h2>
-          <p class="mt-3 text-sm text-slate-700">Environment variables:</p>
-          <pre class="mt-2 overflow-x-auto rounded-lg border border-slate-700 bg-slate-900 p-4 text-[13px] text-slate-100"><code>LARAPOST_DEFAULT_PLATFORM=facebook
+        <section id="configuration" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel">
+          <h2 class="text-2xl font-extrabold tracking-tight">Configuration</h2>
+          <p class="mt-3 text-sm text-slate-700">Core environment variables:</p>
+          <pre class="mt-2 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>LARAPOST_DEFAULT_PLATFORM=facebook
 LARAPOST_QUEUE_ENABLED=true
 LARAPOST_MAX_RETRY_ATTEMPTS=3
 
 FACEBOOK_APP_ID=
 FACEBOOK_APP_SECRET=
+FACEBOOK_API_VERSION=v20.0
+
 TWITTER_CLIENT_ID=
 TWITTER_CLIENT_SECRET=
+
 LINKEDIN_CLIENT_ID=
 LINKEDIN_CLIENT_SECRET=</code></pre>
-          <p class="mt-3 text-sm text-slate-700">Published config file: <code class="font-mono text-[13px]">config/larapost.php</code></p>
+          <p class="mt-3 text-sm text-slate-700">Published config path: <code class="font-mono text-[13px]">config/larapost.php</code></p>
         </section>
 
-        <section id="oauth" class="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h2 class="text-2xl font-bold tracking-tight">OAuth</h2>
-          <p class="mt-3 text-sm text-slate-700">Default endpoints:</p>
+        <section id="oauth" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel">
+          <h2 class="text-2xl font-extrabold tracking-tight">OAuth Onboarding</h2>
+          <p class="mt-3 text-sm text-slate-700">Default routes exposed by the package:</p>
           <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
             <li><code class="font-mono text-[13px]">GET /larapost/connect/{platform}</code></li>
             <li><code class="font-mono text-[13px]">GET /larapost/callback/{platform}</code></li>
           </ul>
         </section>
 
-        <section id="publishing" class="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h2 class="text-2xl font-bold tracking-tight">Publishing API</h2>
-          <p class="mt-3 text-sm text-slate-700">Publish now:</p>
-          <pre class="mt-2 overflow-x-auto rounded-lg border border-slate-700 bg-slate-900 p-4 text-[13px] text-slate-100"><code>use SocialSync\Facades\SocialMedia;
+        <section id="publishing" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel">
+          <h2 class="text-2xl font-extrabold tracking-tight">Publishing API</h2>
+          <p class="mt-3 text-sm text-slate-700">Publish immediately:</p>
+          <pre class="mt-2 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>use SocialSync\Facades\SocialMedia;
 
 SocialMedia::post()
     ->content('Release update from LaraPost')
     ->platforms(['facebook', 'linkedin'])
     ->publish();</code></pre>
-          <p class="mt-4 text-sm text-slate-700">Schedule:</p>
-          <pre class="mt-2 overflow-x-auto rounded-lg border border-slate-700 bg-slate-900 p-4 text-[13px] text-slate-100"><code>SocialMedia::post()
+
+          <p class="mt-4 text-sm text-slate-700">Schedule for later:</p>
+          <pre class="mt-2 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>SocialMedia::post()
     ->content('Scheduled campaign message')
     ->platforms(['facebook', 'twitter'])
     ->scheduleFor(now()->addHours(2))
     ->publish();</code></pre>
         </section>
 
-        <section id="scheduler" class="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h2 class="text-2xl font-bold tracking-tight">Scheduler & Retry Strategy</h2>
+        <section id="scheduler" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel">
+          <h2 class="text-2xl font-extrabold tracking-tight">Scheduler and Retry Strategy</h2>
           <p class="mt-3 text-sm leading-7 text-slate-700">
-            The scheduled runner processes due posts and retries failures based on configured backoff.
-            It claims rows before processing to reduce duplicate sends under concurrent workers.
+            The scheduled runner processes pending due posts and applies configurable retry backoff.
+            Use a one-minute cron to ensure reliable dispatch.
           </p>
-          <pre class="mt-3 overflow-x-auto rounded-lg border border-slate-700 bg-slate-900 p-4 text-[13px] text-slate-100"><code>php artisan larapost:run-scheduled --limit=50</code></pre>
+          <pre class="mt-3 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>php artisan larapost:run-scheduled --limit=50</code></pre>
         </section>
 
-        <section id="commands" class="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h2 class="text-2xl font-bold tracking-tight">Command Reference</h2>
-          <div class="mt-4 overflow-x-auto rounded-lg border border-slate-200">
-            <table class="w-full min-w-[620px] border-collapse text-left text-sm">
+        <section id="commands" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel">
+          <h2 class="text-2xl font-extrabold tracking-tight">Command Reference</h2>
+          <div class="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full min-w-[640px] border-collapse text-left text-sm">
               <thead class="bg-slate-100">
                 <tr>
-                  <th class="border-b border-slate-200 px-4 py-3 font-semibold">Command</th>
-                  <th class="border-b border-slate-200 px-4 py-3 font-semibold">Purpose</th>
+                  <th class="border-b border-slate-200 px-4 py-3 font-bold">Command</th>
+                  <th class="border-b border-slate-200 px-4 py-3 font-bold">Purpose</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td class="border-b border-slate-200 px-4 py-3 font-mono text-[13px]">larapost:install</td>
-                  <td class="border-b border-slate-200 px-4 py-3">Publish config/migrations and prepare storage directories.</td>
+                  <td class="border-b border-slate-200 px-4 py-3">Publish config/migrations and create storage directories.</td>
                 </tr>
                 <tr>
                   <td class="border-b border-slate-200 px-4 py-3 font-mono text-[13px]">larapost:add-account {platform}</td>
-                  <td class="border-b border-slate-200 px-4 py-3">Connect a provider account via OAuth flow.</td>
+                  <td class="border-b border-slate-200 px-4 py-3">Connect a social account via OAuth.</td>
                 </tr>
                 <tr>
                   <td class="border-b border-slate-200 px-4 py-3 font-mono text-[13px]">larapost:test</td>
-                  <td class="border-b border-slate-200 px-4 py-3">Publish a test post to active accounts.</td>
+                  <td class="border-b border-slate-200 px-4 py-3">Smoke test publishing with active accounts.</td>
                 </tr>
                 <tr>
                   <td class="px-4 py-3 font-mono text-[13px]">larapost:run-scheduled</td>
@@ -225,35 +261,40 @@ SocialMedia::post()
           </div>
         </section>
 
-        <section id="deployment" class="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h2 class="text-2xl font-bold tracking-tight">Deployment Checklist</h2>
+        <section id="deployment" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel">
+          <h2 class="text-2xl font-extrabold tracking-tight">Deployment Checklist</h2>
           <ul class="mt-3 space-y-2 text-sm text-slate-700">
-            <li>Run migrations with <code class="font-mono text-[13px]">--force</code>.</li>
-            <li>Validate provider callback URLs in production.</li>
-            <li>Enable scheduler cron and monitor failed posts.</li>
-            <li>Keep package and provider APIs up to date.</li>
-          </ul>
-          <pre class="mt-3 overflow-x-auto rounded-lg border border-slate-700 bg-slate-900 p-4 text-[13px] text-slate-100"><code>* * * * * php /path/to/artisan larapost:run-scheduled >> /dev/null 2>&1</code></pre>
-        </section>
-
-        <section id="troubleshooting" class="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h2 class="text-2xl font-bold tracking-tight">Troubleshooting</h2>
-          <ul class="mt-3 list-disc space-y-1.5 pl-5 text-sm text-slate-700">
-            <li><strong>No active accounts matched</strong>: connect and activate at least one account.</li>
-            <li><strong>OAuth callback failed</strong>: verify client credentials and callback URL registration.</li>
-            <li><strong>Scheduled posts not running</strong>: verify cron execution and timezone assumptions.</li>
-            <li><strong>Media upload failed</strong>: check allowed extensions and size limits.</li>
+            <li>Run migrations with <code class="font-mono text-[13px]">php artisan migrate --force</code>.</li>
+            <li>Verify provider callback URLs and production credentials.</li>
+            <li>Enable the scheduler cron for <code class="font-mono text-[13px]">larapost:run-scheduled</code>.</li>
+            <li>Monitor failures and retry count in `scheduled_posts`.</li>
+            <li>Track upstream API changes for each provider.</li>
           </ul>
         </section>
 
-        <section id="opensource" class="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h2 class="text-2xl font-bold tracking-tight">Open Source Workflow</h2>
-          <p class="mt-3 text-sm text-slate-700">
-            For contribution and release process, use:
-            <a class="font-semibold text-larared-700 underline underline-offset-4 hover:text-larared-800" href="./CONTRIBUTING.md">CONTRIBUTING.md</a>,
-            <a class="font-semibold text-larared-700 underline underline-offset-4 hover:text-larared-800" href="./RELEASE.md">RELEASE.md</a>, and
-            <a class="font-semibold text-larared-700 underline underline-offset-4 hover:text-larared-800" href="./SECURITY.md">SECURITY.md</a>.
+        <section id="support" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel">
+          <h2 class="text-2xl font-extrabold tracking-tight">Open Source Workflow</h2>
+          <p class="mt-3 text-sm leading-7 text-slate-700">
+            Use the project policy docs for contribution standards, release operations, and responsible vulnerability reporting.
           </p>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <a href="./contributing/" class="rounded-xl border border-slate-200 bg-slate-50 p-4 hover:bg-slate-100">
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-700">Contributing</h3>
+              <p class="mt-2 text-sm text-slate-700">Branching, tests, PR checklist, and coding expectations.</p>
+            </a>
+            <a href="./release/" class="rounded-xl border border-slate-200 bg-slate-50 p-4 hover:bg-slate-100">
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-700">Release Playbook</h3>
+              <p class="mt-2 text-sm text-slate-700">Tagging, publishing, and post-release verification steps.</p>
+            </a>
+            <a href="./security/" class="rounded-xl border border-slate-200 bg-slate-50 p-4 hover:bg-slate-100">
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-700">Security Policy</h3>
+              <p class="mt-2 text-sm text-slate-700">Private disclosure process and response SLA targets.</p>
+            </a>
+            <a href="./code-of-conduct/" class="rounded-xl border border-slate-200 bg-slate-50 p-4 hover:bg-slate-100">
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-700">Code of Conduct</h3>
+              <p class="mt-2 text-sm text-slate-700">Community standards and enforcement expectations.</p>
+            </a>
+          </div>
         </section>
 
         <footer class="pb-2 pt-1 text-center text-sm text-slate-500">

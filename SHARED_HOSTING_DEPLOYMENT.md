@@ -1,6 +1,6 @@
 # Shared Hosting Notes
 
-Laravel Social Sync works on shared hosting if your app can run Artisan commands.
+LaraPost works on shared hosting if your app can run Artisan commands.
 
 ## Required cron jobs
 
