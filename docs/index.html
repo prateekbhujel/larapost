@@ -1,190 +1,255 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Laravel Social Sync Documentation</title>
     <meta
       name="description"
-      content="Production-grade documentation for Laravel Social Sync. Learn installation, OAuth setup, scheduling, deployment, troubleshooting, and open-source contribution workflows."
+      content="Production-grade docs for Laravel Social Sync by prateekbhujel: installation, OAuth setup, scheduling, deployment, troubleshooting, and contribution workflows."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Sora:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css" />
+    <script>
+      (() => {
+        try {
+          const storedTheme = localStorage.getItem('lss-docs-theme');
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (error) {
+          /* ignore theme bootstrap errors */
+        }
+      })();
+    </script>
+    <script>
+      window.tailwind = window.tailwind || {};
+      window.tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Manrope', 'ui-sans-serif', 'system-ui'],
+              display: ['Sora', 'Manrope', 'ui-sans-serif', 'system-ui'],
+              mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
+            },
+            colors: {
+              brand: {
+                50: '#fff3ed',
+                100: '#ffe4d5',
+                200: '#ffc6a7',
+                300: '#ff9f71',
+                400: '#ff7342',
+                500: '#f3531d',
+                600: '#e33d0f',
+                700: '#bc2f0d',
+                800: '#962911',
+                900: '#7a2612'
+              },
+              ink: {
+                950: '#141722',
+                900: '#1b2030',
+                800: '#273147',
+                700: '#44506a',
+                300: '#c7d0e2'
+              },
+              mint: {
+                100: '#dbf5ee',
+                500: '#109878',
+                700: '#0f6e5a'
+              }
+            },
+            boxShadow: {
+              soft: '0 20px 45px rgba(25, 34, 56, 0.08)',
+              softdark: '0 22px 50px rgba(5, 8, 16, 0.45)'
+            }
+          }
+        }
+      };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body>
-    <header class="topbar">
-      <div class="topbar-shell">
-        <a class="brand" href="#top">Laravel Social Sync</a>
-        <div class="top-actions">
-          <a class="chip" href="https://github.com/prateekbhujel/laravel-social-sync">GitHub</a>
-          <a class="chip" href="https://packagist.org/packages/prateekbhujel/laravel-social-sync">Packagist</a>
+  <body class="min-h-screen bg-[radial-gradient(circle_at_12%_8%,#ffe9dc_0%,transparent_33%),radial-gradient(circle_at_88%_3%,#dbf5ee_0%,transparent_28%),linear-gradient(180deg,#fcfaf7_0%,#f6f3ee_55%,#efe8de_100%)] text-ink-900 antialiased dark:bg-[radial-gradient(circle_at_12%_8%,#3d1f1a_0%,transparent_30%),radial-gradient(circle_at_88%_3%,#1a3a35_0%,transparent_25%),linear-gradient(180deg,#0f131d_0%,#121826_55%,#0f1422_100%)] dark:text-slate-100">
+    <header class="sticky top-0 z-50 border-b border-brand-100/80 bg-[#fffdfb]/90 backdrop-blur dark:border-slate-800 dark:bg-[#0f141f]/90">
+      <div class="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+        <a href="#top" class="inline-flex items-center gap-2 font-display text-sm font-bold tracking-wide text-ink-900 sm:text-base dark:text-slate-100">
+          <span class="inline-block h-2.5 w-2.5 rounded-full bg-brand-500"></span>
+          Laravel Social Sync
+        </a>
+        <div class="flex items-center gap-2 sm:gap-3">
+          <button id="theme-toggle" type="button" class="rounded-full border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-ink-900 transition hover:border-brand-400 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-800 sm:text-sm">Dark Mode</button>
+          <a href="https://github.com/prateekbhujel/laravel-social-sync" class="rounded-full border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-ink-900 transition hover:border-brand-400 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-800 sm:text-sm">GitHub</a>
+          <a href="https://packagist.org/packages/prateekbhujel/laravel-social-sync" class="rounded-full bg-ink-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-ink-950 dark:bg-brand-600 dark:hover:bg-brand-500 sm:text-sm">Packagist</a>
         </div>
       </div>
     </header>
 
-    <div class="site-shell" id="top">
-      <aside class="sidebar" aria-label="Documentation navigation">
-        <p class="sidebar-label">Getting Started</p>
-        <a href="#overview">Overview</a>
-        <a href="#compatibility">Compatibility</a>
-        <a href="#install">Install</a>
-        <a href="#quickstart">Quick Start</a>
+    <div id="top" class="mx-auto grid w-full max-w-7xl grid-cols-1 gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[270px_minmax(0,1fr)] lg:gap-5 lg:px-8 lg:py-6">
+      <aside class="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] lg:overflow-y-auto">
+        <nav class="rounded-2xl border border-brand-100 bg-white/95 p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900/95 dark:shadow-softdark" aria-label="Documentation navigation">
+          <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-700 dark:text-slate-400">Getting Started</p>
+          <a href="#overview" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">Overview</a>
+          <a href="#compatibility" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">Compatibility</a>
+          <a href="#install" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">Install</a>
+          <a href="#quickstart" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">Quick Start</a>
 
-        <p class="sidebar-label">Core Features</p>
-        <a href="#usage">Usage API</a>
-        <a href="#oauth">OAuth Flow</a>
-        <a href="#scheduler">Scheduling</a>
-        <a href="#configuration">Configuration</a>
+          <p class="mb-2 mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-700 dark:text-slate-400">Core Features</p>
+          <a href="#usage" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">Usage API</a>
+          <a href="#oauth" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">OAuth Flow</a>
+          <a href="#scheduler" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">Scheduling</a>
+          <a href="#configuration" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">Configuration</a>
 
-        <p class="sidebar-label">Production Ops</p>
-        <a href="#deploy">Deployment</a>
-        <a href="#monitoring">Monitoring</a>
-        <a href="#troubleshooting">Troubleshooting</a>
+          <p class="mb-2 mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-700 dark:text-slate-400">Production Ops</p>
+          <a href="#deploy" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">Deployment</a>
+          <a href="#monitoring" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">Monitoring</a>
+          <a href="#troubleshooting" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">Troubleshooting</a>
 
-        <p class="sidebar-label">Open Source</p>
-        <a href="#migration">Package Migration</a>
-        <a href="#contributing">Contributing</a>
-        <a href="#security">Security</a>
+          <p class="mb-2 mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-700 dark:text-slate-400">Open Source</p>
+          <a href="#migration" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">Package Migration</a>
+          <a href="#contributing" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">Contributing</a>
+          <a href="#security" class="block rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-900 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">Security</a>
+        </nav>
       </aside>
 
-      <main class="content">
-        <section class="hero reveal">
-          <div class="hero-kicker">Official Docs</div>
-          <h1>Production-Grade Social Publishing for Laravel</h1>
-          <p>
-            Laravel Social Sync unifies publishing workflows for Facebook, Instagram, Twitter/X, and LinkedIn.
-            Built for real production teams with reliable scheduling, account encryption, and contributor-friendly tooling.
+      <main class="space-y-4 lg:space-y-5">
+        <section class="overflow-hidden rounded-3xl border border-brand-200 bg-gradient-to-br from-brand-50 via-white to-[#fff8f4] p-5 shadow-soft dark:border-brand-700/40 dark:from-brand-900/40 dark:via-slate-900 dark:to-slate-800 sm:p-7">
+          <div class="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-700 dark:border-brand-700 dark:bg-slate-900 dark:text-brand-300">Official Docs</div>
+          <h1 class="mt-4 max-w-3xl font-display text-3xl font-extrabold leading-tight tracking-tight text-ink-950 dark:text-slate-100 sm:text-4xl lg:text-5xl">Production-Grade Social Publishing for Laravel</h1>
+          <p class="mt-4 max-w-3xl text-[15px] leading-7 text-ink-700 dark:text-slate-300 sm:text-base">
+            Laravel Social Sync gives your app a single publish API for Facebook, Instagram, Twitter/X, and LinkedIn,
+            with encrypted account storage, safe scheduling behavior, and contributor-ready release workflows.
           </p>
-          <div class="hero-meta">
-            <span>Stable: v1.1.1</span>
-            <span>Preview: 1.x-dev</span>
-            <span>Laravel: 10 | 11 | 12 | 13</span>
-            <span>PHP: 8.1+</span>
+          <div class="mt-5 flex flex-wrap gap-2">
+            <span class="rounded-full border border-brand-200 bg-white px-3 py-1 text-xs font-semibold dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">Stable: v1.1.1</span>
+            <span class="rounded-full border border-brand-200 bg-white px-3 py-1 text-xs font-semibold dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">Preview: 1.x-dev</span>
+            <span class="rounded-full border border-brand-200 bg-white px-3 py-1 text-xs font-semibold dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">Laravel: 10 | 11 | 12 | 13</span>
+            <span class="rounded-full border border-mint-100 bg-mint-100/60 px-3 py-1 text-xs font-semibold text-mint-700 dark:border-mint-700/40 dark:bg-mint-700/20 dark:text-mint-100">PHP 8.1+</span>
           </div>
         </section>
 
-        <section id="overview" class="doc-block reveal delay-1">
-          <h2>Overview</h2>
-          <p>
-            Use one fluent API to publish now or queue for later, while storing account credentials in your own database.
-            The package ships with artisan commands, OAuth callbacks, retry/backoff strategy, and safe concurrent processing for scheduled jobs.
+        <section id="overview" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">Overview</h2>
+          <p class="mt-3 text-sm leading-7 text-ink-700 dark:text-slate-300 sm:text-base">
+            Use one fluent interface to publish instantly or queue posts for future delivery. The package includes OAuth connect routes,
+            artisan tooling, retries with backoff, and atomic job claiming so multiple workers do not publish the same scheduled post twice.
           </p>
-          <div class="grid-cards">
-            <article>
-              <h3>Unified Fluent API</h3>
-              <p><code>SocialMedia::post()</code> handles immediate and scheduled publishing across supported platforms.</p>
+          <div class="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <article class="rounded-xl border border-brand-100 bg-[#fffdfa] p-4 dark:border-slate-700 dark:bg-slate-800/80">
+              <h3 class="font-display text-base font-bold">Unified API</h3>
+              <p class="mt-1.5 text-sm text-ink-700 dark:text-slate-300"><code class="font-mono text-[13px]">SocialMedia::post()</code> supports immediate and scheduled publishing.</p>
             </article>
-            <article>
-              <h3>Concurrency Safe Runner</h3>
-              <p>Scheduled posts are atomically claimed before execution to prevent duplicate sends.</p>
+            <article class="rounded-xl border border-brand-100 bg-[#fffdfa] p-4 dark:border-slate-700 dark:bg-slate-800/80">
+              <h3 class="font-display text-base font-bold">Safe Scheduling</h3>
+              <p class="mt-1.5 text-sm text-ink-700 dark:text-slate-300">Due rows are claimed atomically before processing to prevent duplicates.</p>
             </article>
-            <article>
-              <h3>Open Source Ready</h3>
-              <p>Includes CI, issue templates, release playbook, contribution guide, and security policy.</p>
+            <article class="rounded-xl border border-brand-100 bg-[#fffdfa] p-4 dark:border-slate-700 dark:bg-slate-800/80">
+              <h3 class="font-display text-base font-bold">OSS Ready</h3>
+              <p class="mt-1.5 text-sm text-ink-700 dark:text-slate-300">CI, issue templates, release docs, contribution process, and security policy included.</p>
             </article>
           </div>
         </section>
 
-        <section id="compatibility" class="doc-block reveal delay-1">
-          <h2>Compatibility Matrix</h2>
-          <div class="table-wrap">
-            <table>
+        <section id="compatibility" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">Compatibility Matrix</h2>
+          <div class="mt-4 overflow-x-auto rounded-xl border border-brand-100 dark:border-slate-700">
+            <table class="w-full min-w-[620px] border-collapse">
               <thead>
-                <tr>
-                  <th>Component</th>
-                  <th>Supported</th>
-                  <th>Notes</th>
+                <tr class="bg-brand-50 text-left text-sm text-ink-900 dark:bg-slate-800 dark:text-slate-100">
+                  <th class="border-b border-brand-100 px-4 py-3 font-semibold dark:border-slate-700">Component</th>
+                  <th class="border-b border-brand-100 px-4 py-3 font-semibold dark:border-slate-700">Supported</th>
+                  <th class="border-b border-brand-100 px-4 py-3 font-semibold dark:border-slate-700">Notes</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody class="text-sm text-ink-700 dark:text-slate-300">
                 <tr>
-                  <td>Laravel</td>
-                  <td>10, 11, 12, 13</td>
-                  <td>Forward-compatible with new Illuminate releases through package constraints.</td>
+                  <td class="border-b border-brand-100 px-4 py-3 font-medium text-ink-900 dark:border-slate-700 dark:text-slate-100">Laravel</td>
+                  <td class="border-b border-brand-100 px-4 py-3 dark:border-slate-700">10, 11, 12, 13</td>
+                  <td class="border-b border-brand-100 px-4 py-3 dark:border-slate-700">Enabled via expanded illuminate constraints.</td>
                 </tr>
                 <tr>
-                  <td>PHP</td>
-                  <td>8.1+</td>
-                  <td>Composer will resolve framework-compatible versions per runtime.</td>
+                  <td class="border-b border-brand-100 px-4 py-3 font-medium text-ink-900 dark:border-slate-700 dark:text-slate-100">PHP</td>
+                  <td class="border-b border-brand-100 px-4 py-3 dark:border-slate-700">8.1+</td>
+                  <td class="border-b border-brand-100 px-4 py-3 dark:border-slate-700">Composer resolves compatible framework stack.</td>
                 </tr>
                 <tr>
-                  <td>Platforms</td>
-                  <td>Facebook, Instagram, Twitter/X, LinkedIn</td>
-                  <td>OAuth credentials required per provider.</td>
+                  <td class="px-4 py-3 font-medium text-ink-900 dark:text-slate-100">Platforms</td>
+                  <td class="px-4 py-3">Facebook, Instagram, Twitter/X, LinkedIn</td>
+                  <td class="px-4 py-3">Each provider requires configured OAuth credentials.</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        <section id="install" class="doc-block reveal delay-1">
-          <h2>Installation</h2>
-          <pre><code>composer require prateekbhujel/laravel-social-sync
+        <section id="install" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">Installation</h2>
+          <p class="mt-2 text-sm text-ink-700 dark:text-slate-300">Install and bootstrap:</p>
+          <pre class="mt-3 overflow-x-auto rounded-xl border border-[#2c3347] bg-[#171c28] p-4 font-mono text-[13px] leading-6 text-[#e9f0ff]"><code>composer require prateekbhujel/laravel-social-sync
 php artisan social-sync:install</code></pre>
-          <p>Manual setup path:</p>
-          <pre><code>php artisan vendor:publish --tag=social-sync-config
+          <p class="mt-4 text-sm text-ink-700 dark:text-slate-300">Manual setup path:</p>
+          <pre class="mt-3 overflow-x-auto rounded-xl border border-[#2c3347] bg-[#171c28] p-4 font-mono text-[13px] leading-6 text-[#e9f0ff]"><code>php artisan vendor:publish --tag=social-sync-config
 php artisan vendor:publish --tag=social-sync-migrations
 php artisan migrate</code></pre>
         </section>
 
-        <section id="quickstart" class="doc-block reveal delay-2">
-          <h2>Quick Start</h2>
-          <ol>
-            <li>Configure OAuth credentials in <code>.env</code>.</li>
-            <li>Connect at least one platform account.</li>
-            <li>Send a test post.</li>
-            <li>Enable cron for scheduled processing.</li>
+        <section id="quickstart" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">Quick Start</h2>
+          <ol class="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-ink-700 dark:text-slate-300 sm:text-base">
+            <li>Configure OAuth provider credentials in <code class="font-mono text-[13px]">.env</code>.</li>
+            <li>Connect at least one social account.</li>
+            <li>Run a test publish.</li>
+            <li>Enable cron for scheduled publishing.</li>
           </ol>
-          <pre><code>php artisan social-sync:add-account facebook
+          <pre class="mt-4 overflow-x-auto rounded-xl border border-[#2c3347] bg-[#171c28] p-4 font-mono text-[13px] leading-6 text-[#e9f0ff]"><code>php artisan social-sync:add-account facebook
 php artisan social-sync:test
 * * * * * php /path/to/artisan social-sync:run-scheduled >> /dev/null 2>&1</code></pre>
         </section>
 
-        <section id="usage" class="doc-block reveal delay-2">
-          <h2>Usage API</h2>
-          <p>Publish immediately:</p>
-          <pre><code>use SocialSync\Facades\SocialMedia;
+        <section id="usage" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">Usage API</h2>
+          <p class="mt-3 text-sm text-ink-700 dark:text-slate-300">Publish now:</p>
+          <pre class="mt-3 overflow-x-auto rounded-xl border border-[#2c3347] bg-[#171c28] p-4 font-mono text-[13px] leading-6 text-[#e9f0ff]"><code>use SocialSync\Facades\SocialMedia;
 
 $results = SocialMedia::post()
     ->content('Shipping v1.1.1 today')
     ->platforms(['facebook', 'linkedin'])
     ->publish();</code></pre>
-          <p>Schedule for later:</p>
-          <pre><code>SocialMedia::post()
+          <p class="mt-4 text-sm text-ink-700 dark:text-slate-300">Schedule for later:</p>
+          <pre class="mt-3 overflow-x-auto rounded-xl border border-[#2c3347] bg-[#171c28] p-4 font-mono text-[13px] leading-6 text-[#e9f0ff]"><code>SocialMedia::post()
     ->content('Scheduled campaign message')
     ->platforms(['facebook', 'twitter'])
     ->scheduleFor(now()->addHours(2))
     ->publish();</code></pre>
         </section>
 
-        <section id="oauth" class="doc-block reveal delay-2">
-          <h2>OAuth Flow</h2>
-          <p>Connect routes are mounted under <code>/social-sync</code> by default:</p>
-          <ul>
-            <li><code>GET /social-sync/connect/{platform}</code></li>
-            <li><code>GET /social-sync/callback/{platform}</code></li>
+        <section id="oauth" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">OAuth Flow</h2>
+          <p class="mt-3 text-sm text-ink-700 dark:text-slate-300">Default connect routes:</p>
+          <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-ink-700 dark:text-slate-300 sm:text-base">
+            <li><code class="font-mono text-[13px]">GET /social-sync/connect/{platform}</code></li>
+            <li><code class="font-mono text-[13px]">GET /social-sync/callback/{platform}</code></li>
           </ul>
-          <p>You can customize prefix and middleware in <code>config/social-sync.php</code>.</p>
+          <p class="mt-3 text-sm text-ink-700 dark:text-slate-300">Route prefix and middleware are configurable in <code class="font-mono text-[13px]">config/social-sync.php</code>.</p>
         </section>
 
-        <section id="scheduler" class="doc-block reveal delay-3">
-          <h2>Scheduling and Retries</h2>
-          <p>
-            The scheduled runner processes due posts, retries failures with configurable backoff, and permanently fails items
-            after max attempts. Concurrency-safe claim logic prevents duplicate processing when multiple workers run together.
+        <section id="scheduler" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">Scheduling and Retries</h2>
+          <p class="mt-3 text-sm leading-7 text-ink-700 dark:text-slate-300 sm:text-base">
+            The scheduled runner processes due rows, applies retry backoff, and marks permanent failures after max attempts.
+            Job claiming is atomic, so parallel workers do not process the same row simultaneously.
           </p>
-          <pre><code>php artisan social-sync:run-scheduled --limit=50</code></pre>
+          <pre class="mt-4 overflow-x-auto rounded-xl border border-[#2c3347] bg-[#171c28] p-4 font-mono text-[13px] leading-6 text-[#e9f0ff]"><code>php artisan social-sync:run-scheduled --limit=50</code></pre>
         </section>
 
-        <section id="configuration" class="doc-block reveal delay-3">
-          <h2>Configuration</h2>
-          <p>Core environment variables:</p>
-          <pre><code>SOCIAL_SYNC_DEFAULT_PLATFORM=facebook
+        <section id="configuration" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">Configuration</h2>
+          <p class="mt-3 text-sm text-ink-700 dark:text-slate-300">Core environment variables:</p>
+          <pre class="mt-3 overflow-x-auto rounded-xl border border-[#2c3347] bg-[#171c28] p-4 font-mono text-[13px] leading-6 text-[#e9f0ff]"><code>SOCIAL_SYNC_DEFAULT_PLATFORM=facebook
 SOCIAL_SYNC_QUEUE_ENABLED=true
 SOCIAL_SYNC_MAX_RETRY_ATTEMPTS=3
 
@@ -196,69 +261,93 @@ LINKEDIN_CLIENT_ID=
 LINKEDIN_CLIENT_SECRET=</code></pre>
         </section>
 
-        <section id="deploy" class="doc-block reveal delay-3">
-          <h2>Production Deployment Checklist</h2>
-          <ul class="checklist">
-            <li>Run migrations with <code>--force</code> during deploy.</li>
-            <li>Verify provider callback URLs match production domain.</li>
-            <li>Enable and monitor the scheduled runner cron.</li>
-            <li>Track failed posts and retry counts.</li>
-            <li>Keep to latest stable <code>1.x</code> patch.</li>
+        <section id="deploy" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">Production Deployment Checklist</h2>
+          <ul class="mt-3 space-y-2 text-sm text-ink-700 dark:text-slate-300 sm:text-base">
+            <li class="flex gap-2"><span class="mt-1 h-2.5 w-2.5 shrink-0 rotate-45 rounded-sm bg-mint-500"></span>Run migrations with <code class="font-mono text-[13px]">--force</code> in deploy pipeline.</li>
+            <li class="flex gap-2"><span class="mt-1 h-2.5 w-2.5 shrink-0 rotate-45 rounded-sm bg-mint-500"></span>Ensure provider callback URLs match production domain.</li>
+            <li class="flex gap-2"><span class="mt-1 h-2.5 w-2.5 shrink-0 rotate-45 rounded-sm bg-mint-500"></span>Enable cron for scheduled runner and monitor failures.</li>
+            <li class="flex gap-2"><span class="mt-1 h-2.5 w-2.5 shrink-0 rotate-45 rounded-sm bg-mint-500"></span>Track retries and failed publish responses in logs/alerts.</li>
+            <li class="flex gap-2"><span class="mt-1 h-2.5 w-2.5 shrink-0 rotate-45 rounded-sm bg-mint-500"></span>Stay on latest stable <code class="font-mono text-[13px]">1.x</code> release.</li>
           </ul>
         </section>
 
-        <section id="monitoring" class="doc-block reveal delay-3">
-          <h2>Monitoring and Observability</h2>
-          <p>
-            Capture failed publish responses and exception messages in your normal Laravel logging pipeline.
-            Expose queue depth and failed post counts in your dashboard for proactive incident handling.
+        <section id="monitoring" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">Monitoring and Observability</h2>
+          <p class="mt-3 text-sm leading-7 text-ink-700 dark:text-slate-300 sm:text-base">
+            Capture failed publish payloads and exceptions in your normal Laravel logging stack. Expose scheduled queue depth,
+            failed counts, and retry age in your ops dashboard to catch incidents before campaign deadlines.
           </p>
         </section>
 
-        <section id="troubleshooting" class="doc-block reveal delay-3">
-          <h2>Troubleshooting</h2>
-          <ul>
-            <li><strong>No active accounts matched</strong>: connect at least one active account for selected platform(s).</li>
-            <li><strong>OAuth callback errors</strong>: verify client IDs/secrets and callback URL registration.</li>
-            <li><strong>No scheduled publishes</strong>: confirm cron invocation and server timezone expectations.</li>
-            <li><strong>Media upload issues</strong>: validate file type and size limits in package config.</li>
+        <section id="troubleshooting" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">Troubleshooting</h2>
+          <ul class="mt-3 list-disc space-y-1.5 pl-5 text-sm text-ink-700 dark:text-slate-300 sm:text-base">
+            <li><strong class="text-ink-900 dark:text-slate-100">No active accounts matched:</strong> connect at least one active account for selected platforms.</li>
+            <li><strong class="text-ink-900 dark:text-slate-100">OAuth callback fails:</strong> verify app credentials and registered callback URL.</li>
+            <li><strong class="text-ink-900 dark:text-slate-100">No scheduled publishes:</strong> confirm cron executes every minute and timezone assumptions are correct.</li>
+            <li><strong class="text-ink-900 dark:text-slate-100">Media upload errors:</strong> validate type and size constraints in package config.</li>
           </ul>
         </section>
 
-        <section id="migration" class="doc-block reveal delay-3">
-          <h2>Package Migration: <code>socialsync</code> to <code>prateekbhujel</code></h2>
-          <div class="callout">
-            Package ownership is now under <code>prateekbhujel/laravel-social-sync</code>. Update your dependency reference accordingly.
+        <section id="migration" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">Package Migration: <code class="font-mono text-lg">socialsync</code> to <code class="font-mono text-lg">prateekbhujel</code></h2>
+          <div class="mt-3 rounded-xl border border-mint-100 bg-mint-100/60 px-4 py-3 text-sm text-mint-700 dark:border-mint-700/40 dark:bg-mint-700/20 dark:text-mint-100">
+            Package ownership is now under <code class="font-mono text-[13px]">prateekbhujel/laravel-social-sync</code>. Update your dependency reference.
           </div>
-          <pre><code># old
+          <pre class="mt-4 overflow-x-auto rounded-xl border border-[#2c3347] bg-[#171c28] p-4 font-mono text-[13px] leading-6 text-[#e9f0ff]"><code># old
 composer remove socialsync/laravel-social-sync
 
 # new
 composer require prateekbhujel/laravel-social-sync</code></pre>
         </section>
 
-        <section id="contributing" class="doc-block reveal delay-3">
-          <h2>Contributing</h2>
-          <p>
-            Contributions are welcome. Follow
-            <a href="./CONTRIBUTING.md">CONTRIBUTING.md</a>,
-            <a href="./CODE_OF_CONDUCT.md">CODE_OF_CONDUCT.md</a>, and
-            <a href="./RELEASE.md">RELEASE.md</a>.
+        <section id="contributing" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">Contributing</h2>
+          <p class="mt-3 text-sm text-ink-700 dark:text-slate-300 sm:text-base">
+            Contributions are welcome. Start with
+            <a href="./CONTRIBUTING.md" class="font-semibold text-brand-700 underline decoration-brand-300 underline-offset-4 hover:text-brand-800 dark:text-brand-300 dark:decoration-brand-600 dark:hover:text-brand-200">CONTRIBUTING.md</a>,
+            <a href="./CODE_OF_CONDUCT.md" class="font-semibold text-brand-700 underline decoration-brand-300 underline-offset-4 hover:text-brand-800 dark:text-brand-300 dark:decoration-brand-600 dark:hover:text-brand-200">CODE_OF_CONDUCT.md</a>, and
+            <a href="./RELEASE.md" class="font-semibold text-brand-700 underline decoration-brand-300 underline-offset-4 hover:text-brand-800 dark:text-brand-300 dark:decoration-brand-600 dark:hover:text-brand-200">RELEASE.md</a>.
           </p>
         </section>
 
-        <section id="security" class="doc-block reveal delay-3">
-          <h2>Security</h2>
-          <p>
+        <section id="security" class="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900 dark:shadow-softdark sm:p-6">
+          <h2 class="font-display text-2xl font-bold tracking-tight">Security</h2>
+          <p class="mt-3 text-sm text-ink-700 dark:text-slate-300 sm:text-base">
             Report vulnerabilities privately as documented in
-            <a href="./SECURITY.md">SECURITY.md</a>.
+            <a href="./SECURITY.md" class="font-semibold text-brand-700 underline decoration-brand-300 underline-offset-4 hover:text-brand-800 dark:text-brand-300 dark:decoration-brand-600 dark:hover:text-brand-200">SECURITY.md</a>.
           </p>
         </section>
 
-        <footer>
+        <footer class="px-1 py-4 text-center text-sm text-ink-700 dark:text-slate-400">
           Laravel Social Sync by Pratik Bhujel. Built for production teams and serious open-source collaboration.
         </footer>
       </main>
     </div>
+
+    <script>
+      (() => {
+        const root = document.documentElement;
+        const button = document.getElementById('theme-toggle');
+
+        if (!button) {
+          return;
+        }
+
+        const setLabel = () => {
+          button.textContent = root.classList.contains('dark') ? 'Light Mode' : 'Dark Mode';
+        };
+
+        setLabel();
+
+        button.addEventListener('click', () => {
+          root.classList.toggle('dark');
+          const mode = root.classList.contains('dark') ? 'dark' : 'light';
+          localStorage.setItem('lss-docs-theme', mode);
+          setLabel();
+        });
+      })();
+    </script>
   </body>
 </html>
