@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Laravel-inspired production documentation portal layout for GitHub Pages with richer operational guidance
+
+### Changed
+
+- Compatibility constraints expanded to include `illuminate/support` for Laravel 12 and 13
+- Dev test matrix dependencies expanded for newer Laravel/Testbench lines
+- Package now explicitly replaces `socialsync/laravel-social-sync` for smoother vendor migration
+
 ## [1.1.1] - 2026-03-01
 
 ### Added

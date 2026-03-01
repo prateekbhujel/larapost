@@ -3,7 +3,7 @@
 [![CI](https://github.com/prateekbhujel/laravel-social-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/prateekbhujel/laravel-social-sync/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PHP](https://img.shields.io/badge/php-%5E8.1-777BB4.svg)](https://php.net)
-[![Laravel](https://img.shields.io/badge/laravel-10%20%7C%2011-FF2D20.svg)](https://laravel.com)
+[![Laravel](https://img.shields.io/badge/laravel-10%20%7C%2011%20%7C%2012%20%7C%2013-FF2D20.svg)](https://laravel.com)
 
 Production-ready Laravel package for publishing and scheduling social content across Facebook, Instagram, Twitter/X, and LinkedIn using one API.
 
@@ -14,6 +14,7 @@ User documentation page: [GitHub Pages docs](https://prateekbhujel.github.io/lar
 - Stable channel: `^1.0` (recommended for production)
 - Preview channel: `1.x-dev` (for testing upcoming changes)
 - Current documented release: `v1.1.1`
+- Package migration: use `prateekbhujel/laravel-social-sync` (replaces `socialsync/laravel-social-sync`)
 
 ## Why Teams Use It
 

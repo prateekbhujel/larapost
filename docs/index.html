@@ -3,108 +3,158 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Laravel Social Sync Docs</title>
+    <title>Laravel Social Sync Documentation</title>
     <meta
       name="description"
-      content="Production-ready docs for Laravel Social Sync by prateekbhujel. Setup, OAuth, scheduling, troubleshooting, and contribution guide."
+      content="Production-grade documentation for Laravel Social Sync. Learn installation, OAuth setup, scheduling, deployment, troubleshooting, and open-source contribution workflows."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Sora:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <header class="topbar">
-      <div class="topbar-inner">
+      <div class="topbar-shell">
         <a class="brand" href="#top">Laravel Social Sync</a>
-        <nav class="nav" aria-label="Primary">
-          <a href="#install">Install</a>
-          <a href="#usage">Usage</a>
-          <a href="#oauth">OAuth</a>
-          <a href="#deploy">Deploy</a>
-          <a href="#contribute">Contribute</a>
-        </nav>
+        <div class="top-actions">
+          <a class="chip" href="https://github.com/prateekbhujel/laravel-social-sync">GitHub</a>
+          <a class="chip" href="https://packagist.org/packages/prateekbhujel/laravel-social-sync">Packagist</a>
+        </div>
       </div>
     </header>
 
-    <div class="wrap" id="top">
-      <section class="hero reveal">
-        <h1>Laravel Social Sync Documentation</h1>
-        <p>
-          A practical guide for teams who want one clean API for multi-platform publishing in Laravel.
-          This package is maintained under <strong>prateekbhujel</strong> and tuned for production use.
-        </p>
+    <div class="site-shell" id="top">
+      <aside class="sidebar" aria-label="Documentation navigation">
+        <p class="sidebar-label">Getting Started</p>
+        <a href="#overview">Overview</a>
+        <a href="#compatibility">Compatibility</a>
+        <a href="#install">Install</a>
+        <a href="#quickstart">Quick Start</a>
 
-        <div class="badges" role="list" aria-label="Package details">
-          <span class="badge accent" role="listitem">Stable: v1.1.1</span>
-          <span class="badge" role="listitem">Preview: 1.x-dev</span>
-          <span class="badge" role="listitem">Laravel 10 | 11</span>
-          <span class="badge alt" role="listitem">PHP 8.1+</span>
-          <span class="badge" role="listitem">MIT License</span>
-        </div>
+        <p class="sidebar-label">Core Features</p>
+        <a href="#usage">Usage API</a>
+        <a href="#oauth">OAuth Flow</a>
+        <a href="#scheduler">Scheduling</a>
+        <a href="#configuration">Configuration</a>
 
-        <div class="cta-row">
-          <a class="btn primary" href="https://github.com/prateekbhujel/laravel-social-sync">View Repository</a>
-          <a class="btn ghost" href="https://packagist.org/packages/socialsync/laravel-social-sync">Current Packagist Listing</a>
-        </div>
-      </section>
+        <p class="sidebar-label">Production Ops</p>
+        <a href="#deploy">Deployment</a>
+        <a href="#monitoring">Monitoring</a>
+        <a href="#troubleshooting">Troubleshooting</a>
 
-      <section class="section-grid reveal delay-1" aria-label="Highlights">
-        <article class="card">
-          <h3>Unified API</h3>
-          <p>Use <span class="inline-code">SocialMedia::post()</span> to publish or schedule posts across Facebook, Instagram, Twitter/X, and LinkedIn.</p>
-        </article>
-        <article class="card">
-          <h3>Safer Scheduling</h3>
-          <p>Due posts are atomically claimed before processing to reduce duplicate publishes in concurrent worker environments.</p>
-        </article>
-        <article class="card">
-          <h3>Contributor Ready</h3>
-          <p>Built with issue templates, PR template, CI workflow, changelog, release playbook, and contribution docs.</p>
-        </article>
-      </section>
+        <p class="sidebar-label">Open Source</p>
+        <a href="#migration">Package Migration</a>
+        <a href="#contributing">Contributing</a>
+        <a href="#security">Security</a>
+      </aside>
 
-      <main>
-        <section class="doc-section reveal delay-1" id="install">
-          <h2>1. Installation</h2>
-          <p>Install the package in your Laravel application:</p>
+      <main class="content">
+        <section class="hero reveal">
+          <div class="hero-kicker">Official Docs</div>
+          <h1>Production-Grade Social Publishing for Laravel</h1>
+          <p>
+            Laravel Social Sync unifies publishing workflows for Facebook, Instagram, Twitter/X, and LinkedIn.
+            Built for real production teams with reliable scheduling, account encryption, and contributor-friendly tooling.
+          </p>
+          <div class="hero-meta">
+            <span>Stable: v1.1.1</span>
+            <span>Preview: 1.x-dev</span>
+            <span>Laravel: 10 | 11 | 12 | 13</span>
+            <span>PHP: 8.1+</span>
+          </div>
+        </section>
+
+        <section id="overview" class="doc-block reveal delay-1">
+          <h2>Overview</h2>
+          <p>
+            Use one fluent API to publish now or queue for later, while storing account credentials in your own database.
+            The package ships with artisan commands, OAuth callbacks, retry/backoff strategy, and safe concurrent processing for scheduled jobs.
+          </p>
+          <div class="grid-cards">
+            <article>
+              <h3>Unified Fluent API</h3>
+              <p><code>SocialMedia::post()</code> handles immediate and scheduled publishing across supported platforms.</p>
+            </article>
+            <article>
+              <h3>Concurrency Safe Runner</h3>
+              <p>Scheduled posts are atomically claimed before execution to prevent duplicate sends.</p>
+            </article>
+            <article>
+              <h3>Open Source Ready</h3>
+              <p>Includes CI, issue templates, release playbook, contribution guide, and security policy.</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="compatibility" class="doc-block reveal delay-1">
+          <h2>Compatibility Matrix</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>Supported</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Laravel</td>
+                  <td>10, 11, 12, 13</td>
+                  <td>Forward-compatible with new Illuminate releases through package constraints.</td>
+                </tr>
+                <tr>
+                  <td>PHP</td>
+                  <td>8.1+</td>
+                  <td>Composer will resolve framework-compatible versions per runtime.</td>
+                </tr>
+                <tr>
+                  <td>Platforms</td>
+                  <td>Facebook, Instagram, Twitter/X, LinkedIn</td>
+                  <td>OAuth credentials required per provider.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="install" class="doc-block reveal delay-1">
+          <h2>Installation</h2>
           <pre><code>composer require prateekbhujel/laravel-social-sync
 php artisan social-sync:install</code></pre>
-          <p>If you prefer manual setup:</p>
+          <p>Manual setup path:</p>
           <pre><code>php artisan vendor:publish --tag=social-sync-config
 php artisan vendor:publish --tag=social-sync-migrations
 php artisan migrate</code></pre>
         </section>
 
-        <section class="doc-section reveal delay-2" id="env">
-          <h2>2. Required Environment Variables</h2>
-          <pre><code>SOCIAL_SYNC_DEFAULT_PLATFORM=facebook
-
-FACEBOOK_APP_ID=
-FACEBOOK_APP_SECRET=
-FACEBOOK_API_VERSION=v20.0
-
-TWITTER_CLIENT_ID=
-TWITTER_CLIENT_SECRET=
-
-LINKEDIN_CLIENT_ID=
-LINKEDIN_CLIENT_SECRET=</code></pre>
-          <p>Instagram uses Facebook credentials by default unless dedicated <span class="inline-code">INSTAGRAM_*</span> values are provided.</p>
+        <section id="quickstart" class="doc-block reveal delay-2">
+          <h2>Quick Start</h2>
+          <ol>
+            <li>Configure OAuth credentials in <code>.env</code>.</li>
+            <li>Connect at least one platform account.</li>
+            <li>Send a test post.</li>
+            <li>Enable cron for scheduled processing.</li>
+          </ol>
+          <pre><code>php artisan social-sync:add-account facebook
+php artisan social-sync:test
+* * * * * php /path/to/artisan social-sync:run-scheduled >> /dev/null 2>&1</code></pre>
         </section>
 
-        <section class="doc-section reveal delay-2" id="usage">
-          <h2>3. Usage</h2>
-          <p>Immediate publish:</p>
+        <section id="usage" class="doc-block reveal delay-2">
+          <h2>Usage API</h2>
+          <p>Publish immediately:</p>
           <pre><code>use SocialSync\Facades\SocialMedia;
 
 $results = SocialMedia::post()
-    ->content('New update from our Laravel app')
+    ->content('Shipping v1.1.1 today')
     ->platforms(['facebook', 'linkedin'])
     ->publish();</code></pre>
-          <p>Scheduled publish:</p>
+          <p>Schedule for later:</p>
           <pre><code>SocialMedia::post()
     ->content('Scheduled campaign message')
     ->platforms(['facebook', 'twitter'])
@@ -112,56 +162,103 @@ $results = SocialMedia::post()
     ->publish();</code></pre>
         </section>
 
-        <section class="doc-section reveal delay-3" id="oauth">
-          <h2>4. OAuth Account Connection</h2>
-          <p>CLI flow:</p>
-          <pre><code>php artisan social-sync:add-account facebook</code></pre>
-          <p>Web endpoints:</p>
+        <section id="oauth" class="doc-block reveal delay-2">
+          <h2>OAuth Flow</h2>
+          <p>Connect routes are mounted under <code>/social-sync</code> by default:</p>
           <ul>
-            <li><span class="inline-code">GET /social-sync/connect/{platform}</span></li>
-            <li><span class="inline-code">GET /social-sync/callback/{platform}</span></li>
+            <li><code>GET /social-sync/connect/{platform}</code></li>
+            <li><code>GET /social-sync/callback/{platform}</code></li>
           </ul>
+          <p>You can customize prefix and middleware in <code>config/social-sync.php</code>.</p>
         </section>
 
-        <section class="doc-section reveal delay-3" id="deploy">
-          <h2>5. Production Deployment</h2>
-          <p>Add this cron entry for scheduled publishing:</p>
-          <pre><code>* * * * * php /path/to/artisan social-sync:run-scheduled >> /dev/null 2>&1</code></pre>
-          <p>Production checklist:</p>
-          <ul class="checklist">
-            <li>Run migrations before enabling scheduled posting.</li>
-            <li>Set all OAuth credentials in production <span class="inline-code">.env</span>.</li>
-            <li>Monitor failed posts and retry behavior.</li>
-            <li>Keep the package updated to the latest stable <span class="inline-code">1.x</span> patch.</li>
-          </ul>
-        </section>
-
-        <section class="doc-section reveal delay-3" id="troubleshoot">
-          <h2>6. Troubleshooting</h2>
-          <ul>
-            <li><strong>"No active accounts matched"</strong>: connect at least one active social account for the selected platform.</li>
-            <li><strong>OAuth callback fails</strong>: verify app credentials and callback URL in provider dashboards.</li>
-            <li><strong>Scheduled posts not running</strong>: check cron output and confirm server timezone alignment.</li>
-            <li><strong>Media posting issues</strong>: validate file size/type against package limits and platform constraints.</li>
-          </ul>
-        </section>
-
-        <section class="doc-section reveal delay-3" id="contribute">
-          <h2>7. Contributing</h2>
-          <p>This project is open to community contributions.</p>
+        <section id="scheduler" class="doc-block reveal delay-3">
+          <h2>Scheduling and Retries</h2>
           <p>
-            Read:
-            <a href="../CONTRIBUTING.md">CONTRIBUTING.md</a>,
-            <a href="../SECURITY.md">SECURITY.md</a>,
-            <a href="../CODE_OF_CONDUCT.md">CODE_OF_CONDUCT.md</a>,
-            and <a href="../RELEASE.md">RELEASE.md</a>.
+            The scheduled runner processes due posts, retries failures with configurable backoff, and permanently fails items
+            after max attempts. Concurrency-safe claim logic prevents duplicate processing when multiple workers run together.
+          </p>
+          <pre><code>php artisan social-sync:run-scheduled --limit=50</code></pre>
+        </section>
+
+        <section id="configuration" class="doc-block reveal delay-3">
+          <h2>Configuration</h2>
+          <p>Core environment variables:</p>
+          <pre><code>SOCIAL_SYNC_DEFAULT_PLATFORM=facebook
+SOCIAL_SYNC_QUEUE_ENABLED=true
+SOCIAL_SYNC_MAX_RETRY_ATTEMPTS=3
+
+FACEBOOK_APP_ID=
+FACEBOOK_APP_SECRET=
+TWITTER_CLIENT_ID=
+TWITTER_CLIENT_SECRET=
+LINKEDIN_CLIENT_ID=
+LINKEDIN_CLIENT_SECRET=</code></pre>
+        </section>
+
+        <section id="deploy" class="doc-block reveal delay-3">
+          <h2>Production Deployment Checklist</h2>
+          <ul class="checklist">
+            <li>Run migrations with <code>--force</code> during deploy.</li>
+            <li>Verify provider callback URLs match production domain.</li>
+            <li>Enable and monitor the scheduled runner cron.</li>
+            <li>Track failed posts and retry counts.</li>
+            <li>Keep to latest stable <code>1.x</code> patch.</li>
+          </ul>
+        </section>
+
+        <section id="monitoring" class="doc-block reveal delay-3">
+          <h2>Monitoring and Observability</h2>
+          <p>
+            Capture failed publish responses and exception messages in your normal Laravel logging pipeline.
+            Expose queue depth and failed post counts in your dashboard for proactive incident handling.
           </p>
         </section>
-      </main>
 
-      <footer class="reveal delay-3">
-        Laravel Social Sync by Pratik Bhujel. Built for production teams and open-source collaborators.
-      </footer>
+        <section id="troubleshooting" class="doc-block reveal delay-3">
+          <h2>Troubleshooting</h2>
+          <ul>
+            <li><strong>No active accounts matched</strong>: connect at least one active account for selected platform(s).</li>
+            <li><strong>OAuth callback errors</strong>: verify client IDs/secrets and callback URL registration.</li>
+            <li><strong>No scheduled publishes</strong>: confirm cron invocation and server timezone expectations.</li>
+            <li><strong>Media upload issues</strong>: validate file type and size limits in package config.</li>
+          </ul>
+        </section>
+
+        <section id="migration" class="doc-block reveal delay-3">
+          <h2>Package Migration: <code>socialsync</code> to <code>prateekbhujel</code></h2>
+          <div class="callout">
+            Package ownership is now under <code>prateekbhujel/laravel-social-sync</code>. Update your dependency reference accordingly.
+          </div>
+          <pre><code># old
+composer remove socialsync/laravel-social-sync
+
+# new
+composer require prateekbhujel/laravel-social-sync</code></pre>
+        </section>
+
+        <section id="contributing" class="doc-block reveal delay-3">
+          <h2>Contributing</h2>
+          <p>
+            Contributions are welcome. Follow
+            <a href="../CONTRIBUTING.md">CONTRIBUTING.md</a>,
+            <a href="../CODE_OF_CONDUCT.md">CODE_OF_CONDUCT.md</a>, and
+            <a href="../RELEASE.md">RELEASE.md</a>.
+          </p>
+        </section>
+
+        <section id="security" class="doc-block reveal delay-3">
+          <h2>Security</h2>
+          <p>
+            Report vulnerabilities privately as documented in
+            <a href="../SECURITY.md">SECURITY.md</a>.
+          </p>
+        </section>
+
+        <footer>
+          Laravel Social Sync by Pratik Bhujel. Built for production teams and serious open-source collaboration.
+        </footer>
+      </main>
     </div>
   </body>
 </html>
