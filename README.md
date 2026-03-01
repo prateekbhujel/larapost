@@ -17,7 +17,6 @@ User documentation page (with light/dark mode): [GitHub Pages docs](https://prat
 - Preview channel: `1.x-dev` (for testing upcoming changes)
 - Current documented release: `v1.1.1`
 - Package name: `prateekbhujel/larapost`
-- Backward compatibility aliases are intentionally not provided. Use the `larapost:*` command namespace only.
 
 ## Why Teams Use It
 
