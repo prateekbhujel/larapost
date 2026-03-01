@@ -1,4 +1,4 @@
-# Laravel Social Sync
+# LaraPost for Laravel
 
 [![CI](https://github.com/prateekbhujel/larapost/actions/workflows/ci.yml/badge.svg)](https://github.com/prateekbhujel/larapost/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -16,7 +16,8 @@ User documentation page (with light/dark mode): [GitHub Pages docs](https://prat
 - Stable channel: `^1.1` (recommended for production)
 - Preview channel: `1.x-dev` (for testing upcoming changes)
 - Current documented release: `v1.1.1`
-- Package migration target: `prateekbhujel/larapost`
+- Package name: `prateekbhujel/larapost`
+- Backward compatibility aliases are intentionally not provided. Use the `larapost:*` command namespace only.
 
 ## Why Teams Use It
 
@@ -30,13 +31,6 @@ User documentation page (with light/dark mode): [GitHub Pages docs](https://prat
 ## Installation
 
 ```bash
-composer require prateekbhujel/larapost
-```
-
-If you are migrating from the old vendor package:
-
-```bash
-composer remove socialsync/laravel-social-sync
 composer require prateekbhujel/larapost
 ```
 
