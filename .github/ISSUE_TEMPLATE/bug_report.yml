@@ -20,7 +20,7 @@ body:
     id: package_version
     attributes:
       label: Package version
-      placeholder: 1.0.1
+      placeholder: 1.1.1
     validations:
       required: true
   - type: input

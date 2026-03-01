@@ -13,7 +13,7 @@ User documentation page: [GitHub Pages docs](https://prateekbhujel.github.io/lar
 
 - Stable channel: `^1.0` (recommended for production)
 - Preview channel: `1.x-dev` (for testing upcoming changes)
-- Current documented release: `v1.0.1`
+- Current documented release: `v1.1.1`
 
 ## Why Teams Use It
 
