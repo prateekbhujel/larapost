@@ -20,7 +20,7 @@ echo [OK] Laravel project detected
 echo.
 
 REM Define base paths
-set PACKAGE_PATH=packages\prateekbhujel\laravel-social-sync
+set PACKAGE_PATH=packages\prateekbhujel\larapost
 set SRC_PATH=%PACKAGE_PATH%\src
 
 echo Creating package directory structure...
@@ -98,7 +98,7 @@ REM Middleware
 type nul > "%SRC_PATH%\Http\Middleware\RateLimitPosts.php"
 
 REM Config
-type nul > "%PACKAGE_PATH%\config\social-sync.php"
+type nul > "%PACKAGE_PATH%\config\larapost.php"
 
 REM Routes
 type nul > "%PACKAGE_PATH%\routes\web.php"
@@ -120,7 +120,7 @@ REM Create composer.json
 echo Creating composer.json...
 (
 echo {
-echo     "name": "prateekbhujel/laravel-social-sync",
+echo     "name": "prateekbhujel/larapost",
 echo     "description": "Unified social media posting SDK for Laravel",
 echo     "type": "library",
 echo     "license": "MIT",
@@ -191,7 +191,7 @@ mkdir "app\Http\Controllers" 2>nul
 mkdir "resources\views" 2>nul
 
 type nul > "app\Http\Controllers\SocialSyncTestController.php"
-type nul > "resources\views\social-sync-test.blade.php"
+type nul > "resources\views\larapost-test.blade.php"
 
 echo [OK] Application directories created
 echo.
@@ -218,22 +218,22 @@ echo    ^(Refer to COMPLETE_FILE_LIST.md for artifact-to-file mapping^)
 echo.
 echo 2. Update main composer.json require section:
 echo    "require": {
-echo        "prateekbhujel/laravel-social-sync": "@dev"
+echo        "prateekbhujel/larapost": "@dev"
 echo    }
 echo.
 echo 3. Add repository path in composer.json:
 echo    "repositories": [
 echo        {
 echo            "type": "path",
-echo            "url": "./packages/prateekbhujel/laravel-social-sync"
+echo            "url": "./packages/prateekbhujel/larapost"
 echo        }
 echo    ]
 echo.
 echo 4. Install the package:
-echo    composer update prateekbhujel/laravel-social-sync
+echo    composer update prateekbhujel/larapost
 echo.
 echo 5. Run installation:
-echo    php artisan social-sync:install
+echo    php artisan larapost:install
 echo.
 echo 6. Follow the QUICK_START_GUIDE.md to complete setup
 echo.

@@ -8,7 +8,7 @@ use SocialSync\Models\SocialAccount;
 
 class TestPostCommand extends Command
 {
-    protected $signature = 'social-sync:test
+    protected $signature = 'larapost:test
                             {--platform= : Limit to one platform}
                             {--content= : Post content}
                             {--schedule= : Schedule time (e.g. "+30 minutes")}';
@@ -26,7 +26,7 @@ class TestPostCommand extends Command
         $accounts = $query->get();
 
         if ($accounts->isEmpty()) {
-            $this->error('No active accounts found. Use `php artisan social-sync:add-account {platform}` first.');
+            $this->error('No active accounts found. Use `php artisan larapost:add-account {platform}` first.');
 
             return self::FAILURE;
         }

@@ -12,7 +12,9 @@ All notable changes to this project are documented in this file.
 
 - Compatibility constraints expanded to include `illuminate/support` for Laravel 12 and 13
 - Dev test matrix dependencies expanded for newer Laravel/Testbench lines
-- Package now explicitly replaces `socialsync/laravel-social-sync` for smoother vendor migration
+- Package identity moved to `prateekbhujel/larapost` (no backward compatibility aliases)
+- Artisan command namespace moved from `social-sync:*` to `larapost:*`
+- Config/runtime namespace moved to `larapost` with `config/larapost.php` publish target
 
 ## [1.1.1] - 2026-03-01
 
@@ -24,11 +26,11 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
-- Package vendor updated to `prateekbhujel/laravel-social-sync`
+- Package vendor updated to `prateekbhujel/larapost`
 - README refreshed with stability channels and production checklist
-- Setup scripts now use `packages/prateekbhujel/laravel-social-sync`
+- Setup scripts now use `packages/prateekbhujel/larapost`
 
 ### Fixed
 
 - Scheduled post runner now atomically claims posts before processing to avoid duplicate publishing under concurrent workers
-- `social-sync:run-scheduled` now treats non-positive `--limit` values safely as `1`
+- `larapost:run-scheduled` now treats non-positive `--limit` values safely as `1`

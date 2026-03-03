@@ -1,71 +1,71 @@
-# Laravel Social Sync
+# LaraPost
 
-[![CI](https://github.com/prateekbhujel/laravel-social-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/prateekbhujel/laravel-social-sync/actions/workflows/ci.yml)
+[![CI](https://github.com/prateekbhujel/larapost/actions/workflows/ci.yml/badge.svg)](https://github.com/prateekbhujel/larapost/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PHP](https://img.shields.io/badge/php-%5E8.1-777BB4.svg)](https://php.net)
 [![Laravel](https://img.shields.io/badge/laravel-10%20%7C%2011%20%7C%2012%20%7C%2013-FF2D20.svg)](https://laravel.com)
 
-Production-ready Laravel package for publishing and scheduling social content across Facebook, Instagram, Twitter/X, and LinkedIn using one API.
+LaraPost is a production-focused Laravel package for publishing and scheduling social content across Facebook, Instagram, Twitter/X, and LinkedIn from one API.
 
-User documentation page: [GitHub Pages docs](https://prateekbhujel.github.io/laravel-social-sync/)
+## Table of Contents
 
-## Stability and Versions
+- [Why LaraPost](#why-larapost)
+- [Compatibility](#compatibility)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [OAuth Routes](#oauth-routes)
+- [Artisan Commands](#artisan-commands)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [Security](#security)
+- [Release Process](#release-process)
+- [License](#license)
 
-- Stable channel: `^1.0` (recommended for production)
-- Preview channel: `1.x-dev` (for testing upcoming changes)
-- Current documented release: `v1.1.1`
-- Package migration: use `prateekbhujel/laravel-social-sync` (replaces `socialsync/laravel-social-sync`)
+## Why LaraPost
 
-## Why Teams Use It
+- Single fluent API for multi-platform publishing (`SocialMedia::post()`)
+- Account onboarding via OAuth
+- Immediate and scheduled posting workflows
+- Retry/backoff handling for transient failures
+- Command tooling for install, testing, and scheduled processing
+- Safe scheduled-runner behavior for concurrent workers
 
-- One fluent API (`SocialMedia::post()`) for all supported platforms
-- Encrypted credential storage in your own database
-- Immediate and scheduled publishing with retry/backoff
-- OAuth connect flow for account onboarding
-- Artisan commands for installation, testing, and scheduled processing
-- Safe concurrent scheduled-runner behavior for multi-worker cron setups
+## Compatibility
+
+- PHP: `8.1+`
+- Laravel: `10`, `11`, `12`, `13`
+- Package: `prateekbhujel/larapost`
 
 ## Installation
 
 ```bash
-composer require prateekbhujel/laravel-social-sync
-```
-
-Run installer:
-
-```bash
-php artisan social-sync:install
+composer require prateekbhujel/larapost
+php artisan larapost:install
 ```
 
 Manual setup:
 
 ```bash
-php artisan vendor:publish --tag=social-sync-config
-php artisan vendor:publish --tag=social-sync-migrations
+php artisan vendor:publish --tag=larapost-config
+php artisan vendor:publish --tag=larapost-migrations
 php artisan migrate
 ```
 
-## Environment Variables
-
-```env
-SOCIAL_SYNC_DEFAULT_PLATFORM=facebook
-
-FACEBOOK_APP_ID=
-FACEBOOK_APP_SECRET=
-FACEBOOK_API_VERSION=v20.0
-
-TWITTER_CLIENT_ID=
-TWITTER_CLIENT_SECRET=
-
-LINKEDIN_CLIENT_ID=
-LINKEDIN_CLIENT_SECRET=
-```
-
-Instagram falls back to Facebook credentials unless dedicated `INSTAGRAM_*` values are set.
-
 ## Quick Start
 
-### Publish Now
+1. Add provider credentials to `.env`.
+2. Connect at least one social account.
+3. Publish immediately or schedule content.
+4. Run scheduled processing via cron.
+
+### Connect an Account
+
+```bash
+php artisan larapost:add-account facebook
+```
+
+### Publish Immediately
 
 ```php
 use SocialSync\Facades\SocialMedia;
@@ -86,18 +86,6 @@ SocialMedia::post()
     ->publish();
 ```
 
-Run scheduled posts via cron:
-
-```bash
-php artisan social-sync:run-scheduled
-```
-
-Example cron:
-
-```cron
-* * * * * php /path/to/artisan social-sync:run-scheduled >> /dev/null 2>&1
-```
-
 ### Post Media
 
 ```php
@@ -108,59 +96,72 @@ SocialMedia::post()
     ->publish();
 ```
 
-## Account Management
+### Scheduler Cron
 
-CLI flow:
-
-```bash
-php artisan social-sync:add-account facebook
+```cron
+* * * * * php /path/to/artisan larapost:run-scheduled >> /dev/null 2>&1
 ```
 
-Web flow endpoints:
+## Configuration
 
-- `GET /social-sync/connect/{platform}`
-- `GET /social-sync/callback/{platform}`
+Key environment variables:
 
-Route prefix and middleware are configurable in `config/social-sync.php`.
+```env
+LARAPOST_DEFAULT_PLATFORM=facebook
+LARAPOST_QUEUE_ENABLED=true
+LARAPOST_MAX_RETRY_ATTEMPTS=3
+
+FACEBOOK_APP_ID=
+FACEBOOK_APP_SECRET=
+FACEBOOK_API_VERSION=v20.0
+
+TWITTER_CLIENT_ID=
+TWITTER_CLIENT_SECRET=
+
+LINKEDIN_CLIENT_ID=
+LINKEDIN_CLIENT_SECRET=
+```
+
+Configuration file: `config/larapost.php`
+
+Instagram credentials fall back to Facebook values unless `INSTAGRAM_*` is explicitly set.
+
+## OAuth Routes
+
+Default routes:
+
+- `GET /larapost/connect/{platform}`
+- `GET /larapost/callback/{platform}`
+
+Route prefix and middleware are configurable in `config/larapost.php`.
 
 ## Artisan Commands
 
-- `php artisan social-sync:install`
-- `php artisan social-sync:add-account {platform}`
-- `php artisan social-sync:test`
-- `php artisan social-sync:run-scheduled`
+- `php artisan larapost:install`
+- `php artisan larapost:add-account {platform}`
+- `php artisan larapost:test`
+- `php artisan larapost:run-scheduled`
 
-## Data Model
+## Documentation
 
-- `social_accounts`: account metadata + encrypted credentials
-- `scheduled_posts`: scheduling state, retries, and publish responses
-
-## Testing
-
-```bash
-composer test
-```
-
-## Production Checklist
-
-- Configure all required OAuth credentials in `.env`
-- Run migrations in production before enabling scheduled jobs
-- Add the scheduled runner to cron (`social-sync:run-scheduled`)
-- Monitor failed posts and retry behavior
-- Keep package on latest `1.x` patch release
+- Docs portal: [https://prateekbhujel.github.io/larapost/](https://prateekbhujel.github.io/larapost/)
+- Contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Security policy: [SECURITY.md](SECURITY.md)
+- Release playbook: [RELEASE.md](RELEASE.md)
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
 
 ## Contributing
 
-Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for setup, branching, testing, and PR standards.
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
 ## Security
 
-Report vulnerabilities privately via [SECURITY.md](SECURITY.md).
+Please report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
 ## Release Process
 
-Release guidance is documented in [CHANGELOG.md](CHANGELOG.md) and [RELEASE.md](RELEASE.md).
+Release and tagging workflow is documented in [RELEASE.md](RELEASE.md).
 
 ## License
 
-MIT
+LaraPost is open-sourced under the [MIT license](LICENSE).

@@ -193,7 +193,7 @@ class PostBuilder
     protected function schedulePosts(Collection $accounts): array
     {
         $payload = $this->payload();
-        $maxAttempts = (int) config('social-sync.retry.max_attempts', 3);
+        $maxAttempts = (int) config('larapost.retry.max_attempts', 3);
 
         return $accounts->map(function (SocialAccount $account) use ($payload, $maxAttempts): array {
             $scheduledPost = ScheduledPost::query()->create([
@@ -230,7 +230,7 @@ class PostBuilder
                 'metadata' => $payload['metadata'],
                 'status' => ScheduledPost::STATUS_PENDING,
                 'retry_count' => 0,
-                'max_attempts' => (int) config('social-sync.retry.max_attempts', 3),
+                'max_attempts' => (int) config('larapost.retry.max_attempts', 3),
                 'scheduled_for' => now(),
             ]);
 

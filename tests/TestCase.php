@@ -25,15 +25,15 @@ abstract class TestCase extends Orchestra
             'foreign_key_constraints' => true,
         ]);
 
-        $app['config']->set('social-sync.default_platform', 'facebook');
-        $app['config']->set('social-sync.drivers', [
+        $app['config']->set('larapost.default_platform', 'facebook');
+        $app['config']->set('larapost.drivers', [
             'facebook' => FakeDriver::class,
             'instagram' => FakeDriver::class,
             'twitter' => FakeDriver::class,
             'linkedin' => FakeDriver::class,
         ]);
-        $app['config']->set('social-sync.routes.enabled', false);
-        $app['config']->set('social-sync.queue.enabled', false);
+        $app['config']->set('larapost.routes.enabled', false);
+        $app['config']->set('larapost.queue.enabled', false);
     }
 
     protected function defineDatabaseMigrations(): void

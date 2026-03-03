@@ -40,5 +40,5 @@ git push origin vX.Y.Z
 
 ## 6. Post-release checks
 
-- Verify `composer show prateekbhujel/laravel-social-sync --all` resolves new tag
+- Verify `composer show prateekbhujel/larapost --all` resolves new tag
 - Smoke test install in a fresh Laravel app

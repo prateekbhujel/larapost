@@ -17,7 +17,7 @@ class SocialSyncTestController extends Controller
         $accounts = SocialAccount::query()->active()->orderBy('platform')->orderBy('account_name')->get();
         $recentPosts = ScheduledPost::query()->with('account')->latest()->limit(10)->get();
 
-        return view('social-sync::test-dashboard', [
+        return view('larapost::test-dashboard', [
             'accounts' => $accounts,
             'recentPosts' => $recentPosts,
         ]);

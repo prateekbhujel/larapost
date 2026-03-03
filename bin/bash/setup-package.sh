@@ -18,7 +18,7 @@ echo "✓ Laravel project detected"
 echo ""
 
 # Define base paths
-PACKAGE_PATH="packages/prateekbhujel/laravel-social-sync"
+PACKAGE_PATH="packages/prateekbhujel/larapost"
 SRC_PATH="$PACKAGE_PATH/src"
 
 echo "📁 Creating package directory structure..."
@@ -97,7 +97,7 @@ touch "$SRC_PATH/Http/Controllers/OAuthController.php"
 touch "$SRC_PATH/Http/Middleware/RateLimitPosts.php"
 
 # Config
-touch "$PACKAGE_PATH/config/social-sync.php"
+touch "$PACKAGE_PATH/config/larapost.php"
 
 # Routes
 touch "$PACKAGE_PATH/routes/web.php"
@@ -119,7 +119,7 @@ echo ""
 echo "📦 Creating composer.json..."
 cat > "$PACKAGE_PATH/composer.json" << 'EOF'
 {
-    "name": "prateekbhujel/laravel-social-sync",
+    "name": "prateekbhujel/larapost",
     "description": "Unified social media posting SDK for Laravel",
     "type": "library",
     "license": "MIT",
@@ -192,7 +192,7 @@ if ! grep -q '"repositories"' composer.json; then
     "repositories": [\
         {\
             "type": "path",\
-            "url": "./packages/prateekbhujel/laravel-social-sync"\
+            "url": "./packages/prateekbhujel/larapost"\
         }\
     ],' composer.json
     echo "✓ Added repositories section to composer.json"
@@ -209,7 +209,7 @@ mkdir -p "app/Http/Controllers"
 mkdir -p "resources/views"
 
 touch "app/Http/Controllers/SocialSyncTestController.php"
-touch "resources/views/social-sync-test.blade.php"
+touch "resources/views/larapost-test.blade.php"
 
 echo "✓ Application directories created"
 echo ""
@@ -236,14 +236,14 @@ echo "   (Refer to COMPLETE_FILE_LIST.md for artifact-to-file mapping)"
 echo ""
 echo "2. Update main composer.json require section:"
 echo "   \"require\": {"
-echo "       \"prateekbhujel/laravel-social-sync\": \"@dev\""
+echo "       \"prateekbhujel/larapost\": \"@dev\""
 echo "   }"
 echo ""
 echo "3. Install the package:"
-echo "   composer update prateekbhujel/laravel-social-sync"
+echo "   composer update prateekbhujel/larapost"
 echo ""
 echo "4. Run installation:"
-echo "   php artisan social-sync:install"
+echo "   php artisan larapost:install"
 echo ""
 echo "5. Follow the QUICK_START_GUIDE.md to complete setup"
 echo ""

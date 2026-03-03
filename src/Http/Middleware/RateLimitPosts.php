@@ -26,7 +26,7 @@ class RateLimitPosts
 
     protected function checkRateLimit(string $platform): bool
     {
-        $limits = config('social-sync.rate_limits.' . $platform, [
+        $limits = config('larapost.rate_limits.' . $platform, [
             'posts_per_hour' => 30,
             'posts_per_day' => 200,
         ]);
@@ -49,7 +49,7 @@ class RateLimitPosts
 
     public static function getRateLimitStatus(string $platform): array
     {
-        $limits = config('social-sync.rate_limits.' . $platform, [
+        $limits = config('larapost.rate_limits.' . $platform, [
             'posts_per_hour' => 30,
             'posts_per_day' => 200,
         ]);

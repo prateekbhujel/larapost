@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'default_platform' => env('SOCIAL_SYNC_DEFAULT_PLATFORM', 'facebook'),
+    'default_platform' => env('LARAPOST_DEFAULT_PLATFORM', 'facebook'),
 
     'drivers' => [
         'facebook' => \SocialSync\Drivers\FacebookDriver::class,
@@ -36,13 +36,13 @@ return [
     ],
 
     'queue' => [
-        'enabled' => env('SOCIAL_SYNC_QUEUE_ENABLED', true),
-        'connection' => env('SOCIAL_SYNC_QUEUE_CONNECTION', env('QUEUE_CONNECTION', 'database')),
-        'queue_name' => env('SOCIAL_SYNC_QUEUE_NAME', 'social-sync'),
+        'enabled' => env('LARAPOST_QUEUE_ENABLED', true),
+        'connection' => env('LARAPOST_QUEUE_CONNECTION', env('QUEUE_CONNECTION', 'database')),
+        'queue_name' => env('LARAPOST_QUEUE_NAME', 'larapost'),
     ],
 
     'retry' => [
-        'max_attempts' => (int) env('SOCIAL_SYNC_MAX_RETRY_ATTEMPTS', 3),
+        'max_attempts' => (int) env('LARAPOST_MAX_RETRY_ATTEMPTS', 3),
         'backoff_minutes' => [1, 5, 15],
     ],
 
@@ -66,7 +66,7 @@ return [
     ],
 
     'media' => [
-        'temp_upload_path' => storage_path('app/social-sync/temp'),
+        'temp_upload_path' => storage_path('app/larapost/temp'),
         'max_image_size' => 5 * 1024 * 1024,
         'max_video_size' => 100 * 1024 * 1024,
         'allowed_image_types' => ['jpg', 'jpeg', 'png', 'gif', 'webp'],
@@ -74,8 +74,8 @@ return [
     ],
 
     'routes' => [
-        'enabled' => env('SOCIAL_SYNC_ROUTES_ENABLED', true),
-        'prefix' => env('SOCIAL_SYNC_ROUTE_PREFIX', 'social-sync'),
+        'enabled' => env('LARAPOST_ROUTES_ENABLED', true),
+        'prefix' => env('LARAPOST_ROUTE_PREFIX', 'larapost'),
         'middleware' => ['web'],
     ],
 ];

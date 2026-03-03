@@ -1,33 +1,57 @@
-# Contributing to Laravel Social Sync
+# Contributing to LaraPost
 
 Thanks for contributing.
+
+## Contribution Model
+
+LaraPost accepts community changes through **forks + pull requests**.
+
+- Do not push contribution branches directly to `prateekbhujel/larapost`
+- Fork the repository to your own GitHub account
+- Open pull requests from your fork branch into `main`
 
 ## Ground Rules
 
 - Keep changes focused and small
 - Add or update tests for behavior changes
-- Preserve backward compatibility inside the `1.x` line unless discussed first
+- Avoid breaking behavior without documenting it in the PR and release notes
 - Do not commit secrets or API tokens
 
-## Local Setup
+## Local Setup (Fork Workflow)
 
 ```bash
-git clone https://github.com/prateekbhujel/laravel-social-sync.git
-cd laravel-social-sync
+# 1) Fork on GitHub, then clone your fork
+git clone https://github.com/<your-username>/larapost.git
+cd larapost
+
+# 2) Add upstream remote
+git remote add upstream https://github.com/prateekbhujel/larapost.git
+
+# 3) Install and test
 composer install
 composer test
 ```
 
 ## Branching
 
-Use clear branch names, for example:
+Create branches from latest upstream `main` with clear names, for example:
 
 - `feature/oauth-state-validation`
 - `fix/linkedin-image-upload-error`
 - `docs/release-checklist`
 
+## Keep Your Fork in Sync
+
+```bash
+git fetch upstream
+git checkout main
+git rebase upstream/main
+git push origin main
+```
+
 ## Pull Request Checklist
 
+- [ ] PR opened from a fork branch
 - [ ] Tests pass locally (`composer test`)
 - [ ] Public API/config impact is documented
 - [ ] README or docs updated when behavior changed

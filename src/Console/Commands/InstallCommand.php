@@ -7,21 +7,21 @@ use Illuminate\Support\Facades\File;
 
 class InstallCommand extends Command
 {
-    protected $signature = 'social-sync:install {--force : Overwrite published files}';
+    protected $signature = 'larapost:install {--force : Overwrite published files}';
 
     protected $description = 'Install Laravel Social Sync configuration, migrations, and storage directories.';
 
     public function handle(): int
     {
-        $this->info('Installing Laravel Social Sync...');
+        $this->info('Installing LaraPost for Laravel...');
 
         $this->call('vendor:publish', [
-            '--tag' => 'social-sync-config',
+            '--tag' => 'larapost-config',
             '--force' => (bool) $this->option('force'),
         ]);
 
         $this->call('vendor:publish', [
-            '--tag' => 'social-sync-migrations',
+            '--tag' => 'larapost-migrations',
             '--force' => (bool) $this->option('force'),
         ]);
 
@@ -34,17 +34,19 @@ class InstallCommand extends Command
         $this->displayRequiredEnvVariables();
 
         $this->newLine();
-        $this->info('Social Sync installed successfully.');
-        $this->line('Next: connect an account with `php artisan social-sync:add-account facebook`.');
+        $this->info('LaraPost installed successfully.');
+        $this->line('Next: connect an account with `php artisan larapost:add-account facebook`.');
 
         return self::SUCCESS;
     }
 
     protected function createStorageDirectories(): void
     {
+        $tempUploadPath = (string) config('larapost.media.temp_upload_path', storage_path('app/larapost/temp'));
+
         $directories = [
-            storage_path('app/social-sync'),
-            storage_path('app/social-sync/temp'),
+            dirname($tempUploadPath),
+            $tempUploadPath,
         ];
 
         foreach ($directories as $directory) {
@@ -76,9 +78,9 @@ class InstallCommand extends Command
             'LINKEDIN_CLIENT_SECRET=',
             '',
             '# Optional',
-            'SOCIAL_SYNC_DEFAULT_PLATFORM=facebook',
-            'SOCIAL_SYNC_QUEUE_ENABLED=true',
-            'SOCIAL_SYNC_MAX_RETRY_ATTEMPTS=3',
+            'LARAPOST_DEFAULT_PLATFORM=facebook',
+            'LARAPOST_QUEUE_ENABLED=true',
+            'LARAPOST_MAX_RETRY_ATTEMPTS=3',
         ];
 
         foreach ($variables as $variable) {
