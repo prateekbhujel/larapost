@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Sync Connected</title>
+    <title>LaraPost OAuth Success</title>
 </head>
-<body>
+<body style="font-family: Arial, sans-serif; padding: 24px;">
     <h1>Account Connected</h1>
     <p>{{ $message ?? 'Account connected successfully.' }}</p>
-    <p>Platform: {{ ucfirst($platform ?? 'unknown') }}</p>
-    @isset($account)
-        <p>Account ID: {{ $account->id }}</p>
-        <p>Name: {{ $account->account_name }}</p>
-    @endisset
+    <p><a href="{{ route('larapost.dashboard') }}">Go to dashboard</a></p>
 </body>
 </html>

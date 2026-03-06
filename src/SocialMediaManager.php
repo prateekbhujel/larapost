@@ -4,8 +4,10 @@ namespace SocialSync;
 
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Schema;
 use SocialSync\Contracts\SocialDriverInterface;
 use SocialSync\Exceptions\SocialSyncException;
+use SocialSync\Models\PlatformCredential;
 use SocialSync\Models\SocialAccount;
 
 class SocialMediaManager
@@ -18,6 +20,8 @@ class SocialMediaManager
      * @var array<string, \SocialSync\Contracts\SocialDriverInterface>
      */
     protected array $resolvedDrivers = [];
+
+    protected ?bool $hasPlatformCredentialTable = null;
 
     public function __construct(array $config = [], ?Container $container = null)
     {
@@ -65,6 +69,17 @@ class SocialMediaManager
         return $this->resolvedDrivers[$platform] = $driver;
     }
 
+    public function forgetDriver(?string $name = null): void
+    {
+        if ($name === null) {
+            $this->resolvedDrivers = [];
+
+            return;
+        }
+
+        unset($this->resolvedDrivers[strtolower($name)]);
+    }
+
     public function publish(int $accountId, array $payload): array
     {
         try {
@@ -109,11 +124,48 @@ class SocialMediaManager
 
     public function platformConfig(string $platform): array
     {
-        return (array) ($this->config['platforms'][$platform] ?? []);
+        $platform = strtolower($platform);
+
+        $configured = (array) ($this->config['platforms'][$platform] ?? []);
+        $stored = $this->databasePlatformConfig($platform);
+
+        $merged = array_replace($configured, $stored);
+
+        return array_filter($merged, static fn ($value) => $value !== null && $value !== '');
     }
 
     protected function driverMap(): array
     {
         return (array) ($this->config['drivers'] ?? []);
+    }
+
+    protected function databasePlatformConfig(string $platform): array
+    {
+        if (!$this->isPlatformCredentialStoreAvailable()) {
+            return [];
+        }
+
+        try {
+            $record = PlatformCredential::query()->platform($platform)->first();
+
+            return is_array($record?->credentials) ? $record->credentials : [];
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    protected function isPlatformCredentialStoreAvailable(): bool
+    {
+        if ($this->hasPlatformCredentialTable !== null) {
+            return $this->hasPlatformCredentialTable;
+        }
+
+        try {
+            $this->hasPlatformCredentialTable = Schema::hasTable('larapost_platform_credentials');
+        } catch (\Throwable) {
+            $this->hasPlatformCredentialTable = false;
+        }
+
+        return $this->hasPlatformCredentialTable;
     }
 }

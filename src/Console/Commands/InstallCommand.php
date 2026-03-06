@@ -9,7 +9,7 @@ class InstallCommand extends Command
 {
     protected $signature = 'larapost:install {--force : Overwrite published files}';
 
-    protected $description = 'Install Laravel Social Sync configuration, migrations, and storage directories.';
+    protected $description = 'Install LaraPost configuration, migrations, views, and storage directories.';
 
     public function handle(): int
     {
@@ -25,6 +25,11 @@ class InstallCommand extends Command
             '--force' => (bool) $this->option('force'),
         ]);
 
+        $this->call('vendor:publish', [
+            '--tag' => 'larapost-views',
+            '--force' => (bool) $this->option('force'),
+        ]);
+
         $this->createStorageDirectories();
 
         if ($this->confirm('Run migrations now?', true)) {
@@ -35,7 +40,7 @@ class InstallCommand extends Command
 
         $this->newLine();
         $this->info('LaraPost installed successfully.');
-        $this->line('Next: connect an account with `php artisan larapost:add-account facebook`.');
+        $this->line('Next: open the dashboard at `/larapost/dashboard` and connect an account.');
 
         return self::SUCCESS;
     }
@@ -60,7 +65,7 @@ class InstallCommand extends Command
     protected function displayRequiredEnvVariables(): void
     {
         $this->newLine();
-        $this->line('Add the variables you need to `.env`:');
+        $this->line('Add the variables you need to `.env` (or save credentials from the dashboard UI):');
         $this->newLine();
 
         $variables = [
@@ -81,6 +86,7 @@ class InstallCommand extends Command
             'LARAPOST_DEFAULT_PLATFORM=facebook',
             'LARAPOST_QUEUE_ENABLED=true',
             'LARAPOST_MAX_RETRY_ATTEMPTS=3',
+            'LARAPOST_UI_ENABLED=true',
         ];
 
         foreach ($variables as $variable) {

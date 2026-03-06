@@ -6,14 +6,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\View\View;
 use SocialSync\Facades\SocialMedia;
 use SocialSync\Models\SocialAccount;
 use SocialSync\Support\AccountDataResolver;
 
 class OAuthController extends Controller
 {
-    public function connect(string $platform): RedirectResponse|JsonResponse
+    public function connect(Request $request, string $platform): RedirectResponse|JsonResponse
     {
         try {
             $driver = SocialMedia::driver($platform);
@@ -21,14 +20,18 @@ class OAuthController extends Controller
 
             return redirect()->away($driver->getAuthorizationUrl($callbackUrl));
         } catch (\Throwable $exception) {
-            return response()->json([
-                'message' => 'Failed to initiate OAuth flow.',
-                'error' => $exception->getMessage(),
-            ], 422);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Failed to initiate OAuth flow.',
+                    'error' => $exception->getMessage(),
+                ], 422);
+            }
+
+            return redirect()->route('larapost.dashboard')->with('error', $exception->getMessage());
         }
     }
 
-    public function callback(Request $request, string $platform): View|JsonResponse
+    public function callback(Request $request, string $platform): RedirectResponse|JsonResponse
     {
         try {
             if ($request->filled('error')) {
@@ -68,11 +71,9 @@ class OAuthController extends Controller
                 ]);
             }
 
-            return view('larapost::oauth-success', [
-                'platform' => $platform,
-                'account' => $account,
-                'message' => 'Account connected successfully.',
-            ]);
+            return redirect()
+                ->route('larapost.dashboard')
+                ->with('success', sprintf('%s account "%s" connected successfully.', ucfirst($platform), $account->account_name));
         } catch (\Throwable $exception) {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -81,10 +82,7 @@ class OAuthController extends Controller
                 ], 422);
             }
 
-            return view('larapost::oauth-error', [
-                'platform' => $platform,
-                'error' => $exception->getMessage(),
-            ]);
+            return redirect()->route('larapost.dashboard')->with('error', $exception->getMessage());
         }
     }
 }

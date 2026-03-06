@@ -78,4 +78,9 @@ return [
         'prefix' => env('LARAPOST_ROUTE_PREFIX', 'larapost'),
         'middleware' => ['web'],
     ],
+
+    'ui' => [
+        'enabled' => env('LARAPOST_UI_ENABLED', true),
+        'title' => env('LARAPOST_UI_TITLE', 'LaraPost Dashboard'),
+    ],
 ];

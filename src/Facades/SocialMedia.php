@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Facade;
  * @method static array publish(int $accountId, array $payload)
  * @method static array supportedPlatforms()
  * @method static string defaultPlatform()
+ * @method static array platformConfig(string $platform)
+ * @method static void forgetDriver(string|null $name = null)
  *
  * @see \SocialSync\SocialMediaManager
  */

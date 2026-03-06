@@ -13,6 +13,7 @@ LaraPost is a production-focused Laravel package for publishing and scheduling s
 - [Compatibility](#compatibility)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [Web Dashboard](#web-dashboard)
 - [Configuration](#configuration)
 - [OAuth Routes](#oauth-routes)
 - [Artisan Commands](#artisan-commands)
@@ -26,10 +27,10 @@ LaraPost is a production-focused Laravel package for publishing and scheduling s
 
 - Single fluent API for multi-platform publishing (`SocialMedia::post()`)
 - Account onboarding via OAuth
-- Immediate and scheduled posting workflows
+- Optional web dashboard with one-click connect buttons and publish/schedule form
+- Manual provider credential forms in UI (with `.env` fallback)
 - Retry/backoff handling for transient failures
 - Command tooling for install, testing, and scheduled processing
-- Safe scheduled-runner behavior for concurrent workers
 
 ## Compatibility
 
@@ -49,23 +50,24 @@ Manual setup:
 ```bash
 php artisan vendor:publish --tag=larapost-config
 php artisan vendor:publish --tag=larapost-migrations
+php artisan vendor:publish --tag=larapost-views
 php artisan migrate
 ```
 
 ## Quick Start
 
-1. Add provider credentials to `.env`.
+1. Configure provider credentials in `.env` **or** in dashboard UI.
 2. Connect at least one social account.
 3. Publish immediately or schedule content.
 4. Run scheduled processing via cron.
 
-### Connect an Account
+### Connect an Account (CLI)
 
 ```bash
 php artisan larapost:add-account facebook
 ```
 
-### Publish Immediately
+### Publish Immediately (API)
 
 ```php
 use SocialSync\Facades\SocialMedia;
@@ -76,7 +78,7 @@ $results = SocialMedia::post()
     ->publish();
 ```
 
-### Schedule a Post
+### Schedule a Post (API)
 
 ```php
 SocialMedia::post()
@@ -86,20 +88,30 @@ SocialMedia::post()
     ->publish();
 ```
 
-### Post Media
-
-```php
-SocialMedia::post()
-    ->content('Image post')
-    ->image('https://cdn.example.com/image.jpg')
-    ->platforms(['instagram'])
-    ->publish();
-```
-
 ### Scheduler Cron
 
 ```cron
 * * * * * php /path/to/artisan larapost:run-scheduled >> /dev/null 2>&1
+```
+
+## Web Dashboard
+
+LaraPost includes a built-in dashboard:
+
+- `GET /larapost/dashboard`
+
+Dashboard features:
+
+- Connect buttons for Facebook, Instagram, Twitter/X, and LinkedIn
+- Provider app credential forms (saved in encrypted DB storage)
+- Connected account enable/disable toggles
+- Publish now / schedule form with optional media URL
+- Recent post history panel
+
+The UI can be disabled with:
+
+```env
+LARAPOST_UI_ENABLED=false
 ```
 
 ## Configuration
@@ -110,6 +122,7 @@ Key environment variables:
 LARAPOST_DEFAULT_PLATFORM=facebook
 LARAPOST_QUEUE_ENABLED=true
 LARAPOST_MAX_RETRY_ATTEMPTS=3
+LARAPOST_UI_ENABLED=true
 
 FACEBOOK_APP_ID=
 FACEBOOK_APP_SECRET=
@@ -124,7 +137,10 @@ LINKEDIN_CLIENT_SECRET=
 
 Configuration file: `config/larapost.php`
 
-Instagram credentials fall back to Facebook values unless `INSTAGRAM_*` is explicitly set.
+Credential precedence:
+
+1. Dashboard-saved provider credentials (DB)
+2. `.env` / config values
 
 ## OAuth Routes
 

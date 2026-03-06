@@ -36,6 +36,10 @@ class SocialSyncServiceProvider extends ServiceProvider
                 __DIR__ . '/../database/migrations' => database_path('migrations'),
             ], 'larapost-migrations');
 
+            $this->publishes([
+                __DIR__ . '/../resources/views' => resource_path('views/vendor/larapost'),
+            ], 'larapost-views');
+
             $this->commands([
                 InstallCommand::class,
                 AddAccountCommand::class,
