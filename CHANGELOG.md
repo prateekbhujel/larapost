@@ -6,15 +6,28 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
-- Laravel-inspired production documentation portal layout for GitHub Pages with richer operational guidance
+- No unreleased changes yet.
+
+## [2.1.0] - 2026-03-06
+
+### Added
+
+- Full LaraPost web dashboard at `/larapost/dashboard` with:
+  - provider connect buttons (Facebook, Instagram, Twitter/X, LinkedIn)
+  - manual provider credential forms
+  - publish-now and schedule UI
+  - account enable/disable controls
+  - recent post history view
+- Encrypted database-backed provider credential storage via `larapost_platform_credentials`
+- View publishing support with `larapost-views` tag
+- Feature tests for dashboard rendering, credential storage, and publish flow
 
 ### Changed
 
-- Compatibility constraints expanded to include `illuminate/support` for Laravel 12 and 13
-- Dev test matrix dependencies expanded for newer Laravel/Testbench lines
-- Package identity moved to `prateekbhujel/larapost` (no backward compatibility aliases)
-- Artisan command namespace moved from `social-sync:*` to `larapost:*`
-- Config/runtime namespace moved to `larapost` with `config/larapost.php` publish target
+- OAuth callback flow now redirects back to dashboard with success/error flash messages
+- `larapost:install` now publishes package views in addition to config and migrations
+- Composer branch alias updated from `1.x-dev` to `2.x-dev`
+- README and docs updated for the dashboard-first UX and manual credential workflow
 
 ## [1.1.1] - 2026-03-01
 

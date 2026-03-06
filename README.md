@@ -37,6 +37,8 @@ LaraPost is a production-focused Laravel package for publishing and scheduling s
 - PHP: `8.1+`
 - Laravel: `10`, `11`, `12`, `13`
 - Package: `prateekbhujel/larapost`
+- Stable release target: `v2.1.0`
+- Branch alias: `2.x-dev`
 
 ## Installation
 
@@ -57,9 +59,10 @@ php artisan migrate
 ## Quick Start
 
 1. Configure provider credentials in `.env` **or** in dashboard UI.
-2. Connect at least one social account.
-3. Publish immediately or schedule content.
-4. Run scheduled processing via cron.
+2. Open `/larapost/dashboard` to connect providers with one-click OAuth.
+3. Connect at least one social account.
+4. Publish immediately or schedule content.
+5. Run scheduled processing via cron.
 
 ### Connect an Account (CLI)
 

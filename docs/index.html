@@ -83,6 +83,7 @@
               <a href="#overview" class="block rounded px-2 py-1.5 hover:bg-slate-100">Overview</a>
               <a href="#installation" class="block rounded px-2 py-1.5 hover:bg-slate-100">Installation</a>
               <a href="#quick-start" class="block rounded px-2 py-1.5 hover:bg-slate-100">Quick Start</a>
+              <a href="#dashboard" class="block rounded px-2 py-1.5 hover:bg-slate-100">Dashboard</a>
             </div>
             <div>
               <p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Core</p>
@@ -116,7 +117,8 @@
             <span class="rounded-full border border-slate-300 bg-white px-3 py-1">Package: <strong class="ml-1">prateekbhujel/larapost</strong></span>
             <span class="rounded-full border border-slate-300 bg-white px-3 py-1">Laravel: <strong class="ml-1">10 / 11 / 12 / 13</strong></span>
             <span class="rounded-full border border-slate-300 bg-white px-3 py-1">PHP: <strong class="ml-1">8.1+</strong></span>
-            <span class="rounded-full border border-slate-300 bg-white px-3 py-1">Branch Alias: <strong class="ml-1">1.x-dev</strong></span>
+            <span class="rounded-full border border-slate-300 bg-white px-3 py-1">Branch Alias: <strong class="ml-1">2.x-dev</strong></span>
+            <span class="rounded-full border border-slate-300 bg-white px-3 py-1">Release: <strong class="ml-1">v2.1.0</strong></span>
             <span class="rounded-full border border-slate-300 bg-white px-3 py-1">License: <strong class="ml-1">MIT</strong></span>
           </div>
 
@@ -156,21 +158,37 @@ php artisan larapost:install</code></pre>
           <p class="mt-4 text-sm text-slate-700">Manual setup (if you do not run the installer):</p>
           <pre class="mt-2 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>php artisan vendor:publish --tag=larapost-config
 php artisan vendor:publish --tag=larapost-migrations
+php artisan vendor:publish --tag=larapost-views
 php artisan migrate</code></pre>
         </section>
 
         <section id="quick-start" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel">
           <h2 class="text-2xl font-extrabold tracking-tight">Quick Start</h2>
           <ol class="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-7 text-slate-700">
-            <li>Add provider credentials to <code class="font-mono text-[13px]">.env</code>.</li>
+            <li>Add provider credentials to <code class="font-mono text-[13px]">.env</code> or configure them in dashboard settings.</li>
             <li>Connect at least one provider account.</li>
             <li>Publish test content.</li>
             <li>Enable cron for scheduled jobs.</li>
           </ol>
 
-          <pre class="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>php artisan larapost:add-account facebook
+          <pre class="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>open /larapost/dashboard
+php artisan larapost:add-account facebook
 php artisan larapost:test
 * * * * * php /path/to/artisan larapost:run-scheduled >> /dev/null 2>&1</code></pre>
+        </section>
+
+        <section id="dashboard" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel">
+          <h2 class="text-2xl font-extrabold tracking-tight">Web Dashboard</h2>
+          <p class="mt-3 text-sm leading-7 text-slate-700">The built-in dashboard gives you a full DX flow for provider onboarding and publishing without editing code.</p>
+          <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+            <li>Route: <code class="font-mono text-[13px]">GET /larapost/dashboard</code></li>
+            <li>Connect buttons for Facebook, Instagram, Twitter/X, and LinkedIn</li>
+            <li>Manual provider credential forms (encrypted DB storage)</li>
+            <li>Publish now or schedule posts with optional media URL</li>
+            <li>Enable/disable connected accounts and review recent post history</li>
+          </ul>
+          <pre class="mt-3 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>php artisan vendor:publish --tag=larapost-views</code></pre>
+          <p class="mt-2 text-sm text-slate-700">Disable dashboard routes with <code class="font-mono text-[13px]">LARAPOST_UI_ENABLED=false</code>.</p>
         </section>
 
         <section id="configuration" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel">
@@ -179,6 +197,7 @@ php artisan larapost:test
           <pre class="mt-2 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>LARAPOST_DEFAULT_PLATFORM=facebook
 LARAPOST_QUEUE_ENABLED=true
 LARAPOST_MAX_RETRY_ATTEMPTS=3
+LARAPOST_UI_ENABLED=true
 
 FACEBOOK_APP_ID=
 FACEBOOK_APP_SECRET=
