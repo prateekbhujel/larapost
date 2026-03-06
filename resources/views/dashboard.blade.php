@@ -297,9 +297,37 @@
                     </p>
 
                     <div class="row" style="margin-bottom: 0.55rem;">
-                        <a class="btn btn-primary" data-larapost-oauth-popup="1" href="{{ route('larapost.connect', ['platform' => $platform['key'], 'mode' => 'popup']) }}">Login with {{ ucfirst($platform['key']) }}</a>
+                        @if ($platform['configured'])
+                            <a class="btn btn-primary" data-larapost-oauth-popup="1" href="{{ route('larapost.connect', ['platform' => $platform['key'], 'mode' => 'popup']) }}">Login with {{ ucfirst($platform['key']) }}</a>
+                        @else
+                            <button class="btn btn-ghost" type="button" disabled>Save credentials first</button>
+                        @endif
                     </div>
 
+                    @if (! $platform['configured'])
+                        <p class="muted small" style="margin: 0 0 0.65rem;">Fill app credentials below and click Save. Then use Login with {{ ucfirst($platform['key']) }}.</p>
+                    @endif
+
+                    <div class="field-grid" style="margin-bottom: 0.7rem;">
+                        <div>
+                            <label for="{{ $platform['key'] }}_callback_url">OAuth Callback URL</label>
+                            <div class="row">
+                                <input id="{{ $platform['key'] }}_callback_url" type="text" readonly value="{{ route('larapost.callback', ['platform' => $platform['key']]) }}">
+                                <button class="btn btn-ghost" type="button" data-copy-target="{{ $platform['key'] }}_callback_url">Copy</button>
+                            </div>
+                        </div>
+                        <div>
+                            @php
+                                $consoleUrl = match ($platform['key']) {
+                                    'facebook', 'instagram' => 'https://developers.facebook.com/apps/',
+                                    'twitter' => 'https://developer.x.com/en/portal/dashboard',
+                                    'linkedin' => 'https://www.linkedin.com/developers/apps',
+                                    default => '#',
+                                };
+                            @endphp
+                            <a class="small" href="{{ $consoleUrl }}" target="_blank" rel="noopener">Open {{ ucfirst($platform['key']) }} developer console</a>
+                        </div>
+                    </div>
                     <form method="POST" action="{{ route('larapost.settings.store', ['platform' => $platform['key']]) }}">
                         @csrf
                         <div class="field-grid">
@@ -474,16 +502,47 @@
 <script>
 (function () {
     var links = document.querySelectorAll('[data-larapost-oauth-popup="1"]');
-
-    if (!links.length) {
-        return;
-    }
+    var copyButtons = document.querySelectorAll('[data-copy-target]');
 
     function popupFeatures(width, height) {
         var left = Math.max(0, Math.round((window.screen.width - width) / 2));
         var top = Math.max(0, Math.round((window.screen.height - height) / 2));
         return 'popup=yes,width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',resizable=yes,scrollbars=yes';
     }
+
+    copyButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            var targetId = button.getAttribute('data-copy-target');
+            var input = document.getElementById(targetId);
+
+            if (!input) {
+                return;
+            }
+
+            var text = input.value;
+            var original = button.textContent;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function () {
+                    button.textContent = 'Copied';
+                    setTimeout(function () {
+                        button.textContent = original;
+                    }, 1200);
+                });
+
+                return;
+            }
+
+            input.removeAttribute('readonly');
+            input.select();
+            document.execCommand('copy');
+            input.setAttribute('readonly', 'readonly');
+            button.textContent = 'Copied';
+            setTimeout(function () {
+                button.textContent = original;
+            }, 1200);
+        });
+    });
 
     links.forEach(function (link) {
         link.addEventListener('click', function (event) {
