@@ -15,17 +15,15 @@ class OAuthController extends Controller
 {
     public function connect(Request $request, string $platform): RedirectResponse|JsonResponse|Response
     {
-        $popupMode = $this->isPopupMode($request);
+        $popupMode = $this->isPopupModeRequest($request);
 
         try {
             $driver = SocialMedia::driver($platform);
-            $callbackParams = ['platform' => $platform];
+            $callbackUrl = route('larapost.callback', ['platform' => $platform]);
 
             if ($popupMode) {
-                $callbackParams['popup'] = 1;
+                $this->storePopupMode($platform);
             }
-
-            $callbackUrl = route('larapost.callback', $callbackParams);
 
             return redirect()->away($driver->getAuthorizationUrl($callbackUrl));
         } catch (\Throwable $exception) {
@@ -49,7 +47,7 @@ class OAuthController extends Controller
 
     public function callback(Request $request, string $platform): RedirectResponse|JsonResponse|Response
     {
-        $popupMode = $this->isPopupMode($request);
+        $popupMode = $this->isPopupModeRequest($request) || $this->consumePopupMode($platform);
 
         try {
             if ($request->filled('error')) {
@@ -122,8 +120,38 @@ class OAuthController extends Controller
         }
     }
 
-    protected function isPopupMode(Request $request): bool
+    protected function isPopupModeRequest(Request $request): bool
     {
         return $request->boolean('popup') || $request->query('mode') === 'popup';
+    }
+
+    protected function popupModeSessionKey(string $platform): string
+    {
+        return 'larapost_oauth_popup_' . strtolower($platform);
+    }
+
+    protected function storePopupMode(string $platform): void
+    {
+        if (!function_exists('session')) {
+            return;
+        }
+
+        session([$this->popupModeSessionKey($platform) => true]);
+    }
+
+    protected function consumePopupMode(string $platform): bool
+    {
+        if (!function_exists('session')) {
+            return false;
+        }
+
+        $key = $this->popupModeSessionKey($platform);
+        $popupMode = (bool) session($key, false);
+
+        if ($popupMode) {
+            session()->forget($key);
+        }
+
+        return $popupMode;
     }
 }

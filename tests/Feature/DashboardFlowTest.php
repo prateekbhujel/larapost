@@ -84,13 +84,15 @@ class DashboardFlowTest extends TestCase
 
         $location = (string) $response->headers->get('Location', '');
 
-        $this->assertStringContainsString('popup=1', $location);
+        $this->assertStringContainsString('/larapost/callback/facebook', $location);
         $this->assertStringContainsString('oauth=fake', $location);
     }
 
     public function test_callback_popup_success_returns_popup_completion_page(): void
     {
-        $response = $this->get('/larapost/callback/facebook?popup=1&code=fake-code');
+        $this->get('/larapost/connect/facebook?mode=popup');
+
+        $response = $this->get('/larapost/callback/facebook?code=fake-code');
 
         $response->assertOk();
         $response->assertSee('Account Connected');
@@ -102,7 +104,9 @@ class DashboardFlowTest extends TestCase
 
     public function test_callback_popup_error_returns_popup_error_page(): void
     {
-        $response = $this->get('/larapost/callback/facebook?popup=1');
+        $this->get('/larapost/connect/facebook?mode=popup');
+
+        $response = $this->get('/larapost/callback/facebook');
 
         $response->assertStatus(422);
         $response->assertSee('Connection Failed');
