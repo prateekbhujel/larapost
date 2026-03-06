@@ -297,7 +297,7 @@
                     </p>
 
                     <div class="row" style="margin-bottom: 0.55rem;">
-                        <a class="btn btn-primary" href="{{ route('larapost.connect', ['platform' => $platform['key']]) }}">Connect {{ ucfirst($platform['key']) }}</a>
+                        <a class="btn btn-primary" data-larapost-oauth-popup="1" href="{{ route('larapost.connect', ['platform' => $platform['key'], 'mode' => 'popup']) }}">Login with {{ ucfirst($platform['key']) }}</a>
                     </div>
 
                     <form method="POST" action="{{ route('larapost.settings.store', ['platform' => $platform['key']]) }}">
@@ -471,5 +471,48 @@
         </table>
     </section>
 </div>
+<script>
+(function () {
+    var links = document.querySelectorAll('[data-larapost-oauth-popup="1"]');
+
+    if (!links.length) {
+        return;
+    }
+
+    function popupFeatures(width, height) {
+        var left = Math.max(0, Math.round((window.screen.width - width) / 2));
+        var top = Math.max(0, Math.round((window.screen.height - height) / 2));
+        return 'popup=yes,width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',resizable=yes,scrollbars=yes';
+    }
+
+    links.forEach(function (link) {
+        link.addEventListener('click', function (event) {
+            event.preventDefault();
+
+            var url = link.getAttribute('href');
+            var popup = window.open(url, 'larapost-oauth', popupFeatures(620, 760));
+
+            if (!popup) {
+                window.location.href = url;
+                return;
+            }
+
+            popup.focus();
+        });
+    });
+
+    window.addEventListener('message', function (event) {
+        if (event.origin !== window.location.origin) {
+            return;
+        }
+
+        if (!event.data || event.data.source !== 'larapost-oauth') {
+            return;
+        }
+
+        window.location.href = '{{ route('larapost.dashboard') }}';
+    });
+})();
+</script>
 </body>
 </html>

@@ -5,6 +5,7 @@ namespace SocialSync\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use SocialSync\Facades\SocialMedia;
 use SocialSync\Models\SocialAccount;
@@ -12,11 +13,19 @@ use SocialSync\Support\AccountDataResolver;
 
 class OAuthController extends Controller
 {
-    public function connect(Request $request, string $platform): RedirectResponse|JsonResponse
+    public function connect(Request $request, string $platform): RedirectResponse|JsonResponse|Response
     {
+        $popupMode = $this->isPopupMode($request);
+
         try {
             $driver = SocialMedia::driver($platform);
-            $callbackUrl = route('larapost.callback', ['platform' => $platform]);
+            $callbackParams = ['platform' => $platform];
+
+            if ($popupMode) {
+                $callbackParams['popup'] = 1;
+            }
+
+            $callbackUrl = route('larapost.callback', $callbackParams);
 
             return redirect()->away($driver->getAuthorizationUrl($callbackUrl));
         } catch (\Throwable $exception) {
@@ -27,12 +36,21 @@ class OAuthController extends Controller
                 ], 422);
             }
 
+            if ($popupMode) {
+                return response()->view('larapost::oauth-error', [
+                    'error' => $exception->getMessage(),
+                    'platform' => $platform,
+                ], 422);
+            }
+
             return redirect()->route('larapost.dashboard')->with('error', $exception->getMessage());
         }
     }
 
-    public function callback(Request $request, string $platform): RedirectResponse|JsonResponse
+    public function callback(Request $request, string $platform): RedirectResponse|JsonResponse|Response
     {
+        $popupMode = $this->isPopupMode($request);
+
         try {
             if ($request->filled('error')) {
                 throw new \RuntimeException((string) $request->input('error_description', $request->input('error')));
@@ -71,9 +89,19 @@ class OAuthController extends Controller
                 ]);
             }
 
+            $message = sprintf('%s account "%s" connected successfully.', ucfirst($platform), $account->account_name);
+
+            if ($popupMode) {
+                return response()->view('larapost::oauth-success', [
+                    'message' => $message,
+                    'platform' => $platform,
+                    'dashboardUrl' => route('larapost.dashboard'),
+                ]);
+            }
+
             return redirect()
                 ->route('larapost.dashboard')
-                ->with('success', sprintf('%s account "%s" connected successfully.', ucfirst($platform), $account->account_name));
+                ->with('success', $message);
         } catch (\Throwable $exception) {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -82,7 +110,20 @@ class OAuthController extends Controller
                 ], 422);
             }
 
+            if ($popupMode) {
+                return response()->view('larapost::oauth-error', [
+                    'error' => $exception->getMessage(),
+                    'platform' => $platform,
+                    'dashboardUrl' => route('larapost.dashboard'),
+                ], 422);
+            }
+
             return redirect()->route('larapost.dashboard')->with('error', $exception->getMessage());
         }
+    }
+
+    protected function isPopupMode(Request $request): bool
+    {
+        return $request->boolean('popup') || $request->query('mode') === 'popup';
     }
 }
