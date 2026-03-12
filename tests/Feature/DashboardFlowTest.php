@@ -75,4 +75,42 @@ class DashboardFlowTest extends TestCase
         $this->assertNotNull($post);
         $this->assertSame(ScheduledPost::STATUS_PUBLISHED, $post->status);
     }
+
+    public function test_connect_route_supports_popup_mode(): void
+    {
+        $response = $this->get('/larapost/connect/facebook?mode=popup');
+
+        $response->assertRedirect();
+
+        $location = (string) $response->headers->get('Location', '');
+
+        $this->assertStringContainsString('/larapost/callback/facebook', $location);
+        $this->assertStringContainsString('oauth=fake', $location);
+    }
+
+    public function test_callback_popup_success_returns_popup_completion_page(): void
+    {
+        $this->get('/larapost/connect/facebook?mode=popup');
+
+        $response = $this->get('/larapost/callback/facebook?code=fake-code');
+
+        $response->assertOk();
+        $response->assertSee('Account Connected');
+        $response->assertSee('window.opener.postMessage', false);
+        $response->assertSee('larapost-oauth', false);
+
+        $this->assertSame(1, SocialAccount::query()->count());
+    }
+
+    public function test_callback_popup_error_returns_popup_error_page(): void
+    {
+        $this->get('/larapost/connect/facebook?mode=popup');
+
+        $response = $this->get('/larapost/callback/facebook');
+
+        $response->assertStatus(422);
+        $response->assertSee('Connection Failed');
+        $response->assertSee('Missing OAuth authorization code.');
+        $response->assertSee('window.opener.postMessage', false);
+    }
 }

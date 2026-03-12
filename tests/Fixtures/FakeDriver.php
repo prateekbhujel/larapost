@@ -26,7 +26,9 @@ class FakeDriver implements SocialDriverInterface
 
     public function getAuthorizationUrl(string $redirectUri): string
     {
-        return $redirectUri . '?oauth=fake';
+        $separator = str_contains($redirectUri, '?') ? '&' : '?';
+
+        return $redirectUri . $separator . 'oauth=fake';
     }
 
     public function handleCallback(string $code, string $redirectUri): array
