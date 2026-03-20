@@ -2,6 +2,7 @@
 
 namespace SocialSync\Tests\Feature;
 
+use Carbon\Carbon;
 use SocialSync\Models\PlatformCredential;
 use SocialSync\Models\ScheduledPost;
 use SocialSync\Models\SocialAccount;
@@ -18,11 +19,15 @@ class DashboardFlowTest extends TestCase
 
     public function test_dashboard_renders(): void
     {
+        config()->set('app.timezone', 'Asia/Kathmandu');
+
         $response = $this->get('/larapost/dashboard');
 
         $response->assertOk();
         $response->assertSee('LaraPost Dashboard');
         $response->assertSee('Provider Connection');
+        $response->assertSee('Bulk Composer');
+        $response->assertSee('Timezone · Asia/Kathmandu');
     }
 
     public function test_it_saves_platform_credentials_and_overrides_config(): void
@@ -47,6 +52,28 @@ class DashboardFlowTest extends TestCase
 
         $this->assertSame('db-client', $platformConfig['client_id']);
         $this->assertSame('db-secret', $platformConfig['client_secret']);
+    }
+
+    public function test_instagram_uses_saved_facebook_meta_credentials_when_not_saved_directly(): void
+    {
+        config()->set('larapost.platforms.facebook.app_id', null);
+        config()->set('larapost.platforms.facebook.app_secret', null);
+        config()->set('larapost.platforms.instagram.app_id', null);
+        config()->set('larapost.platforms.instagram.app_secret', null);
+
+        $response = $this->post('/larapost/settings/facebook', [
+            'app_id' => 'meta-app-id',
+            'app_secret' => 'meta-app-secret',
+            'api_version' => 'v25.0',
+        ]);
+
+        $response->assertRedirect();
+
+        $instagramConfig = app('social-media')->platformConfig('instagram');
+
+        $this->assertSame('meta-app-id', $instagramConfig['app_id']);
+        $this->assertSame('meta-app-secret', $instagramConfig['app_secret']);
+        $this->assertSame('v25.0', $instagramConfig['api_version']);
     }
 
     public function test_it_publishes_from_dashboard_form(): void
@@ -112,6 +139,102 @@ class DashboardFlowTest extends TestCase
 
         $this->assertCount(1, $posts);
         $this->assertSame($firstAccount->id, $posts->first()->account_id);
+    }
+
+    public function test_bulk_composer_publishes_different_content_to_different_accounts(): void
+    {
+        $firstAccount = SocialAccount::query()->create([
+            'platform' => 'facebook',
+            'account_name' => 'Page One',
+            'account_id_on_platform' => 'page-1',
+            'credentials' => [
+                'access_token' => 'token-1',
+                'page_id' => 'page-1',
+            ],
+            'is_active' => true,
+        ]);
+
+        $secondAccount = SocialAccount::query()->create([
+            'platform' => 'facebook',
+            'account_name' => 'Page Two',
+            'account_id_on_platform' => 'page-2',
+            'credentials' => [
+                'access_token' => 'token-2',
+                'page_id' => 'page-2',
+            ],
+            'is_active' => true,
+        ]);
+
+        $response = $this->post('/larapost/publish-bulk', [
+            'entries' => [
+                [
+                    'account_id' => $firstAccount->id,
+                    'content' => 'Status for page one',
+                    'media_url' => '',
+                    'media_type' => 'image',
+                    'schedule_for' => '',
+                ],
+                [
+                    'account_id' => $secondAccount->id,
+                    'content' => 'Status for page two',
+                    'media_url' => '',
+                    'media_type' => 'image',
+                    'schedule_for' => '',
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', fn (string $message): bool => str_contains($message, 'Bulk composer processed 2 row(s): 2 published, 0 scheduled, 0 failed.'));
+
+        $posts = ScheduledPost::query()->orderBy('account_id')->get();
+
+        $this->assertCount(2, $posts);
+        $this->assertSame(ScheduledPost::STATUS_PUBLISHED, $posts[0]->status);
+        $this->assertSame(ScheduledPost::STATUS_PUBLISHED, $posts[1]->status);
+        $this->assertSame('Status for page one', $posts[0]->content);
+        $this->assertSame('Status for page two', $posts[1]->content);
+        $this->assertSame($firstAccount->id, $posts[0]->account_id);
+        $this->assertSame($secondAccount->id, $posts[1]->account_id);
+    }
+
+    public function test_bulk_composer_schedules_rows_using_application_timezone(): void
+    {
+        config()->set('app.timezone', 'Asia/Kathmandu');
+
+        $account = SocialAccount::query()->create([
+            'platform' => 'facebook',
+            'account_name' => 'Nepal Page',
+            'account_id_on_platform' => 'page-nepal',
+            'credentials' => [
+                'access_token' => 'token',
+                'page_id' => 'page-nepal',
+            ],
+            'is_active' => true,
+        ]);
+
+        $scheduleFor = Carbon::now('Asia/Kathmandu')->addHour()->format('Y-m-d\TH:i');
+
+        $response = $this->post('/larapost/publish-bulk', [
+            'entries' => [
+                [
+                    'account_id' => $account->id,
+                    'content' => 'Scheduled in Nepal time',
+                    'media_url' => '',
+                    'media_type' => 'image',
+                    'schedule_for' => $scheduleFor,
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', fn (string $message): bool => str_contains($message, 'Bulk composer processed 1 row(s): 0 published, 1 scheduled, 0 failed.'));
+
+        $post = ScheduledPost::query()->first();
+
+        $this->assertNotNull($post);
+        $this->assertSame(ScheduledPost::STATUS_PENDING, $post->status);
+        $this->assertSame($scheduleFor, $post->scheduled_for?->format('Y-m-d\TH:i'));
     }
 
     public function test_connect_route_supports_popup_mode(): void

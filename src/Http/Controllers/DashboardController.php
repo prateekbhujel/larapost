@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -13,6 +14,7 @@ use SocialSync\Facades\SocialMedia;
 use SocialSync\Models\PlatformCredential;
 use SocialSync\Models\ScheduledPost;
 use SocialSync\Models\SocialAccount;
+use SocialSync\PostBuilder;
 
 class DashboardController extends Controller
 {
@@ -92,83 +94,96 @@ class DashboardController extends Controller
         ]);
 
         try {
-            $selectedAccounts = SocialAccount::query()
-                ->active()
-                ->when(
-                    !empty($validated['account_ids']),
-                    fn ($query) => $query->whereIn('id', array_map('intval', $validated['account_ids']))
-                )
-                ->get();
-
-            if (!empty($validated['account_ids']) && $selectedAccounts->isEmpty()) {
-                throw ValidationException::withMessages([
-                    'account_ids' => 'No active connected accounts matched the selected account list.',
-                ]);
-            }
-
-            $platforms = collect($validated['platforms'] ?? [])
-                ->map(static fn ($platform) => strtolower(trim((string) $platform)))
-                ->filter()
-                ->unique()
-                ->values();
-
-            if ($platforms->isEmpty() && $selectedAccounts->isNotEmpty()) {
-                $platforms = $selectedAccounts->pluck('platform')->unique()->values();
-            }
-
-            if ($platforms->isEmpty()) {
-                throw ValidationException::withMessages([
-                    'platforms' => 'Select at least one platform or one connected account.',
-                ]);
-            }
+            $selectedAccounts = $this->resolveSelectedAccounts($validated['account_ids'] ?? []);
+            $platforms = $this->resolvePlatforms($validated['platforms'] ?? [], $selectedAccounts);
 
             $builder = SocialMedia::post()
                 ->content($validated['content'])
-                ->platforms($platforms->all());
+                ->platforms($platforms);
 
             if ($selectedAccounts->isNotEmpty()) {
-                $builder->accounts(
-                    $selectedAccounts
-                        ->groupBy('platform')
-                        ->map(fn ($accounts) => $accounts->pluck('id')->map(static fn ($id) => (int) $id)->values()->all())
-                        ->all()
-                );
+                $builder->accounts($this->accountFilters($selectedAccounts));
             }
 
-            $mediaUrl = trim((string) ($validated['media_url'] ?? ''));
-            if ($mediaUrl !== '') {
-                $mediaType = (string) ($validated['media_type'] ?? 'image');
+            $this->applyMediaToBuilder(
+                $builder,
+                (string) ($validated['media_url'] ?? ''),
+                (string) ($validated['media_type'] ?? 'image')
+            );
 
-                if ($mediaType === 'video') {
-                    $builder->video($mediaUrl);
-                } else {
-                    $builder->image($mediaUrl);
+            if (!empty($validated['schedule_for'])) {
+                $builder->scheduleFor($this->parseSchedule((string) $validated['schedule_for']));
+            }
+
+            return $this->redirectWithResults($builder->publish(), null);
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
+            return back()
+                ->withInput()
+                ->with('error', $exception->getMessage());
+        }
+    }
+
+    public function publishBulk(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'entries' => ['required', 'array', 'min:1'],
+            'entries.*.account_id' => ['required', 'integer', Rule::exists('social_accounts', 'id')],
+            'entries.*.content' => ['required', 'string', 'max:5000'],
+            'entries.*.media_url' => ['nullable', 'url', 'max:2048'],
+            'entries.*.media_type' => ['nullable', Rule::in(['image', 'video'])],
+            'entries.*.schedule_for' => ['nullable', 'date_format:Y-m-d\TH:i'],
+        ]);
+
+        try {
+            $entries = collect($validated['entries'])
+                ->map(fn (array $entry): array => [
+                    'account_id' => (int) $entry['account_id'],
+                    'content' => trim((string) $entry['content']),
+                    'media_url' => trim((string) ($entry['media_url'] ?? '')),
+                    'media_type' => (string) ($entry['media_type'] ?? 'image'),
+                    'schedule_for' => (string) ($entry['schedule_for'] ?? ''),
+                ])
+                ->values();
+
+            $accounts = SocialAccount::query()
+                ->active()
+                ->whereIn('id', $entries->pluck('account_id')->unique()->all())
+                ->get()
+                ->keyBy('id');
+
+            $results = [];
+
+            foreach ($entries as $index => $entry) {
+                $account = $accounts->get($entry['account_id']);
+
+                if (!$account) {
+                    throw ValidationException::withMessages([
+                        sprintf('entries.%d.account_id', $index) => 'Selected account is missing or inactive.',
+                    ]);
+                }
+
+                $builder = SocialMedia::post()
+                    ->content($entry['content'])
+                    ->platform($account->platform)
+                    ->accounts([$account->platform => [$account->id]]);
+
+                $this->applyMediaToBuilder($builder, $entry['media_url'], $entry['media_type']);
+
+                if ($entry['schedule_for'] !== '') {
+                    $builder->scheduleFor($this->parseSchedule($entry['schedule_for']));
+                }
+
+                foreach ($builder->publish() as $result) {
+                    $result['bulk_entry'] = $index;
+                    $results[] = $result;
                 }
             }
 
-            if (!empty($validated['schedule_for'])) {
-                $scheduled = Carbon::createFromFormat('Y-m-d\TH:i', (string) $validated['schedule_for'], config('app.timezone'));
-                $builder->scheduleFor($scheduled);
-            }
-
-            $results = $builder->publish();
-
-            $total = count($results);
-            $success = collect($results)->where('success', true)->count();
-            $scheduled = collect($results)->where('scheduled', true)->count();
-            $failed = max(0, $total - $success);
-
-            $message = $scheduled > 0
-                ? sprintf('Scheduled %d post(s) across %d account(s).', $scheduled, $total)
-                : sprintf('Published %d/%d account(s).', $success, $total);
-
-            if ($failed > 0) {
-                $message .= sprintf(' %d failed.', $failed);
-            }
-
-            return back()
-                ->with('success', $message)
-                ->with('larapost_results', $results);
+            return $this->redirectWithResults($results, $entries->count());
+        } catch (ValidationException $exception) {
+            throw $exception;
         } catch (\Throwable $exception) {
             return back()
                 ->withInput()
@@ -188,6 +203,105 @@ class DashboardController extends Controller
             $account->account_name,
             $account->is_active ? 'active' : 'inactive'
         ));
+    }
+
+    protected function resolveSelectedAccounts(array $accountIds): Collection
+    {
+        $ids = collect($accountIds)
+            ->map(static fn ($id): int => (int) $id)
+            ->filter(static fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        $accounts = SocialAccount::query()
+            ->active()
+            ->whereIn('id', $ids->all())
+            ->get();
+
+        if ($accounts->isEmpty()) {
+            throw ValidationException::withMessages([
+                'account_ids' => 'No active connected accounts matched the selected account list.',
+            ]);
+        }
+
+        return $accounts;
+    }
+
+    protected function resolvePlatforms(array $platforms, Collection $selectedAccounts): array
+    {
+        $normalized = collect($platforms)
+            ->map(static fn ($platform): string => strtolower(trim((string) $platform)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($normalized->isEmpty() && $selectedAccounts->isNotEmpty()) {
+            $normalized = $selectedAccounts->pluck('platform')->unique()->values();
+        }
+
+        if ($normalized->isEmpty()) {
+            throw ValidationException::withMessages([
+                'platforms' => 'Select at least one platform or one connected account.',
+            ]);
+        }
+
+        return $normalized->all();
+    }
+
+    protected function accountFilters(Collection $accounts): array
+    {
+        return $accounts
+            ->groupBy('platform')
+            ->map(fn (Collection $platformAccounts): array => $platformAccounts->pluck('id')->map(static fn ($id): int => (int) $id)->values()->all())
+            ->all();
+    }
+
+    protected function applyMediaToBuilder(PostBuilder $builder, string $mediaUrl, string $mediaType): void
+    {
+        $mediaUrl = trim($mediaUrl);
+
+        if ($mediaUrl === '') {
+            return;
+        }
+
+        if ($mediaType === 'video') {
+            $builder->video($mediaUrl);
+
+            return;
+        }
+
+        $builder->image($mediaUrl);
+    }
+
+    protected function parseSchedule(string $value): Carbon
+    {
+        return Carbon::createFromFormat('Y-m-d\TH:i', $value, config('app.timezone'));
+    }
+
+    protected function redirectWithResults(array $results, ?int $bulkRows): RedirectResponse
+    {
+        $total = count($results);
+        $scheduled = collect($results)->where('scheduled', true)->count();
+        $published = collect($results)->filter(fn (array $result): bool => ($result['success'] ?? false) === true && ($result['scheduled'] ?? false) !== true)->count();
+        $failed = max(0, $total - $scheduled - $published);
+
+        $message = $bulkRows !== null
+            ? sprintf('Bulk composer processed %d row(s): %d published, %d scheduled, %d failed.', $bulkRows, $published, $scheduled, $failed)
+            : ($scheduled > 0
+                ? sprintf('Scheduled %d post(s) across %d account(s).', $scheduled, $total)
+                : sprintf('Published %d/%d account(s).', $published, $total));
+
+        if ($bulkRows === null && $failed > 0) {
+            $message .= sprintf(' %d failed.', $failed);
+        }
+
+        return back()
+            ->with('success', $message)
+            ->with('larapost_results', $results);
     }
 
     protected function assertSupportedPlatform(string $platform): string

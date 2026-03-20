@@ -129,6 +129,10 @@ class SocialMediaManager
         $configured = (array) ($this->config['platforms'][$platform] ?? []);
         $stored = $this->databasePlatformConfig($platform);
 
+        if ($this->isMetaPlatform($platform)) {
+            $stored = array_replace($this->databasePlatformConfig($this->metaCompanionPlatform($platform)), $stored);
+        }
+
         $merged = array_replace($configured, $stored);
 
         return array_filter($merged, static fn ($value) => $value !== null && $value !== '');
@@ -167,5 +171,15 @@ class SocialMediaManager
         }
 
         return $this->hasPlatformCredentialTable;
+    }
+
+    protected function isMetaPlatform(string $platform): bool
+    {
+        return in_array($platform, ['facebook', 'instagram'], true);
+    }
+
+    protected function metaCompanionPlatform(string $platform): string
+    {
+        return $platform === 'facebook' ? 'instagram' : 'facebook';
     }
 }

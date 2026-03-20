@@ -36,6 +36,10 @@
         <div class="absolute top-28 -right-24 h-[26rem] w-[26rem] rounded-full bg-cyan-100 blur-3xl opacity-70"></div>
     </div>
 
+    @php
+        $dashboardTimezone = config('app.timezone', 'UTC');
+    @endphp
+
     <main class="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <header class="mb-6 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur">
             <div class="flex flex-wrap items-center justify-between gap-4">
@@ -44,7 +48,10 @@
                     <h1 class="mt-1 font-display text-3xl font-semibold text-slate-900">{{ config('larapost.ui.title', 'Social Publishing Control Panel') }}</h1>
                     <p class="mt-2 max-w-3xl text-sm text-slate-600">Connect providers, save OAuth app credentials, then publish or schedule content across the exact Pages and accounts you want.</p>
                 </div>
-                <a href="{{ route('larapost.dashboard') }}" class="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50">Refresh</a>
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">Timezone · {{ $dashboardTimezone }}</span>
+                    <a href="{{ route('larapost.dashboard') }}" class="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50">Refresh</a>
+                </div>
             </div>
         </header>
 
@@ -180,108 +187,275 @@
         </section>
 
         <div class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-            <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                @php
-                    $selectedPlatformValues = collect(old('platforms', []))->map(fn ($platform) => (string) $platform)->all();
-                    $selectedAccountValues = collect(old('account_ids', []))->map(fn ($id) => (string) $id)->all();
-                    $activeAccounts = $accounts->where('is_active', true)->groupBy('platform');
-                @endphp
+            <div class="space-y-6">
+                <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                    @php
+                        $selectedPlatformValues = collect(old('platforms', []))->map(fn ($platform) => (string) $platform)->all();
+                        $selectedAccountValues = collect(old('account_ids', []))->map(fn ($id) => (string) $id)->all();
+                        $activeAccountList = $accounts->where('is_active', true)->values();
+                        $activeAccounts = $activeAccountList->groupBy('platform');
+                        $bulkEntries = collect(old('entries', [[
+                            'account_id' => '',
+                            'content' => '',
+                            'media_url' => '',
+                            'media_type' => 'image',
+                            'schedule_for' => '',
+                        ]]))
+                            ->map(function ($entry): array {
+                                $entry = is_array($entry) ? $entry : [];
 
-                <h2 class="font-display text-2xl font-semibold text-slate-900">Publish / Schedule</h2>
-                <p class="mt-1 text-sm text-slate-600">Publish instantly or schedule for later. Leave account selection empty to target every active account on the chosen platforms.</p>
+                                return [
+                                    'account_id' => (string) ($entry['account_id'] ?? ''),
+                                    'content' => (string) ($entry['content'] ?? ''),
+                                    'media_url' => (string) ($entry['media_url'] ?? ''),
+                                    'media_type' => (string) ($entry['media_type'] ?? 'image'),
+                                    'schedule_for' => (string) ($entry['schedule_for'] ?? ''),
+                                ];
+                            })
+                            ->values();
 
-                <form method="POST" action="{{ route('larapost.publish') }}" class="mt-4 space-y-4">
-                    @csrf
-                    <div>
-                        <label for="content" class="mb-1 block text-sm font-medium text-slate-700">Content</label>
-                        <textarea id="content" name="content" required class="min-h-[140px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">{{ old('content') }}</textarea>
-                    </div>
+                        if ($bulkEntries->isEmpty()) {
+                            $bulkEntries = collect([[
+                                'account_id' => '',
+                                'content' => '',
+                                'media_url' => '',
+                                'media_type' => 'image',
+                                'schedule_for' => '',
+                            ]]);
+                        }
+                    @endphp
 
-                    <div>
-                        <label class="mb-2 block text-sm font-medium text-slate-700">Platforms</label>
-                        <div class="flex flex-wrap gap-2">
-                            @foreach ($platforms as $platform)
-                                @php
-                                    $label = match ($platform['key']) {
-                                        'twitter' => 'Twitter / X',
-                                        'linkedin' => 'LinkedIn',
-                                        default => ucfirst($platform['key']),
-                                    };
-                                @endphp
-                                <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                                    <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" data-platform-toggle="1" name="platforms[]" value="{{ $platform['key'] }}" {{ in_array($platform['key'], $selectedPlatformValues, true) ? 'checked' : '' }}>
-                                    {{ $label }}
-                                </label>
-                            @endforeach
+                    <h2 class="font-display text-2xl font-semibold text-slate-900">Publish / Schedule</h2>
+                    <p class="mt-1 text-sm text-slate-600">Publish instantly or schedule for later. Leave account selection empty to target every active account on the chosen platforms. All schedule times use {{ $dashboardTimezone }}.</p>
+
+                    <form method="POST" action="{{ route('larapost.publish') }}" class="mt-4 space-y-4">
+                        @csrf
+                        <div>
+                            <label for="content" class="mb-1 block text-sm font-medium text-slate-700">Content</label>
+                            <textarea id="content" name="content" required class="min-h-[140px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">{{ old('content') }}</textarea>
                         </div>
-                    </div>
 
-                    <div>
-                        <div class="mb-2 flex items-center justify-between gap-3">
-                            <label class="block text-sm font-medium text-slate-700">Specific Accounts (optional)</label>
-                            <span class="text-xs text-slate-500">Select exact Pages or accounts when you do not want to post to every active account on a platform.</span>
-                        </div>
-
-                        @if ($activeAccounts->isEmpty())
-                            <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
-                                Connect an account first. Once connected, it will appear here for targeted publishing and scheduling.
-                            </div>
-                        @else
-                            <div class="grid gap-3 md:grid-cols-2">
-                                @foreach ($activeAccounts as $platformKey => $platformAccounts)
-                                    <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                                        <div class="mb-3 flex items-center justify-between gap-2">
-                                            <h3 class="font-display text-lg font-semibold text-slate-900">
-                                                {{ $platformKey === 'twitter' ? 'Twitter / X' : ucfirst($platformKey) }}
-                                            </h3>
-                                            <span class="rounded-full border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-600">{{ $platformAccounts->count() }} active</span>
-                                        </div>
-                                        <div class="space-y-2">
-                                            @foreach ($platformAccounts as $account)
-                                                <label class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
-                                                    <input
-                                                        type="checkbox"
-                                                        class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                                                        data-account-platform="{{ $platformKey }}"
-                                                        name="account_ids[]"
-                                                        value="{{ $account->id }}"
-                                                        {{ in_array((string) $account->id, $selectedAccountValues, true) ? 'checked' : '' }}
-                                                    >
-                                                    <span class="min-w-0 flex-1">
-                                                        <span class="block font-semibold text-slate-900">{{ $account->account_name }}</span>
-                                                        <span class="block text-xs text-slate-500">{{ $account->account_username ?: $account->account_id_on_platform }}</span>
-                                                    </span>
-                                                </label>
-                                            @endforeach
-                                        </div>
-                                    </div>
+                        <div>
+                            <label class="mb-2 block text-sm font-medium text-slate-700">Platforms</label>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach ($platforms as $platform)
+                                    @php
+                                        $label = match ($platform['key']) {
+                                            'twitter' => 'Twitter / X',
+                                            'linkedin' => 'LinkedIn',
+                                            default => ucfirst($platform['key']),
+                                        };
+                                    @endphp
+                                    <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                                        <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" data-platform-toggle="1" name="platforms[]" value="{{ $platform['key'] }}" {{ in_array($platform['key'], $selectedPlatformValues, true) ? 'checked' : '' }}>
+                                        {{ $label }}
+                                    </label>
                                 @endforeach
                             </div>
-                        @endif
-                    </div>
-
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <div>
-                            <label for="media_url" class="mb-1 block text-sm font-medium text-slate-700">Media URL (optional)</label>
-                            <input id="media_url" name="media_url" type="url" value="{{ old('media_url') }}" placeholder="https://cdn.example.com/image.jpg" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
                         </div>
+
                         <div>
-                            <label for="media_type" class="mb-1 block text-sm font-medium text-slate-700">Media Type</label>
-                            <select id="media_type" name="media_type" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
-                                <option value="image" {{ old('media_type', 'image') === 'image' ? 'selected' : '' }}>Image</option>
-                                <option value="video" {{ old('media_type') === 'video' ? 'selected' : '' }}>Video</option>
-                            </select>
+                            <div class="mb-2 flex items-center justify-between gap-3">
+                                <label class="block text-sm font-medium text-slate-700">Specific Accounts (optional)</label>
+                                <span class="text-xs text-slate-500">Select exact Pages or accounts when you do not want to post to every active account on a platform.</span>
+                            </div>
+
+                            @if ($activeAccounts->isEmpty())
+                                <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                                    Connect an account first. Once connected, it will appear here for targeted publishing and scheduling.
+                                </div>
+                            @else
+                                <div class="grid gap-3 md:grid-cols-2">
+                                    @foreach ($activeAccounts as $platformKey => $platformAccounts)
+                                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                                            <div class="mb-3 flex items-center justify-between gap-2">
+                                                <h3 class="font-display text-lg font-semibold text-slate-900">
+                                                    {{ $platformKey === 'twitter' ? 'Twitter / X' : ucfirst($platformKey) }}
+                                                </h3>
+                                                <span class="rounded-full border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-600">{{ $platformAccounts->count() }} active</span>
+                                            </div>
+                                            <div class="space-y-2">
+                                                @foreach ($platformAccounts as $account)
+                                                    <label class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
+                                                        <input
+                                                            type="checkbox"
+                                                            class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                                                            data-account-platform="{{ $platformKey }}"
+                                                            name="account_ids[]"
+                                                            value="{{ $account->id }}"
+                                                            {{ in_array((string) $account->id, $selectedAccountValues, true) ? 'checked' : '' }}
+                                                        >
+                                                        <span class="min-w-0 flex-1">
+                                                            <span class="block font-semibold text-slate-900">{{ $account->account_name }}</span>
+                                                            <span class="block text-xs text-slate-500">{{ $account->account_username ?: $account->account_id_on_platform }}</span>
+                                                        </span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="media_url" class="mb-1 block text-sm font-medium text-slate-700">Media URL (optional)</label>
+                                <input id="media_url" name="media_url" type="url" value="{{ old('media_url') }}" placeholder="https://cdn.example.com/image.jpg" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
+                            </div>
+                            <div>
+                                <label for="media_type" class="mb-1 block text-sm font-medium text-slate-700">Media Type</label>
+                                <select id="media_type" name="media_type" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
+                                    <option value="image" {{ old('media_type', 'image') === 'image' ? 'selected' : '' }}>Image</option>
+                                    <option value="video" {{ old('media_type') === 'video' ? 'selected' : '' }}>Video</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="schedule_for" class="mb-1 block text-sm font-medium text-slate-700">Schedule For (optional)</label>
+                            <input id="schedule_for" name="schedule_for" type="datetime-local" value="{{ old('schedule_for') }}" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
+                            <p class="mt-1 text-xs text-slate-500">This time is interpreted in {{ $dashboardTimezone }}.</p>
+                        </div>
+
+                        <button class="inline-flex rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600" type="submit">Publish / Schedule</button>
+                    </form>
+                </section>
+
+                <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                            <h2 class="font-display text-2xl font-semibold text-slate-900">Bulk Composer</h2>
+                            <p class="mt-1 max-w-3xl text-sm text-slate-600">Create multiple rows in one submit. Each row can target a different connected Page or account with its own content, media, and optional schedule in {{ $dashboardTimezone }}.</p>
+                        </div>
+                        <button type="button" data-bulk-add-row class="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50">Add Row</button>
                     </div>
 
-                    <div>
-                        <label for="schedule_for" class="mb-1 block text-sm font-medium text-slate-700">Schedule For (optional)</label>
-                        <input id="schedule_for" name="schedule_for" type="datetime-local" value="{{ old('schedule_for') }}" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
-                    </div>
+                    @if ($activeAccountList->isEmpty())
+                        <div class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                            Connect at least one active account to use the bulk composer.
+                        </div>
+                    @else
+                        <form method="POST" action="{{ route('larapost.publish.bulk') }}" class="mt-4 space-y-4">
+                            @csrf
+                            <div id="bulk-composer-rows" class="space-y-4">
+                                @foreach ($bulkEntries as $index => $entry)
+                                    <article class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4" data-bulk-row data-bulk-index="{{ $index }}">
+                                        <div class="mb-4 flex items-center justify-between gap-3">
+                                            <div>
+                                                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-brand-600" data-bulk-label>Row {{ $index + 1 }}</p>
+                                                <p class="mt-1 text-sm text-slate-500">Target one account with its own message.</p>
+                                            </div>
+                                            <button type="button" data-bulk-remove class="inline-flex items-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50">Remove</button>
+                                        </div>
 
-                    <button class="inline-flex rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600" type="submit">Publish / Schedule</button>
-                </form>
-            </section>
+                                        <div class="grid gap-4 md:grid-cols-2">
+                                            <div>
+                                                <label class="mb-1 block text-sm font-medium text-slate-700" for="bulk_account_{{ $index }}">Connected Account</label>
+                                                <select id="bulk_account_{{ $index }}" name="entries[{{ $index }}][account_id]" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
+                                                    <option value="">Select an account</option>
+                                                    @foreach ($activeAccountList as $account)
+                                                        @php
+                                                            $accountPlatformLabel = match ($account->platform) {
+                                                                'twitter' => 'Twitter / X',
+                                                                'linkedin' => 'LinkedIn',
+                                                                default => ucfirst($account->platform),
+                                                            };
+                                                        @endphp
+                                                        <option value="{{ $account->id }}" {{ $entry['account_id'] === (string) $account->id ? 'selected' : '' }}>{{ $accountPlatformLabel }} · {{ $account->account_name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="mb-1 block text-sm font-medium text-slate-700" for="bulk_schedule_{{ $index }}">Schedule For (optional)</label>
+                                                <input id="bulk_schedule_{{ $index }}" name="entries[{{ $index }}][schedule_for]" type="datetime-local" value="{{ $entry['schedule_for'] }}" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-4">
+                                            <label class="mb-1 block text-sm font-medium text-slate-700" for="bulk_content_{{ $index }}">Content</label>
+                                            <textarea id="bulk_content_{{ $index }}" name="entries[{{ $index }}][content]" required class="min-h-[140px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">{{ $entry['content'] }}</textarea>
+                                        </div>
+
+                                        <div class="mt-4 grid gap-4 md:grid-cols-[1fr_220px]">
+                                            <div>
+                                                <label class="mb-1 block text-sm font-medium text-slate-700" for="bulk_media_url_{{ $index }}">Media URL (optional)</label>
+                                                <input id="bulk_media_url_{{ $index }}" name="entries[{{ $index }}][media_url]" type="url" value="{{ $entry['media_url'] }}" placeholder="https://cdn.example.com/image.jpg" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
+                                            </div>
+                                            <div>
+                                                <label class="mb-1 block text-sm font-medium text-slate-700" for="bulk_media_type_{{ $index }}">Media Type</label>
+                                                <select id="bulk_media_type_{{ $index }}" name="entries[{{ $index }}][media_type]" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
+                                                    <option value="image" {{ $entry['media_type'] === 'video' ? '' : 'selected' }}>Image</option>
+                                                    <option value="video" {{ $entry['media_type'] === 'video' ? 'selected' : '' }}>Video</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </article>
+                                @endforeach
+                            </div>
+
+                            <template id="bulk-composer-template">
+                                <article class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4" data-bulk-row data-bulk-index="__INDEX__">
+                                    <div class="mb-4 flex items-center justify-between gap-3">
+                                        <div>
+                                            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-brand-600" data-bulk-label>Row __LABEL__</p>
+                                            <p class="mt-1 text-sm text-slate-500">Target one account with its own message.</p>
+                                        </div>
+                                        <button type="button" data-bulk-remove class="inline-flex items-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50">Remove</button>
+                                    </div>
+
+                                    <div class="grid gap-4 md:grid-cols-2">
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-slate-700" for="bulk_account___INDEX__">Connected Account</label>
+                                            <select id="bulk_account___INDEX__" name="entries[__INDEX__][account_id]" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
+                                                <option value="">Select an account</option>
+                                                @foreach ($activeAccountList as $account)
+                                                    @php
+                                                        $accountPlatformLabel = match ($account->platform) {
+                                                            'twitter' => 'Twitter / X',
+                                                            'linkedin' => 'LinkedIn',
+                                                            default => ucfirst($account->platform),
+                                                        };
+                                                    @endphp
+                                                    <option value="{{ $account->id }}">{{ $accountPlatformLabel }} · {{ $account->account_name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-slate-700" for="bulk_schedule___INDEX__">Schedule For (optional)</label>
+                                            <input id="bulk_schedule___INDEX__" name="entries[__INDEX__][schedule_for]" type="datetime-local" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4">
+                                        <label class="mb-1 block text-sm font-medium text-slate-700" for="bulk_content___INDEX__">Content</label>
+                                        <textarea id="bulk_content___INDEX__" name="entries[__INDEX__][content]" required class="min-h-[140px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"></textarea>
+                                    </div>
+
+                                    <div class="mt-4 grid gap-4 md:grid-cols-[1fr_220px]">
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-slate-700" for="bulk_media_url___INDEX__">Media URL (optional)</label>
+                                            <input id="bulk_media_url___INDEX__" name="entries[__INDEX__][media_url]" type="url" placeholder="https://cdn.example.com/image.jpg" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
+                                        </div>
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-slate-700" for="bulk_media_type___INDEX__">Media Type</label>
+                                            <select id="bulk_media_type___INDEX__" name="entries[__INDEX__][media_type]" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
+                                                <option value="image" selected>Image</option>
+                                                <option value="video">Video</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </article>
+                            </template>
+
+                            <div class="flex flex-wrap items-center gap-3">
+                                <button type="button" data-bulk-add-row class="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50">Add Row</button>
+                                <button class="inline-flex rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600" type="submit">Publish / Schedule All Rows</button>
+                            </div>
+                        </form>
+                    @endif
+                </section>
+            </div>
 
             <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <h2 class="font-display text-2xl font-semibold text-slate-900">Connected Accounts</h2>
@@ -325,7 +499,12 @@
         </div>
 
         <section class="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <h2 class="font-display text-2xl font-semibold text-slate-900">Recent Posts</h2>
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h2 class="font-display text-2xl font-semibold text-slate-900">Recent Posts</h2>
+                    <p class="mt-1 text-sm text-slate-600">Times below are shown in {{ $dashboardTimezone }}.</p>
+                </div>
+            </div>
             <div class="mt-4 overflow-x-auto">
                 <table class="min-w-full divide-y divide-slate-200 text-sm">
                     <thead>
@@ -355,9 +534,9 @@
                             </td>
                             <td class="py-2 pr-3 text-xs text-slate-600">
                                 @if ($post->scheduled_for)
-                                    Scheduled: {{ $post->scheduled_for->format('Y-m-d H:i') }}<br>
+                                    Scheduled: {{ $post->scheduled_for->timezone($dashboardTimezone)->format('Y-m-d H:i') }}<br>
                                 @endif
-                                Created: {{ $post->created_at?->format('Y-m-d H:i') }}
+                                Created: {{ $post->created_at?->timezone($dashboardTimezone)->format('Y-m-d H:i') }}
                             </td>
                             <td class="py-2">{{ \Illuminate\Support\Str::limit($post->content, 120) }}</td>
                         </tr>
@@ -378,6 +557,13 @@
             var copyButtons = document.querySelectorAll('[data-copy-target]');
             var platformInputs = document.querySelectorAll('[data-platform-toggle]');
             var accountInputs = document.querySelectorAll('[data-account-platform]');
+            var bulkRows = document.getElementById('bulk-composer-rows');
+            var bulkTemplate = document.getElementById('bulk-composer-template');
+            var bulkAddButtons = document.querySelectorAll('[data-bulk-add-row]');
+            var bulkRowIndex = bulkRows ? Array.prototype.reduce.call(bulkRows.querySelectorAll('[data-bulk-row]'), function (highest, row) {
+                var value = parseInt(row.getAttribute('data-bulk-index') || '-1', 10);
+                return Math.max(highest, isNaN(value) ? -1 : value);
+            }, -1) + 1 : 0;
 
             function popupFeatures(width, height) {
                 var left = Math.max(0, Math.round((window.screen.width - width) / 2));
@@ -387,6 +573,28 @@
 
             function platformInputFor(platform) {
                 return document.querySelector('[data-platform-toggle][value="' + platform + '"]');
+            }
+
+            function syncBulkComposer() {
+                if (!bulkRows) {
+                    return;
+                }
+
+                var rows = bulkRows.querySelectorAll('[data-bulk-row]');
+                var removable = rows.length > 1;
+
+                rows.forEach(function (row, index) {
+                    var label = row.querySelector('[data-bulk-label]');
+                    var removeButton = row.querySelector('[data-bulk-remove]');
+
+                    if (label) {
+                        label.textContent = 'Row ' + (index + 1);
+                    }
+
+                    if (removeButton) {
+                        removeButton.hidden = !removable;
+                    }
+                });
             }
 
             copyButtons.forEach(function (button) {
@@ -467,6 +675,45 @@
                     }
                 });
             });
+
+            if (bulkRows && bulkTemplate) {
+                bulkAddButtons.forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        var nextIndex = bulkRowIndex++;
+                        var nextLabel = bulkRows.querySelectorAll('[data-bulk-row]').length + 1;
+                        var html = bulkTemplate.innerHTML
+                            .replace(/__INDEX__/g, String(nextIndex))
+                            .replace(/__LABEL__/g, String(nextLabel))
+                            .trim();
+
+                        bulkRows.insertAdjacentHTML('beforeend', html);
+                        syncBulkComposer();
+                    });
+                });
+
+                bulkRows.addEventListener('click', function (event) {
+                    var button = event.target.closest('[data-bulk-remove]');
+
+                    if (!button) {
+                        return;
+                    }
+
+                    var row = button.closest('[data-bulk-row]');
+
+                    if (!row) {
+                        return;
+                    }
+
+                    if (bulkRows.querySelectorAll('[data-bulk-row]').length === 1) {
+                        return;
+                    }
+
+                    row.remove();
+                    syncBulkComposer();
+                });
+
+                syncBulkComposer();
+            }
 
             window.addEventListener('message', function (event) {
                 if (event.origin !== window.location.origin) {
