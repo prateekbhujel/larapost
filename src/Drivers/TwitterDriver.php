@@ -81,14 +81,19 @@ class TwitterDriver extends AbstractDriver
         }
 
         $client = new Client(['timeout' => 30]);
-
-        $tokenData = $this->requestToken($client, [
+        $tokenParams = [
             'grant_type' => 'authorization_code',
             'code' => $code,
             'redirect_uri' => $redirectUri,
             'code_verifier' => $codeVerifier,
             'client_id' => $this->configValue('client_id'),
-        ]);
+        ];
+
+        $tokenData = $this->requestToken($client, $tokenParams);
+
+        if (function_exists('session')) {
+            session()->forget(['twitter_code_verifier', 'twitter_oauth_state']);
+        }
 
         $accessToken = $tokenData['access_token'] ?? null;
 
@@ -143,9 +148,7 @@ class TwitterDriver extends AbstractDriver
 
     protected function requestToken(Client $client, array $params): array
     {
-        $response = $client->post('https://api.twitter.com/2/oauth2/token', [
-            'form_params' => $params,
-        ]);
+        $response = $client->post('https://api.twitter.com/2/oauth2/token', $this->tokenRequestOptions($params));
 
         $contents = (string) $response->getBody();
         $decoded = json_decode($contents, true);
@@ -159,6 +162,24 @@ class TwitterDriver extends AbstractDriver
         }
 
         return $decoded;
+    }
+
+    protected function tokenRequestOptions(array $params): array
+    {
+        $clientSecret = $this->config['client_secret'] ?? null;
+        $options = [
+            'form_params' => $params,
+        ];
+
+        if (is_string($clientSecret) && $clientSecret !== '') {
+            unset($options['form_params']['client_id']);
+            $options['auth'] = [
+                $this->configValue('client_id'),
+                $clientSecret,
+            ];
+        }
+
+        return $options;
     }
 
     protected function codeVerifier(): string

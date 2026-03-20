@@ -27,6 +27,8 @@ class OAuthController extends Controller
 
             return redirect()->away($driver->getAuthorizationUrl($callbackUrl));
         } catch (\Throwable $exception) {
+            report($exception);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Failed to initiate OAuth flow.',
@@ -101,6 +103,8 @@ class OAuthController extends Controller
                 ->route('larapost.dashboard')
                 ->with('success', $message);
         } catch (\Throwable $exception) {
+            report($exception);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Account connection failed.',

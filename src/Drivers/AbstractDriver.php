@@ -85,4 +85,23 @@ abstract class AbstractDriver implements SocialDriverInterface
     {
         return is_array($account->credentials) ? $account->credentials : [];
     }
+
+    protected function normalizeMetaApiVersion(mixed $value, string $default = 'v20.0'): string
+    {
+        $version = trim((string) ($value ?? ''));
+
+        if ($version === '') {
+            return $default;
+        }
+
+        if (preg_match('/^v\d+(?:\.\d+)?$/i', $version) === 1) {
+            return strtolower($version);
+        }
+
+        if (preg_match('/^\d+(?:\.\d+)?$/', $version) === 1) {
+            return 'v' . (str_contains($version, '.') ? $version : $version . '.0');
+        }
+
+        return $default;
+    }
 }
