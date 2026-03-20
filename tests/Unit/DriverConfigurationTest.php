@@ -23,6 +23,25 @@ class DriverConfigurationTest extends TestCase
         $this->assertStringContainsString('https://www.facebook.com/v25.0/dialog/oauth?', $url);
     }
 
+    public function test_facebook_driver_prefers_page_access_token_for_page_posts(): void
+    {
+        $driver = new InspectableFacebookDriver([
+            'app_id' => 'app-id',
+            'app_secret' => 'app-secret',
+        ]);
+
+        $token = $driver->exposedPageAccessToken([
+            'access_token' => 'user-token',
+            'page_id' => 'page-2',
+            'pages' => [
+                ['id' => 'page-1', 'access_token' => 'page-token-1'],
+                ['id' => 'page-2', 'access_token' => 'page-token-2'],
+            ],
+        ]);
+
+        $this->assertSame('page-token-2', $token);
+    }
+
     public function test_instagram_driver_normalizes_numeric_api_versions(): void
     {
         $driver = new InstagramDriver([
@@ -106,5 +125,13 @@ class InspectableTwitterDriver extends TwitterDriver
     public function exposedTokenRequestOptions(array $params): array
     {
         return $this->tokenRequestOptions($params);
+    }
+}
+
+class InspectableFacebookDriver extends FacebookDriver
+{
+    public function exposedPageAccessToken(array $credentials): string
+    {
+        return $this->pageAccessToken($credentials);
     }
 }

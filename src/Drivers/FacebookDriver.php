@@ -24,7 +24,7 @@ class FacebookDriver extends AbstractDriver
     {
         $credentials = $this->credentials($account);
         $pageId = $this->credentialValue($credentials, 'page_id');
-        $accessToken = $this->credentialValue($credentials, 'access_token');
+        $accessToken = $this->pageAccessToken($credentials);
 
         $form = [
             'access_token' => $accessToken,
@@ -100,6 +100,7 @@ class FacebookDriver extends AbstractDriver
 
         return [
             'access_token' => $accessToken,
+            'page_access_token' => $pages[0]['access_token'] ?? null,
             'page_id' => $pages[0]['id'] ?? null,
             'pages' => $pages,
         ];
@@ -131,5 +132,34 @@ class FacebookDriver extends AbstractDriver
         } catch (SocialSyncException) {
             return false;
         }
+    }
+
+    protected function pageAccessToken(array $credentials): string
+    {
+        $pageAccessToken = $credentials['page_access_token'] ?? null;
+
+        if (is_string($pageAccessToken) && $pageAccessToken !== '') {
+            return $pageAccessToken;
+        }
+
+        $pageId = (string) ($credentials['page_id'] ?? '');
+        $pages = $credentials['pages'] ?? [];
+
+        if (is_array($pages)) {
+            foreach ($pages as $page) {
+                if (!is_array($page)) {
+                    continue;
+                }
+
+                $matchesSelectedPage = $pageId === '' || (string) ($page['id'] ?? '') === $pageId;
+                $token = $page['access_token'] ?? null;
+
+                if ($matchesSelectedPage && is_string($token) && $token !== '') {
+                    return $token;
+                }
+            }
+        }
+
+        return (string) $this->credentialValue($credentials, 'access_token');
     }
 }
