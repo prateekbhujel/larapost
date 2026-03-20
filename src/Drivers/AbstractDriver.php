@@ -104,4 +104,121 @@ abstract class AbstractDriver implements SocialDriverInterface
 
         return $default;
     }
+
+    protected function rememberOauthContext(string $platform, string $state, array $payload, int $ttlSeconds = 600): void
+    {
+        if ($state === '') {
+            return;
+        }
+
+        if (function_exists('cache')) {
+            try {
+                cache()->put(
+                    $this->oauthContextCacheKey($platform, $state),
+                    $payload,
+                    new \DateTimeImmutable(sprintf('+%d seconds', $ttlSeconds))
+                );
+            } catch (Throwable) {
+                // Cache is a resilience layer; session fallback still supports the flow.
+            }
+        }
+
+        $this->storeSessionValues([
+            $this->oauthContextSessionKey($platform, $state) => $payload,
+        ]);
+    }
+
+    protected function pullOauthContext(string $platform, string $state): array
+    {
+        if ($state === '') {
+            return [];
+        }
+
+        $cacheKey = $this->oauthContextCacheKey($platform, $state);
+
+        if (function_exists('cache')) {
+            try {
+                $cached = cache()->get($cacheKey, []);
+                cache()->forget($cacheKey);
+
+                if (is_array($cached) && $cached !== []) {
+                    return $cached;
+                }
+            } catch (Throwable) {
+                // Ignore cache failures and fall back to session storage.
+            }
+        }
+
+        $sessionKey = $this->oauthContextSessionKey($platform, $state);
+        $stored = $this->sessionValue($sessionKey, []);
+        $this->forgetSessionValues([$sessionKey]);
+
+        return is_array($stored) ? $stored : [];
+    }
+
+    protected function requestInput(string $key, string $default = ''): string
+    {
+        if (!function_exists('request')) {
+            return $default;
+        }
+
+        try {
+            return (string) request()->input($key, $default);
+        } catch (Throwable) {
+            return $default;
+        }
+    }
+
+    protected function storeSessionValues(array $values): void
+    {
+        if (!function_exists('session')) {
+            return;
+        }
+
+        try {
+            session($values);
+        } catch (Throwable) {
+            // Session storage is optional in tests and CLI contexts.
+        }
+    }
+
+    protected function sessionValue(string $key, mixed $default = null): mixed
+    {
+        if (!function_exists('session')) {
+            return $default;
+        }
+
+        try {
+            return session($key, $default);
+        } catch (Throwable) {
+            return $default;
+        }
+    }
+
+    protected function forgetSessionValues(array $keys): void
+    {
+        if (!function_exists('session')) {
+            return;
+        }
+
+        try {
+            $session = session();
+
+            if (is_object($session) && method_exists($session, 'forget')) {
+                $session->forget($keys);
+            }
+        } catch (Throwable) {
+            // Ignore session teardown failures outside HTTP runtime.
+        }
+    }
+
+    protected function oauthContextCacheKey(string $platform, string $state): string
+    {
+        return sprintf('larapost_oauth_%s_%s', strtolower($platform), $state);
+    }
+
+    protected function oauthContextSessionKey(string $platform, string $state): string
+    {
+        return sprintf('larapost_oauth_%s_%s', strtolower($platform), $state);
+    }
 }

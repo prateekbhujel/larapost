@@ -52,12 +52,15 @@ class TwitterDriver extends AbstractDriver
         $state = bin2hex(random_bytes(16));
         $codeVerifier = $this->codeVerifier();
 
-        if (function_exists('session')) {
-            session([
-                'twitter_oauth_state' => $state,
-                'twitter_code_verifier' => $codeVerifier,
-            ]);
-        }
+        $this->rememberOauthContext('twitter', $state, [
+            'state' => $state,
+            'code_verifier' => $codeVerifier,
+        ]);
+
+        $this->storeSessionValues([
+            'twitter_oauth_state' => $state,
+            'twitter_code_verifier' => $codeVerifier,
+        ]);
 
         $params = http_build_query([
             'response_type' => 'code',
@@ -74,7 +77,21 @@ class TwitterDriver extends AbstractDriver
 
     public function handleCallback(string $code, string $redirectUri): array
     {
-        $codeVerifier = function_exists('session') ? session('twitter_code_verifier') : null;
+        $returnedState = $this->requestInput('state');
+        $oauthContext = $this->pullOauthContext('twitter', $returnedState);
+        $expectedState = (string) ($oauthContext['state'] ?? $this->sessionValue('twitter_oauth_state', ''));
+
+        if ($returnedState !== '') {
+            if ($expectedState === '') {
+                throw new SocialSyncException('Missing Twitter OAuth state context. Start OAuth again.');
+            }
+
+            if (!hash_equals($expectedState, $returnedState)) {
+                throw new SocialSyncException('Twitter returned an invalid OAuth state. Start OAuth again.');
+            }
+        }
+
+        $codeVerifier = $oauthContext['code_verifier'] ?? $this->sessionValue('twitter_code_verifier');
 
         if (!$codeVerifier) {
             throw new SocialSyncException('Missing Twitter PKCE code verifier in session. Start OAuth again.');
@@ -91,9 +108,7 @@ class TwitterDriver extends AbstractDriver
 
         $tokenData = $this->requestToken($client, $tokenParams);
 
-        if (function_exists('session')) {
-            session()->forget(['twitter_code_verifier', 'twitter_oauth_state']);
-        }
+        $this->forgetSessionValues(['twitter_code_verifier', 'twitter_oauth_state']);
 
         $accessToken = $tokenData['access_token'] ?? null;
 

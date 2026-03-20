@@ -63,9 +63,13 @@ class LinkedInDriver extends AbstractDriver
     {
         $state = bin2hex(random_bytes(16));
 
-        if (function_exists('session')) {
-            session(['linkedin_oauth_state' => $state]);
-        }
+        $this->rememberOauthContext('linkedin', $state, [
+            'state' => $state,
+        ]);
+
+        $this->storeSessionValues([
+            'linkedin_oauth_state' => $state,
+        ]);
 
         $params = http_build_query([
             'response_type' => 'code',
@@ -80,6 +84,22 @@ class LinkedInDriver extends AbstractDriver
 
     public function handleCallback(string $code, string $redirectUri): array
     {
+        $returnedState = $this->requestInput('state');
+        $oauthContext = $this->pullOauthContext('linkedin', $returnedState);
+        $expectedState = (string) ($oauthContext['state'] ?? $this->sessionValue('linkedin_oauth_state', ''));
+
+        if ($returnedState !== '') {
+            if ($expectedState === '') {
+                throw new SocialSyncException('Missing LinkedIn OAuth state context. Start OAuth again.');
+            }
+
+            if (!hash_equals($expectedState, $returnedState)) {
+                throw new SocialSyncException('LinkedIn returned an invalid OAuth state. Start OAuth again.');
+            }
+        }
+
+        $this->forgetSessionValues(['linkedin_oauth_state']);
+
         $tokenData = $this->requestJson('POST', 'https://www.linkedin.com/oauth/v2/accessToken', [
             'form_params' => [
                 'grant_type' => 'authorization_code',

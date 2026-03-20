@@ -5,6 +5,7 @@ namespace SocialSync\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use SocialSync\Drivers\FacebookDriver;
 use SocialSync\Drivers\InstagramDriver;
+use SocialSync\Drivers\LinkedInDriver;
 use SocialSync\Drivers\TwitterDriver;
 
 class DriverConfigurationTest extends TestCase
@@ -68,6 +69,35 @@ class DriverConfigurationTest extends TestCase
 
         $this->assertArrayNotHasKey('auth', $options);
         $this->assertSame('client-id', $options['form_params']['client_id']);
+    }
+
+    public function test_twitter_driver_can_generate_authorization_url_without_laravel_context(): void
+    {
+        $driver = new TwitterDriver([
+            'client_id' => 'client-id',
+            'api_version' => '2',
+        ]);
+
+        $url = $driver->getAuthorizationUrl('https://example.com/callback');
+
+        $this->assertStringContainsString('https://twitter.com/i/oauth2/authorize?', $url);
+        $this->assertStringContainsString('client_id=client-id', $url);
+        $this->assertStringContainsString('code_challenge=', $url);
+        $this->assertStringContainsString('state=', $url);
+    }
+
+    public function test_linkedin_driver_can_generate_authorization_url_without_laravel_context(): void
+    {
+        $driver = new LinkedInDriver([
+            'client_id' => 'client-id',
+            'client_secret' => 'client-secret',
+        ]);
+
+        $url = $driver->getAuthorizationUrl('https://example.com/callback');
+
+        $this->assertStringContainsString('https://www.linkedin.com/oauth/v2/authorization?', $url);
+        $this->assertStringContainsString('client_id=client-id', $url);
+        $this->assertStringContainsString('state=', $url);
     }
 }
 
