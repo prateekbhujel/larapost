@@ -12,7 +12,7 @@ class FacebookDriver extends AbstractDriver
 
     public function __construct(array $config, ?Client $client = null)
     {
-        $this->apiVersion = $config['api_version'] ?? 'v20.0';
+        $this->apiVersion = $this->normalizeMetaApiVersion($config['api_version'] ?? null);
 
         parent::__construct($config, $client ?? new Client([
             'base_uri' => sprintf('https://graph.facebook.com/%s/', $this->apiVersion),
