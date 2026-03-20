@@ -76,6 +76,44 @@ class DashboardFlowTest extends TestCase
         $this->assertSame(ScheduledPost::STATUS_PUBLISHED, $post->status);
     }
 
+    public function test_it_publishes_only_to_selected_accounts_from_dashboard_form(): void
+    {
+        $firstAccount = SocialAccount::query()->create([
+            'platform' => 'facebook',
+            'account_name' => 'First Page',
+            'account_id_on_platform' => 'page-1',
+            'credentials' => [
+                'access_token' => 'token-1',
+                'page_id' => 'page-1',
+            ],
+            'is_active' => true,
+        ]);
+
+        SocialAccount::query()->create([
+            'platform' => 'facebook',
+            'account_name' => 'Second Page',
+            'account_id_on_platform' => 'page-2',
+            'credentials' => [
+                'access_token' => 'token-2',
+                'page_id' => 'page-2',
+            ],
+            'is_active' => true,
+        ]);
+
+        $response = $this->post('/larapost/publish', [
+            'content' => 'Selected account publish test',
+            'account_ids' => [$firstAccount->id],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $posts = ScheduledPost::query()->get();
+
+        $this->assertCount(1, $posts);
+        $this->assertSame($firstAccount->id, $posts->first()->account_id);
+    }
+
     public function test_connect_route_supports_popup_mode(): void
     {
         $response = $this->get('/larapost/connect/facebook?mode=popup');
@@ -100,6 +138,24 @@ class DashboardFlowTest extends TestCase
         $response->assertSee('larapost-oauth', false);
 
         $this->assertSame(1, SocialAccount::query()->count());
+    }
+
+    public function test_callback_syncs_all_facebook_pages_from_single_oauth_response(): void
+    {
+        $this->get('/larapost/connect/facebook?mode=popup');
+
+        $response = $this->get('/larapost/callback/facebook?code=multi-page');
+
+        $response->assertOk();
+        $response->assertSee('2 account(s) synced');
+
+        $accounts = SocialAccount::query()->orderBy('account_id_on_platform')->get();
+
+        $this->assertCount(2, $accounts);
+        $this->assertSame('Fake Page One', $accounts[0]->account_name);
+        $this->assertSame('Fake Page Two', $accounts[1]->account_name);
+        $this->assertSame('fake-page-1', $accounts[0]->credentials['page_id']);
+        $this->assertSame('fake-page-2', $accounts[1]->credentials['page_id']);
     }
 
     public function test_callback_popup_error_returns_popup_error_page(): void

@@ -65,31 +65,16 @@ class OAuthController extends Controller
             $driver = SocialMedia::driver($platform);
             $callbackUrl = route('larapost.callback', ['platform' => $platform]);
             $credentials = $driver->handleCallback($code, $callbackUrl);
-            $accountData = AccountDataResolver::fromCredentials($platform, $credentials);
-
-            $account = SocialAccount::query()->updateOrCreate(
-                [
-                    'platform' => $platform,
-                    'account_id_on_platform' => $accountData['id'],
-                ],
-                [
-                    'account_name' => $accountData['name'],
-                    'account_username' => $accountData['username'],
-                    'credentials' => $credentials,
-                    'metadata' => $accountData['metadata'] ?? [],
-                    'is_active' => true,
-                ]
-            );
+            $accounts = $this->persistConnectedAccounts($platform, $credentials);
+            $message = $this->connectionMessage($platform, $accounts);
 
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'Account connected successfully.',
+                    'message' => $message,
                     'platform' => $platform,
-                    'account_id' => $account->id,
+                    'account_ids' => $accounts->pluck('id')->all(),
                 ]);
             }
-
-            $message = sprintf('%s account "%s" connected successfully.', ucfirst($platform), $account->account_name);
 
             if ($popupMode) {
                 return response()->view('larapost::oauth-success', [
@@ -122,6 +107,47 @@ class OAuthController extends Controller
 
             return redirect()->route('larapost.dashboard')->with('error', $exception->getMessage());
         }
+    }
+
+    protected function persistConnectedAccounts(string $platform, array $credentials)
+    {
+        return collect(AccountDataResolver::accountsFromCredentials($platform, $credentials))
+            ->map(function (array $accountData) use ($platform, $credentials) {
+                $accountCredentials = is_array($accountData['credentials'] ?? null)
+                    ? $accountData['credentials']
+                    : $credentials;
+
+                return SocialAccount::query()->updateOrCreate(
+                    [
+                        'platform' => $platform,
+                        'account_id_on_platform' => $accountData['id'],
+                    ],
+                    [
+                        'account_name' => $accountData['name'],
+                        'account_username' => $accountData['username'],
+                        'credentials' => $accountCredentials,
+                        'metadata' => $accountData['metadata'] ?? [],
+                        'is_active' => true,
+                    ]
+                );
+            })
+            ->values();
+    }
+
+    protected function connectionMessage(string $platform, $accounts): string
+    {
+        if ($accounts->count() === 1) {
+            $account = $accounts->first();
+
+            return sprintf('%s account "%s" connected successfully.', ucfirst($platform), $account->account_name);
+        }
+
+        return sprintf(
+            '%s connected successfully. %d account(s) synced: %s.',
+            ucfirst($platform),
+            $accounts->count(),
+            $accounts->pluck('account_name')->implode(', ')
+        );
     }
 
     protected function isPopupModeRequest(Request $request): bool

@@ -15,6 +15,14 @@ class AccountDataResolver
         };
     }
 
+    public static function accountsFromCredentials(string $platform, array $credentials): array
+    {
+        return match ($platform) {
+            'facebook' => self::facebookAccounts($credentials),
+            default => [self::withCredentials(self::fromCredentials($platform, $credentials), $credentials)],
+        };
+    }
+
     protected static function facebook(array $credentials): array
     {
         $page = $credentials['pages'][0] ?? [];
@@ -70,6 +78,42 @@ class AccountDataResolver
             'username' => null,
             'metadata' => ['profile' => $profile],
         ];
+    }
+
+    protected static function facebookAccounts(array $credentials): array
+    {
+        $pages = array_values(array_filter($credentials['pages'] ?? [], static fn ($page): bool => is_array($page)));
+
+        if ($pages === []) {
+            return [self::withCredentials(self::facebook($credentials), $credentials)];
+        }
+
+        return array_map(function (array $page) use ($credentials): array {
+            $pageCredentials = $credentials;
+            $pageCredentials['page_id'] = (string) ($page['id'] ?? ($credentials['page_id'] ?? 'unknown'));
+
+            if (!empty($page['access_token'])) {
+                $pageCredentials['page_access_token'] = $page['access_token'];
+            }
+
+            return [
+                'id' => (string) ($page['id'] ?? 'unknown'),
+                'name' => $page['name'] ?? 'Facebook Page',
+                'username' => null,
+                'credentials' => $pageCredentials,
+                'metadata' => [
+                    'pages' => $credentials['pages'] ?? [],
+                    'selected_page' => $page,
+                ],
+            ];
+        }, $pages);
+    }
+
+    protected static function withCredentials(array $accountData, array $credentials): array
+    {
+        $accountData['credentials'] = $credentials;
+
+        return $accountData;
     }
 
     protected static function fallback(string $platform): array

@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use SocialSync\Facades\SocialMedia;
 use SocialSync\Models\PlatformCredential;
@@ -81,17 +82,58 @@ class DashboardController extends Controller
     {
         $validated = $request->validate([
             'content' => ['required', 'string', 'max:5000'],
-            'platforms' => ['required', 'array', 'min:1'],
+            'platforms' => ['nullable', 'array'],
             'platforms.*' => ['required', Rule::in(SocialMedia::supportedPlatforms())],
+            'account_ids' => ['nullable', 'array'],
+            'account_ids.*' => ['required', 'integer', Rule::exists('social_accounts', 'id')],
             'media_url' => ['nullable', 'url', 'max:2048'],
             'media_type' => ['nullable', Rule::in(['image', 'video'])],
             'schedule_for' => ['nullable', 'date_format:Y-m-d\TH:i'],
         ]);
 
         try {
+            $selectedAccounts = SocialAccount::query()
+                ->active()
+                ->when(
+                    !empty($validated['account_ids']),
+                    fn ($query) => $query->whereIn('id', array_map('intval', $validated['account_ids']))
+                )
+                ->get();
+
+            if (!empty($validated['account_ids']) && $selectedAccounts->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'account_ids' => 'No active connected accounts matched the selected account list.',
+                ]);
+            }
+
+            $platforms = collect($validated['platforms'] ?? [])
+                ->map(static fn ($platform) => strtolower(trim((string) $platform)))
+                ->filter()
+                ->unique()
+                ->values();
+
+            if ($platforms->isEmpty() && $selectedAccounts->isNotEmpty()) {
+                $platforms = $selectedAccounts->pluck('platform')->unique()->values();
+            }
+
+            if ($platforms->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'platforms' => 'Select at least one platform or one connected account.',
+                ]);
+            }
+
             $builder = SocialMedia::post()
                 ->content($validated['content'])
-                ->platforms($validated['platforms']);
+                ->platforms($platforms->all());
+
+            if ($selectedAccounts->isNotEmpty()) {
+                $builder->accounts(
+                    $selectedAccounts
+                        ->groupBy('platform')
+                        ->map(fn ($accounts) => $accounts->pluck('id')->map(static fn ($id) => (int) $id)->values()->all())
+                        ->all()
+                );
+            }
 
             $mediaUrl = trim((string) ($validated['media_url'] ?? ''));
             if ($mediaUrl !== '') {

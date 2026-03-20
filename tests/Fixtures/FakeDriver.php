@@ -33,11 +33,34 @@ class FakeDriver implements SocialDriverInterface
 
     public function handleCallback(string $code, string $redirectUri): array
     {
+        if ($code === 'multi-page') {
+            return [
+                'access_token' => 'fake-token',
+                'page_id' => 'fake-page-1',
+                'pages' => [
+                    ['id' => 'fake-page-1', 'name' => 'Fake Page One', 'access_token' => 'page-token-1'],
+                    ['id' => 'fake-page-2', 'name' => 'Fake Page Two', 'access_token' => 'page-token-2'],
+                ],
+                'user' => [
+                    'id' => '123',
+                    'name' => 'Fake User',
+                    'username' => 'fake-user',
+                ],
+                'profile' => [
+                    'id' => 'profile-1',
+                    'localizedFirstName' => 'Fake',
+                    'localizedLastName' => 'User',
+                ],
+                'person_urn' => 'urn:li:person:profile-1',
+                'instagram_business_account_id' => 'ig-1',
+            ];
+        }
+
         return [
             'access_token' => 'fake-token',
             'page_id' => 'fake-page-id',
             'pages' => [
-                ['id' => 'fake-page-id', 'name' => 'Fake Page'],
+                ['id' => 'fake-page-id', 'name' => 'Fake Page', 'access_token' => 'fake-page-token'],
             ],
             'user' => [
                 'id' => '123',

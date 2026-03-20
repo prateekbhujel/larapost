@@ -42,7 +42,7 @@
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600">LaraPost</p>
                     <h1 class="mt-1 font-display text-3xl font-semibold text-slate-900">{{ config('larapost.ui.title', 'Social Publishing Control Panel') }}</h1>
-                    <p class="mt-2 max-w-3xl text-sm text-slate-600">Connect providers, save OAuth app credentials, and publish or schedule posts from one dashboard.</p>
+                    <p class="mt-2 max-w-3xl text-sm text-slate-600">Connect providers, save OAuth app credentials, then publish or schedule content across the exact Pages and accounts you want.</p>
                 </div>
                 <a href="{{ route('larapost.dashboard') }}" class="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50">Refresh</a>
             </div>
@@ -133,6 +133,8 @@
 
                         @if (! $platform['configured'])
                             <p class="mt-2 text-xs text-slate-500">Save credentials below, then click Login with {{ $platformLabel }}.</p>
+                        @else
+                            <p class="mt-2 text-xs text-slate-500">Connect again anytime to sync newly granted Pages or accounts.</p>
                         @endif
 
                         <div class="mt-3 rounded-xl border border-slate-200 bg-white p-3">
@@ -179,8 +181,14 @@
 
         <div class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
             <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                @php
+                    $selectedPlatformValues = collect(old('platforms', []))->map(fn ($platform) => (string) $platform)->all();
+                    $selectedAccountValues = collect(old('account_ids', []))->map(fn ($id) => (string) $id)->all();
+                    $activeAccounts = $accounts->where('is_active', true)->groupBy('platform');
+                @endphp
+
                 <h2 class="font-display text-2xl font-semibold text-slate-900">Publish / Schedule</h2>
-                <p class="mt-1 text-sm text-slate-600">Publish instantly or schedule for later.</p>
+                <p class="mt-1 text-sm text-slate-600">Publish instantly or schedule for later. Leave account selection empty to target every active account on the chosen platforms.</p>
 
                 <form method="POST" action="{{ route('larapost.publish') }}" class="mt-4 space-y-4">
                     @csrf
@@ -201,11 +209,55 @@
                                     };
                                 @endphp
                                 <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                                    <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" name="platforms[]" value="{{ $platform['key'] }}" {{ in_array($platform['key'], old('platforms', []), true) ? 'checked' : '' }}>
+                                    <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" data-platform-toggle="1" name="platforms[]" value="{{ $platform['key'] }}" {{ in_array($platform['key'], $selectedPlatformValues, true) ? 'checked' : '' }}>
                                     {{ $label }}
                                 </label>
                             @endforeach
                         </div>
+                    </div>
+
+                    <div>
+                        <div class="mb-2 flex items-center justify-between gap-3">
+                            <label class="block text-sm font-medium text-slate-700">Specific Accounts (optional)</label>
+                            <span class="text-xs text-slate-500">Select exact Pages or accounts when you do not want to post to every active account on a platform.</span>
+                        </div>
+
+                        @if ($activeAccounts->isEmpty())
+                            <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                                Connect an account first. Once connected, it will appear here for targeted publishing and scheduling.
+                            </div>
+                        @else
+                            <div class="grid gap-3 md:grid-cols-2">
+                                @foreach ($activeAccounts as $platformKey => $platformAccounts)
+                                    <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                                        <div class="mb-3 flex items-center justify-between gap-2">
+                                            <h3 class="font-display text-lg font-semibold text-slate-900">
+                                                {{ $platformKey === 'twitter' ? 'Twitter / X' : ucfirst($platformKey) }}
+                                            </h3>
+                                            <span class="rounded-full border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-600">{{ $platformAccounts->count() }} active</span>
+                                        </div>
+                                        <div class="space-y-2">
+                                            @foreach ($platformAccounts as $account)
+                                                <label class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
+                                                    <input
+                                                        type="checkbox"
+                                                        class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                                                        data-account-platform="{{ $platformKey }}"
+                                                        name="account_ids[]"
+                                                        value="{{ $account->id }}"
+                                                        {{ in_array((string) $account->id, $selectedAccountValues, true) ? 'checked' : '' }}
+                                                    >
+                                                    <span class="min-w-0 flex-1">
+                                                        <span class="block font-semibold text-slate-900">{{ $account->account_name }}</span>
+                                                        <span class="block text-xs text-slate-500">{{ $account->account_username ?: $account->account_id_on_platform }}</span>
+                                                    </span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-2">
@@ -324,11 +376,17 @@
         (function () {
             var links = document.querySelectorAll('[data-larapost-oauth-popup="1"]');
             var copyButtons = document.querySelectorAll('[data-copy-target]');
+            var platformInputs = document.querySelectorAll('[data-platform-toggle]');
+            var accountInputs = document.querySelectorAll('[data-account-platform]');
 
             function popupFeatures(width, height) {
                 var left = Math.max(0, Math.round((window.screen.width - width) / 2));
                 var top = Math.max(0, Math.round((window.screen.height - height) / 2));
                 return 'popup=yes,width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',resizable=yes,scrollbars=yes';
+            }
+
+            function platformInputFor(platform) {
+                return document.querySelector('[data-platform-toggle][value="' + platform + '"]');
             }
 
             copyButtons.forEach(function (button) {
@@ -378,6 +436,35 @@
                     }
 
                     popup.focus();
+                });
+            });
+
+            platformInputs.forEach(function (input) {
+                input.addEventListener('change', function () {
+                    if (input.checked) {
+                        return;
+                    }
+
+                    accountInputs.forEach(function (accountInput) {
+                        if (accountInput.getAttribute('data-account-platform') === input.value) {
+                            accountInput.checked = false;
+                        }
+                    });
+                });
+            });
+
+            accountInputs.forEach(function (input) {
+                input.addEventListener('change', function () {
+                    if (!input.checked) {
+                        return;
+                    }
+
+                    var platform = input.getAttribute('data-account-platform');
+                    var platformInput = platformInputFor(platform);
+
+                    if (platformInput) {
+                        platformInput.checked = true;
+                    }
                 });
             });
 
