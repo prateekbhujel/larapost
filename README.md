@@ -10,7 +10,7 @@
 
 LaraPost is a Laravel package for publishing and scheduling content to Facebook Pages, Twitter / X, and LinkedIn from one API and one dashboard.
 
-`v1.0.0` is the first stable release. The package scope is intentionally narrow and honest: Facebook Pages are supported, Facebook personal profiles are not, Instagram is not part of the stable surface, and each provider keeps its own platform constraints.
+`v1.0.0` is the first stable release. The package scope is intentionally narrow and honest: Facebook Pages are supported, Facebook personal profiles are not, and each provider keeps its own platform constraints.
 
 ## What Ships In v1.0.0
 
@@ -30,7 +30,7 @@ LaraPost is a Laravel package for publishing and scheduling content to Facebook 
 | Facebook | OAuth to Facebook login | Page posts with text, image URL, and video URL | Facebook Pages only. Personal profile posting is not supported. |
 | Twitter / X | OAuth 2.0 | Text posts | Your X app still needs write access plus billing or credits. The dashboard does not upload media to X. |
 | LinkedIn | OAuth 2.0 | Member profile text posts | LinkedIn organization pages are not supported. Image upload expects a readable local file path when used programmatically. |
-| Instagram | Not included | Not included | Removed from the stable release because the end-to-end publish flow is not reliable enough yet. |
+
 
 ## Installation
 

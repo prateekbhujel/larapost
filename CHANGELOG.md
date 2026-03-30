@@ -18,7 +18,7 @@ All notable changes to LaraPost are documented in this file.
 ### Changed
 
 - Stable support surface is now explicitly limited to Facebook Pages, Twitter / X, and LinkedIn member profiles
-- Instagram has been removed from the published stable scope and docs
+- Legacy unsupported provider references have been removed from the published docs and release copy
 - Dashboard copy now reflects provider-specific limits instead of promising unsupported flows
 - Package metadata now targets the `v1.0.0` stable release line
 

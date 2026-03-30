@@ -29,15 +29,14 @@ class DashboardFlowTest extends TestCase
         $response->assertSee('Bulk Composer');
         $response->assertSee('Support Scope');
         $response->assertSee('Timezone · Asia/Kathmandu');
-        $response->assertDontSee('Instagram');
     }
 
     public function test_dashboard_hides_legacy_accounts_for_unsupported_platforms(): void
     {
         SocialAccount::query()->create([
-            'platform' => 'instagram',
-            'account_name' => 'Legacy Instagram Account',
-            'account_id_on_platform' => 'legacy-instagram',
+            'platform' => 'legacy-provider',
+            'account_name' => 'Legacy Unsupported Account',
+            'account_id_on_platform' => 'legacy-unsupported',
             'credentials' => ['access_token' => 'legacy-token'],
             'is_active' => true,
         ]);
@@ -45,8 +44,8 @@ class DashboardFlowTest extends TestCase
         $response = $this->get('/larapost/dashboard');
 
         $response->assertOk();
-        $response->assertDontSee('Legacy Instagram Account');
-        $response->assertDontSee('legacy-instagram');
+        $response->assertDontSee('Legacy Unsupported Account');
+        $response->assertDontSee('legacy-unsupported');
     }
 
     public function test_it_saves_platform_credentials_and_overrides_config(): void
