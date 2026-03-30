@@ -10,9 +10,9 @@
 
 LaraPost is a Laravel package for publishing and scheduling content to Facebook Pages, Twitter / X, and LinkedIn from one API and one dashboard.
 
-`v1.0.0` is the first stable release. The package scope is intentionally narrow and honest: Facebook Pages are supported, Facebook personal profiles are not, and each provider keeps its own platform constraints.
+LaraPost supports publishing and scheduling for Facebook Pages, Twitter / X, and LinkedIn from one Laravel API and dashboard.
 
-## What Ships In v1.0.0
+## Features
 
 - One fluent API via `SocialSync\Facades\SocialMedia`
 - Built-in dashboard at `/larapost/dashboard`

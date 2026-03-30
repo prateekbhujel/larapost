@@ -27,7 +27,7 @@ class DashboardFlowTest extends TestCase
         $response->assertSee('LaraPost Dashboard');
         $response->assertSee('Provider Connection');
         $response->assertSee('Bulk Composer');
-        $response->assertSee('Support Scope');
+        $response->assertSee('Connected Platforms');
         $response->assertSee('Timezone · Asia/Kathmandu');
     }
 

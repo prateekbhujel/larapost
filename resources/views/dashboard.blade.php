@@ -56,25 +56,22 @@
         </header>
 
         <section class="mb-6 rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-sm backdrop-blur sm:p-6">
-            <div class="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600">Support Scope</p>
-                    <h2 class="mt-1 font-display text-2xl font-semibold text-slate-900">What this dashboard supports in v1.0.0</h2>
-                </div>
-                <span class="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">Honest shipping surface</span>
+            <div>
+                <h2 class="font-display text-2xl font-semibold text-slate-900">Connected Platforms</h2>
+                <p class="mt-1 text-sm text-slate-600">Facebook Pages, Twitter / X, and LinkedIn.</p>
             </div>
             <div class="mt-4 grid gap-3 md:grid-cols-3">
                 <article class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                     <h3 class="font-display text-lg font-semibold text-slate-900">Facebook Pages</h3>
-                    <p class="mt-2 text-sm text-slate-600">Connect one Facebook login, sync multiple Pages, and publish or schedule Page posts. Personal profile posting is not part of this release.</p>
+                    <p class="mt-2 text-sm text-slate-600">Connect one Facebook login, sync multiple Pages, and publish or schedule Page posts. Personal profile posting is not supported.</p>
                 </article>
                 <article class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                     <h3 class="font-display text-lg font-semibold text-slate-900">Twitter / X</h3>
-                    <p class="mt-2 text-sm text-slate-600">OAuth and text publishing are supported. Posting still depends on your X developer app having the required write access and billing or credits.</p>
+                    <p class="mt-2 text-sm text-slate-600">OAuth and text publishing are supported. Your X developer app still needs write access and billing or credits.</p>
                 </article>
                 <article class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                     <h3 class="font-display text-lg font-semibold text-slate-900">LinkedIn Profiles</h3>
-                    <p class="mt-2 text-sm text-slate-600">OAuth and personal profile posting are supported. Organization pages and unsupported provider flows are intentionally not exposed here.</p>
+                    <p class="mt-2 text-sm text-slate-600">OAuth and personal profile posting are supported. Organization pages are not supported.</p>
                 </article>
             </div>
         </section>
