@@ -10,7 +10,7 @@ use SocialSync\Support\AccountDataResolver;
 
 class AddAccountCommand extends Command
 {
-    protected $signature = 'larapost:add-account {platform : facebook|instagram|twitter|linkedin}';
+    protected $signature = 'larapost:add-account {platform : facebook|twitter|linkedin}';
 
     protected $description = 'Connect a social account and store credentials securely.';
 

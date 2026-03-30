@@ -28,7 +28,6 @@ abstract class TestCase extends Orchestra
         $app['config']->set('larapost.default_platform', 'facebook');
         $app['config']->set('larapost.drivers', [
             'facebook' => FakeDriver::class,
-            'instagram' => FakeDriver::class,
             'twitter' => FakeDriver::class,
             'linkedin' => FakeDriver::class,
         ]);

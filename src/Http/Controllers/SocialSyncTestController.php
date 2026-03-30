@@ -28,7 +28,7 @@ class SocialSyncTestController extends Controller
         $validated = $request->validate([
             'content' => ['required', 'string', 'max:5000'],
             'platforms' => ['required', 'array', 'min:1'],
-            'platforms.*' => ['in:facebook,instagram,twitter,linkedin'],
+            'platforms.*' => ['in:facebook,twitter,linkedin'],
         ]);
 
         try {

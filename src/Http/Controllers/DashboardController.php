@@ -20,10 +20,22 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
-        $accounts = SocialAccount::query()->orderBy('platform')->orderBy('account_name')->get();
-        $recentPosts = ScheduledPost::query()->with('account')->latest()->limit(20)->get();
+        $supportedPlatforms = $this->supportedPlatforms();
 
-        $platforms = collect(SocialMedia::supportedPlatforms())
+        $accounts = SocialAccount::query()
+            ->whereIn('platform', $supportedPlatforms)
+            ->orderBy('platform')
+            ->orderBy('account_name')
+            ->get();
+
+        $recentPosts = ScheduledPost::query()
+            ->with('account')
+            ->whereHas('account', fn ($query) => $query->whereIn('platform', $supportedPlatforms))
+            ->latest()
+            ->limit(20)
+            ->get();
+
+        $platforms = collect($supportedPlatforms)
             ->map(fn (string $platform): array => $this->platformState($platform))
             ->values();
 
@@ -85,7 +97,7 @@ class DashboardController extends Controller
         $validated = $request->validate([
             'content' => ['required', 'string', 'max:5000'],
             'platforms' => ['nullable', 'array'],
-            'platforms.*' => ['required', Rule::in(SocialMedia::supportedPlatforms())],
+            'platforms.*' => ['required', Rule::in($this->supportedPlatforms())],
             'account_ids' => ['nullable', 'array'],
             'account_ids.*' => ['required', 'integer', Rule::exists('social_accounts', 'id')],
             'media_url' => ['nullable', 'url', 'max:2048'],
@@ -149,6 +161,7 @@ class DashboardController extends Controller
 
             $accounts = SocialAccount::query()
                 ->active()
+                ->whereIn('platform', $this->supportedPlatforms())
                 ->whereIn('id', $entries->pluck('account_id')->unique()->all())
                 ->get()
                 ->keyBy('id');
@@ -160,7 +173,7 @@ class DashboardController extends Controller
 
                 if (!$account) {
                     throw ValidationException::withMessages([
-                        sprintf('entries.%d.account_id', $index) => 'Selected account is missing or inactive.',
+                        sprintf('entries.%d.account_id', $index) => 'Selected account is missing, inactive, or no longer supported.',
                     ]);
                 }
 
@@ -193,6 +206,10 @@ class DashboardController extends Controller
 
     public function toggleAccount(SocialAccount $account): RedirectResponse
     {
+        if (!in_array($account->platform, $this->supportedPlatforms(), true)) {
+            abort(404, 'Unsupported platform.');
+        }
+
         $account->forceFill([
             'is_active' => !$account->is_active,
         ])->save();
@@ -219,6 +236,7 @@ class DashboardController extends Controller
 
         $accounts = SocialAccount::query()
             ->active()
+            ->whereIn('platform', $this->supportedPlatforms())
             ->whereIn('id', $ids->all())
             ->get();
 
@@ -308,7 +326,7 @@ class DashboardController extends Controller
     {
         $platform = strtolower($platform);
 
-        if (!in_array($platform, SocialMedia::supportedPlatforms(), true)) {
+        if (!in_array($platform, $this->supportedPlatforms(), true)) {
             abort(404, 'Unsupported platform.');
         }
 
@@ -321,7 +339,7 @@ class DashboardController extends Controller
     protected function platformFields(string $platform): array
     {
         return match ($platform) {
-            'facebook', 'instagram' => [
+            'facebook' => [
                 'app_id' => ['label' => 'App ID'],
                 'app_secret' => ['label' => 'App Secret'],
                 'api_version' => ['label' => 'API Version', 'max' => 64],
@@ -345,7 +363,7 @@ class DashboardController extends Controller
     protected function requiredFields(string $platform): array
     {
         return match ($platform) {
-            'facebook', 'instagram' => ['app_id', 'app_secret'],
+            'facebook' => ['app_id', 'app_secret'],
             'twitter', 'linkedin' => ['client_id', 'client_secret'],
             default => [],
         };
@@ -376,5 +394,13 @@ class DashboardController extends Controller
             'active_accounts' => SocialAccount::query()->active()->where('platform', $platform)->count(),
             'total_accounts' => SocialAccount::query()->where('platform', $platform)->count(),
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function supportedPlatforms(): array
+    {
+        return SocialMedia::supportedPlatforms();
     }
 }

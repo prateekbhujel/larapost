@@ -1,10 +1,10 @@
 @echo off
-REM Social Sync Package Setup Script for Windows
+REM LaraPost Package Setup Script for Windows
 REM This script creates the complete directory structure for the package
 
 echo.
 echo ========================================
-echo  Social Sync - Package Setup Script
+echo  LaraPost - Package Setup Script
 echo ========================================
 echo.
 
@@ -70,7 +70,6 @@ type nul > "%SRC_PATH%\Contracts\SocialDriverInterface.php"
 
 REM Drivers
 type nul > "%SRC_PATH%\Drivers\FacebookDriver.php"
-type nul > "%SRC_PATH%\Drivers\InstagramDriver.php"
 type nul > "%SRC_PATH%\Drivers\TwitterDriver.php"
 type nul > "%SRC_PATH%\Drivers\LinkedInDriver.php"
 
@@ -121,7 +120,7 @@ echo Creating composer.json...
 (
 echo {
 echo     "name": "prateekbhujel/larapost",
-echo     "description": "Unified social media posting SDK for Laravel",
+echo     "description": "Laravel publishing and scheduling for Facebook Pages, Twitter/X, and LinkedIn",
 echo     "type": "library",
 echo     "license": "MIT",
 echo     "require": {
@@ -161,7 +160,7 @@ set YEAR=%datetime:~0,4%
 (
 echo MIT License
 echo.
-echo Copyright ^(c^) %YEAR% Social Sync
+echo Copyright ^(c^) %YEAR% Pratik Bhujel
 echo.
 echo Permission is hereby granted, free of charge, to any person obtaining a copy
 echo of this software and associated documentation files ^(the "Software"^), to deal

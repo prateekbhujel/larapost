@@ -8,7 +8,7 @@ if (!function_exists('social_sync_version')) {
      */
     function social_sync_version()
     {
-        return '1.1.0';
+        return '1.0.0';
     }
 }
 
@@ -23,7 +23,6 @@ if (!function_exists('social_sync_platform_icon')) {
     {
         $icons = [
             'facebook' => 'fab fa-facebook',
-            'instagram' => 'fab fa-instagram',
             'twitter' => 'fab fa-twitter',
             'linkedin' => 'fab fa-linkedin',
         ];
@@ -43,7 +42,6 @@ if (!function_exists('social_sync_platform_color')) {
     {
         $colors = [
             'facebook' => 'bg-blue-600',
-            'instagram' => 'bg-gradient-to-br from-purple-500 to-pink-500',
             'twitter' => 'bg-blue-400',
             'linkedin' => 'bg-blue-700',
         ];
@@ -81,10 +79,8 @@ if (!function_exists('social_sync_format_error')) {
      */
     function social_sync_format_error($error)
     {
-        // Remove technical details
         $error = preg_replace('/\s*\(.*?\)/', '', $error);
 
-        // Common error mappings
         $errorMap = [
             'ECONNREFUSED' => 'Unable to connect to the social platform',
             'Invalid OAuth' => 'Authentication failed. Please reconnect your account',
@@ -127,7 +123,6 @@ if (!function_exists('social_sync_humanize_platform')) {
     {
         $names = [
             'facebook' => 'Facebook',
-            'instagram' => 'Instagram',
             'twitter' => 'Twitter / X',
             'linkedin' => 'LinkedIn',
         ];

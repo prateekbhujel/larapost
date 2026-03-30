@@ -69,7 +69,7 @@ class InstallCommand extends Command
         $this->newLine();
 
         $variables = [
-            '# Facebook + Instagram',
+            '# Facebook Pages',
             'FACEBOOK_APP_ID=',
             'FACEBOOK_APP_SECRET=',
             'FACEBOOK_API_VERSION=v20.0',

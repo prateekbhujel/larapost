@@ -27,7 +27,26 @@ class DashboardFlowTest extends TestCase
         $response->assertSee('LaraPost Dashboard');
         $response->assertSee('Provider Connection');
         $response->assertSee('Bulk Composer');
+        $response->assertSee('Support Scope');
         $response->assertSee('Timezone · Asia/Kathmandu');
+        $response->assertDontSee('Instagram');
+    }
+
+    public function test_dashboard_hides_legacy_accounts_for_unsupported_platforms(): void
+    {
+        SocialAccount::query()->create([
+            'platform' => 'instagram',
+            'account_name' => 'Legacy Instagram Account',
+            'account_id_on_platform' => 'legacy-instagram',
+            'credentials' => ['access_token' => 'legacy-token'],
+            'is_active' => true,
+        ]);
+
+        $response = $this->get('/larapost/dashboard');
+
+        $response->assertOk();
+        $response->assertDontSee('Legacy Instagram Account');
+        $response->assertDontSee('legacy-instagram');
     }
 
     public function test_it_saves_platform_credentials_and_overrides_config(): void
@@ -52,28 +71,6 @@ class DashboardFlowTest extends TestCase
 
         $this->assertSame('db-client', $platformConfig['client_id']);
         $this->assertSame('db-secret', $platformConfig['client_secret']);
-    }
-
-    public function test_instagram_uses_saved_facebook_meta_credentials_when_not_saved_directly(): void
-    {
-        config()->set('larapost.platforms.facebook.app_id', null);
-        config()->set('larapost.platforms.facebook.app_secret', null);
-        config()->set('larapost.platforms.instagram.app_id', null);
-        config()->set('larapost.platforms.instagram.app_secret', null);
-
-        $response = $this->post('/larapost/settings/facebook', [
-            'app_id' => 'meta-app-id',
-            'app_secret' => 'meta-app-secret',
-            'api_version' => 'v25.0',
-        ]);
-
-        $response->assertRedirect();
-
-        $instagramConfig = app('social-media')->platformConfig('instagram');
-
-        $this->assertSame('meta-app-id', $instagramConfig['app_id']);
-        $this->assertSame('meta-app-secret', $instagramConfig['app_secret']);
-        $this->assertSame('v25.0', $instagramConfig['api_version']);
     }
 
     public function test_it_publishes_from_dashboard_form(): void

@@ -78,7 +78,6 @@ class PostBuilderTest extends TestCase
             'credentials' => [
                 'access_token' => 'token-' . $platformId,
                 'page_id' => $platformId,
-                'instagram_business_account_id' => 'ig-' . $platformId,
                 'person_urn' => 'urn:li:person:' . $platformId,
                 'refresh_token' => 'refresh-' . $platformId,
             ],

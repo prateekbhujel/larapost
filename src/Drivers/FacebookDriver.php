@@ -92,7 +92,7 @@ class FacebookDriver extends AbstractDriver
         $pagesData = $this->requestJson('GET', 'me/accounts', [
             'query' => [
                 'access_token' => $accessToken,
-                'fields' => 'id,name,access_token,instagram_business_account',
+                'fields' => 'id,name,access_token',
             ],
         ]);
 

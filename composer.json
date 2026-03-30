@@ -1,6 +1,6 @@
 {
     "name": "prateekbhujel/larapost",
-    "description": "Production-grade social publishing and scheduling tools for Laravel",
+    "description": "Laravel publishing and scheduling for Facebook Pages, Twitter/X, and LinkedIn",
     "type": "library",
     "license": "MIT",
     "homepage": "https://github.com/prateekbhujel/larapost",
@@ -9,8 +9,8 @@
         "laravel",
         "social-media",
         "facebook",
-        "instagram",
         "twitter",
+        "x",
         "linkedin",
         "scheduling"
     ],
@@ -56,9 +56,6 @@
             "aliases": {
                 "SocialMedia": "SocialSync\\Facades\\SocialMedia"
             }
-        },
-        "branch-alias": {
-            "dev-main": "2.x-dev"
         }
     },
     "scripts": {

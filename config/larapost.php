@@ -5,7 +5,6 @@ return [
 
     'drivers' => [
         'facebook' => \SocialSync\Drivers\FacebookDriver::class,
-        'instagram' => \SocialSync\Drivers\InstagramDriver::class,
         'twitter' => \SocialSync\Drivers\TwitterDriver::class,
         'linkedin' => \SocialSync\Drivers\LinkedInDriver::class,
     ],
@@ -15,12 +14,6 @@ return [
             'app_id' => env('FACEBOOK_APP_ID'),
             'app_secret' => env('FACEBOOK_APP_SECRET'),
             'api_version' => env('FACEBOOK_API_VERSION', 'v20.0'),
-        ],
-
-        'instagram' => [
-            'app_id' => env('INSTAGRAM_APP_ID', env('FACEBOOK_APP_ID')),
-            'app_secret' => env('INSTAGRAM_APP_SECRET', env('FACEBOOK_APP_SECRET')),
-            'api_version' => env('INSTAGRAM_API_VERSION', env('FACEBOOK_API_VERSION', 'v20.0')),
         ],
 
         'twitter' => [
@@ -50,10 +43,6 @@ return [
         'facebook' => [
             'posts_per_hour' => 30,
             'posts_per_day' => 200,
-        ],
-        'instagram' => [
-            'posts_per_hour' => 25,
-            'posts_per_day' => 100,
         ],
         'twitter' => [
             'posts_per_hour' => 50,

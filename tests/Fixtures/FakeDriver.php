@@ -52,7 +52,6 @@ class FakeDriver implements SocialDriverInterface
                     'localizedLastName' => 'User',
                 ],
                 'person_urn' => 'urn:li:person:profile-1',
-                'instagram_business_account_id' => 'ig-1',
             ];
         }
 
@@ -73,7 +72,6 @@ class FakeDriver implements SocialDriverInterface
                 'localizedLastName' => 'User',
             ],
             'person_urn' => 'urn:li:person:profile-1',
-            'instagram_business_account_id' => 'ig-1',
         ];
     }
 

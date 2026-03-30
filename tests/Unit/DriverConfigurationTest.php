@@ -4,7 +4,6 @@ namespace SocialSync\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use SocialSync\Drivers\FacebookDriver;
-use SocialSync\Drivers\InstagramDriver;
 use SocialSync\Drivers\LinkedInDriver;
 use SocialSync\Drivers\TwitterDriver;
 
@@ -40,19 +39,6 @@ class DriverConfigurationTest extends TestCase
         ]);
 
         $this->assertSame('page-token-2', $token);
-    }
-
-    public function test_instagram_driver_normalizes_numeric_api_versions(): void
-    {
-        $driver = new InstagramDriver([
-            'app_id' => 'app-id',
-            'app_secret' => 'app-secret',
-            'api_version' => '25',
-        ]);
-
-        $url = $driver->getAuthorizationUrl('https://example.com/callback');
-
-        $this->assertStringContainsString('https://www.facebook.com/v25.0/dialog/oauth?', $url);
     }
 
     public function test_twitter_driver_uses_basic_auth_for_confidential_clients(): void

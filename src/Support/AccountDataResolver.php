@@ -8,7 +8,6 @@ class AccountDataResolver
     {
         return match ($platform) {
             'facebook' => self::facebook($credentials),
-            'instagram' => self::instagram($credentials),
             'twitter' => self::twitter($credentials),
             'linkedin' => self::linkedin($credentials),
             default => self::fallback($platform),
@@ -32,22 +31,6 @@ class AccountDataResolver
             'name' => $page['name'] ?? 'Facebook Page',
             'username' => null,
             'metadata' => ['pages' => $credentials['pages'] ?? []],
-        ];
-    }
-
-    protected static function instagram(array $credentials): array
-    {
-        $page = $credentials['pages'][0] ?? [];
-        $instagramBusinessAccount = $page['instagram_business_account'] ?? [];
-
-        return [
-            'id' => (string) ($credentials['instagram_business_account_id'] ?? $instagramBusinessAccount['id'] ?? 'unknown'),
-            'name' => $page['name'] ?? 'Instagram Business Account',
-            'username' => $credentials['username'] ?? null,
-            'metadata' => [
-                'pages' => $credentials['pages'] ?? [],
-                'profile' => $credentials['profile'] ?? null,
-            ],
         ];
     }
 

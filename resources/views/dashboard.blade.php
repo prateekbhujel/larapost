@@ -46,7 +46,7 @@
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600">LaraPost</p>
                     <h1 class="mt-1 font-display text-3xl font-semibold text-slate-900">{{ config('larapost.ui.title', 'Social Publishing Control Panel') }}</h1>
-                    <p class="mt-2 max-w-3xl text-sm text-slate-600">Connect providers, save OAuth app credentials, then publish or schedule content across the exact Pages and accounts you want.</p>
+                    <p class="mt-2 max-w-3xl text-sm text-slate-600">Connect Facebook Pages, Twitter / X accounts, and LinkedIn profiles, then publish or schedule content across the exact destinations you want.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <span class="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">Timezone · {{ $dashboardTimezone }}</span>
@@ -54,6 +54,30 @@
                 </div>
             </div>
         </header>
+
+        <section class="mb-6 rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-sm backdrop-blur sm:p-6">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600">Support Scope</p>
+                    <h2 class="mt-1 font-display text-2xl font-semibold text-slate-900">What this dashboard supports in v1.0.0</h2>
+                </div>
+                <span class="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">Honest shipping surface</span>
+            </div>
+            <div class="mt-4 grid gap-3 md:grid-cols-3">
+                <article class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                    <h3 class="font-display text-lg font-semibold text-slate-900">Facebook Pages</h3>
+                    <p class="mt-2 text-sm text-slate-600">Connect one Facebook login, sync multiple Pages, and publish or schedule Page posts. Personal profile posting is not part of this release.</p>
+                </article>
+                <article class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                    <h3 class="font-display text-lg font-semibold text-slate-900">Twitter / X</h3>
+                    <p class="mt-2 text-sm text-slate-600">OAuth and text publishing are supported. Posting still depends on your X developer app having the required write access and billing or credits.</p>
+                </article>
+                <article class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                    <h3 class="font-display text-lg font-semibold text-slate-900">LinkedIn Profiles</h3>
+                    <p class="mt-2 text-sm text-slate-600">OAuth and personal profile posting are supported. Organization pages and unsupported provider flows are intentionally not exposed here.</p>
+                </article>
+            </div>
+        </section>
 
         @if (session('success'))
             <div class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
@@ -97,7 +121,7 @@
             <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h2 class="font-display text-2xl font-semibold text-slate-900">Provider Connection & App Credentials</h2>
-                    <p class="mt-1 text-sm text-slate-600">Save credentials once, then login popup will authorize and connect accounts.</p>
+                    <p class="mt-1 text-sm text-slate-600">Save credentials once, then use the login popup to connect Facebook Pages, Twitter / X accounts, or LinkedIn profiles.</p>
                 </div>
             </div>
 
@@ -105,13 +129,14 @@
                 @foreach ($platforms as $platform)
                     @php
                         $platformLabel = match ($platform['key']) {
+                            'facebook' => 'Facebook Pages',
                             'twitter' => 'Twitter / X',
-                            'linkedin' => 'LinkedIn',
+                            'linkedin' => 'LinkedIn Profiles',
                             default => ucfirst($platform['key']),
                         };
 
                         $consoleUrl = match ($platform['key']) {
-                            'facebook', 'instagram' => 'https://developers.facebook.com/apps/',
+                            'facebook' => 'https://developers.facebook.com/apps/',
                             'twitter' => 'https://developer.x.com/en/portal/dashboard',
                             'linkedin' => 'https://www.linkedin.com/developers/apps',
                             default => '#',
@@ -226,7 +251,7 @@
                     @endphp
 
                     <h2 class="font-display text-2xl font-semibold text-slate-900">Publish / Schedule</h2>
-                    <p class="mt-1 text-sm text-slate-600">Publish instantly or schedule for later. Leave account selection empty to target every active account on the chosen platforms. All schedule times use {{ $dashboardTimezone }}.</p>
+                    <p class="mt-1 text-sm text-slate-600">Publish instantly or schedule for later. Leave account selection empty to target every active Facebook Page, Twitter / X account, or LinkedIn profile on the selected platforms. All schedule times use {{ $dashboardTimezone }}.</p>
 
                     <form method="POST" action="{{ route('larapost.publish') }}" class="mt-4 space-y-4">
                         @csrf
@@ -241,8 +266,9 @@
                                 @foreach ($platforms as $platform)
                                     @php
                                         $label = match ($platform['key']) {
+                                            'facebook' => 'Facebook Pages',
                                             'twitter' => 'Twitter / X',
-                                            'linkedin' => 'LinkedIn',
+                                            'linkedin' => 'LinkedIn Profiles',
                                             default => ucfirst($platform['key']),
                                         };
                                     @endphp
@@ -270,7 +296,7 @@
                                         <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                                             <div class="mb-3 flex items-center justify-between gap-2">
                                                 <h3 class="font-display text-lg font-semibold text-slate-900">
-                                                    {{ $platformKey === 'twitter' ? 'Twitter / X' : ucfirst($platformKey) }}
+                                                    {{ match ($platformKey) { 'facebook' => 'Facebook Pages', 'twitter' => 'Twitter / X', 'linkedin' => 'LinkedIn Profiles', default => ucfirst($platformKey) } }}
                                                 </h3>
                                                 <span class="rounded-full border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-600">{{ $platformAccounts->count() }} active</span>
                                             </div>
@@ -302,6 +328,7 @@
                             <div>
                                 <label for="media_url" class="mb-1 block text-sm font-medium text-slate-700">Media URL (optional)</label>
                                 <input id="media_url" name="media_url" type="url" value="{{ old('media_url') }}" placeholder="https://cdn.example.com/image.jpg" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100">
+                                <p class="mt-1 text-xs text-slate-500">Facebook Page image and video URLs are the verified path here. LinkedIn media uploads require a local file path in code, and X media upload is not handled by this dashboard flow.</p>
                             </div>
                             <div>
                                 <label for="media_type" class="mb-1 block text-sm font-medium text-slate-700">Media Type</label>
@@ -357,8 +384,9 @@
                                                     @foreach ($activeAccountList as $account)
                                                         @php
                                                             $accountPlatformLabel = match ($account->platform) {
+                                                                'facebook' => 'Facebook Pages',
                                                                 'twitter' => 'Twitter / X',
-                                                                'linkedin' => 'LinkedIn',
+                                                                'linkedin' => 'LinkedIn Profiles',
                                                                 default => ucfirst($account->platform),
                                                             };
                                                         @endphp
@@ -474,7 +502,7 @@
                         <tbody class="divide-y divide-slate-100">
                         @forelse ($accounts as $account)
                             <tr>
-                                <td class="py-2 pr-3">{{ ucfirst($account->platform) }}</td>
+                                <td class="py-2 pr-3">{{ match ($account->platform) { 'facebook' => 'Facebook Pages', 'twitter' => 'Twitter / X', 'linkedin' => 'LinkedIn Profiles', default => ucfirst($account->platform) } }}</td>
                                 <td class="py-2 pr-3">
                                     <div class="font-medium text-slate-800">{{ $account->account_name }}</div>
                                     <div class="text-xs text-slate-500">{{ $account->account_username ?: $account->account_id_on_platform }}</div>

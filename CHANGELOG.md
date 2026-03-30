@@ -1,49 +1,29 @@
 # Changelog
 
-All notable changes to this project are documented in this file.
+All notable changes to LaraPost are documented in this file.
 
 ## [Unreleased]
 
-### Added
-
 - No unreleased changes yet.
 
-## [2.1.0] - 2026-03-06
+## [1.0.0] - 2026-03-30
 
 ### Added
 
-- Full LaraPost web dashboard at `/larapost/dashboard` with:
-  - provider connect buttons (Facebook, Instagram, Twitter/X, LinkedIn)
-  - manual provider credential forms
-  - publish-now and schedule UI
-  - account enable/disable controls
-  - recent post history view
-- Encrypted database-backed provider credential storage via `larapost_platform_credentials`
-- View publishing support with `larapost-views` tag
-- Feature tests for dashboard rendering, credential storage, and publish flow
+- Stable package branding, docs assets, and refreshed GitHub-facing README
+- Bulk composer for publishing different content across different connected accounts
+- Multi-Page Facebook sync from one OAuth login
+- CI coverage for PHP `8.1`, `8.2`, `8.3`, `8.4`, and `8.5`
 
 ### Changed
 
-- OAuth callback flow now redirects back to dashboard with success/error flash messages
-- `larapost:install` now publishes package views in addition to config and migrations
-- Composer branch alias updated from `1.x-dev` to `2.x-dev`
-- README and docs updated for the dashboard-first UX and manual credential workflow
-
-## [1.1.1] - 2026-03-01
-
-### Added
-
-- Contributor-facing project docs: `CONTRIBUTING.md`, `SECURITY.md`, and `CODE_OF_CONDUCT.md`
-- CI workflow and issue/PR templates for reliable open-source collaboration
-- Release playbook (`RELEASE.md`) for repeatable tagging and publishing
-
-### Changed
-
-- Package vendor updated to `prateekbhujel/larapost`
-- README refreshed with stability channels and production checklist
-- Setup scripts now use `packages/prateekbhujel/larapost`
+- Stable support surface is now explicitly limited to Facebook Pages, Twitter / X, and LinkedIn member profiles
+- Instagram has been removed from the published stable scope and docs
+- Dashboard copy now reflects provider-specific limits instead of promising unsupported flows
+- Package metadata now targets the `v1.0.0` stable release line
 
 ### Fixed
 
-- Scheduled post runner now atomically claims posts before processing to avoid duplicate publishing under concurrent workers
-- `larapost:run-scheduled` now treats non-positive `--limit` values safely as `1`
+- Facebook publishing now uses the correct Page access token for Page posts
+- Facebook OAuth URL generation normalizes Meta API versions correctly
+- Twitter confidential-client OAuth token exchange now sends client credentials correctly

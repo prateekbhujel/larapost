@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Social Sync Package Setup Script
+# LaraPost Package Setup Script
 # This script creates the complete directory structure for the package
 
-echo "🚀 Social Sync - Package Setup Script"
+echo "🚀 LaraPost - Package Setup Script"
 echo "======================================"
 echo ""
 
@@ -69,7 +69,6 @@ touch "$SRC_PATH/Contracts/SocialDriverInterface.php"
 
 # Drivers
 touch "$SRC_PATH/Drivers/FacebookDriver.php"
-touch "$SRC_PATH/Drivers/InstagramDriver.php"
 touch "$SRC_PATH/Drivers/TwitterDriver.php"
 touch "$SRC_PATH/Drivers/LinkedInDriver.php"
 
@@ -120,7 +119,7 @@ echo "📦 Creating composer.json..."
 cat > "$PACKAGE_PATH/composer.json" << 'EOF'
 {
     "name": "prateekbhujel/larapost",
-    "description": "Unified social media posting SDK for Laravel",
+    "description": "Laravel publishing and scheduling for Facebook Pages, Twitter/X, and LinkedIn",
     "type": "library",
     "license": "MIT",
     "require": {
@@ -158,7 +157,7 @@ YEAR=$(date +%Y)
 cat > "$PACKAGE_PATH/LICENSE" << EOF
 MIT License
 
-Copyright (c) $YEAR Social Sync
+Copyright (c) $YEAR Pratik Bhujel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
