@@ -62,9 +62,15 @@ FACEBOOK_API_VERSION=v20.0
 
 TWITTER_CLIENT_ID=
 TWITTER_CLIENT_SECRET=
+TWITTER_BACKEND=twitter
 
 LINKEDIN_CLIENT_ID=
 LINKEDIN_CLIENT_SECRET=
+
+# Optional Xquik backend for Twitter text posts
+XQUIK_API_KEY=
+XQUIK_ACCOUNT=
+XQUIK_API_BASE_URL=https://xquik.com/api/v1
 ```
 
 Dashboard-saved provider credentials override `.env` values.
@@ -134,6 +140,7 @@ Useful commands:
 ## Docs
 
 - Docs portal: [https://prateekbhujel.github.io/larapost/](https://prateekbhujel.github.io/larapost/)
+- Xquik backend: [docs/XQUIK.md](./docs/XQUIK.md)
 - Contributing guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
 - Security policy: [SECURITY.md](./SECURITY.md)
 - Release playbook: [RELEASE.md](./RELEASE.md)
