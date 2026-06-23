@@ -4,7 +4,14 @@ All notable changes to LaraPost are documented in this file.
 
 ## [Unreleased]
 
-- No unreleased changes yet.
+### Added
+
+- Optional Xquik API-key backend for Twitter / X text posts.
+- Dashboard support for saving Xquik backend settings and documenting manual account setup.
+
+### Changed
+
+- Package metadata and CI now target PHP `8.2` and Laravel `11` or newer.
 
 ## [1.0.0] - 2026-03-30
 

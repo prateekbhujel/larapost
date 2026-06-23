@@ -123,7 +123,7 @@ class DriverConfigurationTest extends TestCase
         $this->assertSame('accepted', $response['status']);
         $this->assertSame('POST', $request->getMethod());
         $this->assertSame('https://xquik.com/api/v1/x/tweets', (string) $request->getUri());
-        $this->assertSame('key-123', $request->getHeaderLine('X-API-Key'));
+        $this->assertSame('key-123', $request->getHeaderLine('x-api-key'));
         $this->assertSame([
             'account' => '@account',
             'text' => 'Launch update',

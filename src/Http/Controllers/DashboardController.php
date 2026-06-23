@@ -51,21 +51,35 @@ class DashboardController extends Controller
     {
         $platform = $this->assertSupportedPlatform($platform);
         $fields = $this->platformFields($platform);
+        $saved = PlatformCredential::query()->platform($platform)->first();
+        $savedCredentials = is_array($saved?->credentials) ? $saved->credentials : [];
 
         $rules = [];
 
         foreach ($fields as $field => $meta) {
             $rules[$field] = ['nullable', 'string', 'max:' . ($meta['max'] ?? 2048)];
-        }
 
-        if ($platform === 'twitter' && isset($rules['backend'])) {
-            $rules['backend'][] = Rule::in(['twitter', 'xquik']);
+            if (isset($meta['options'])) {
+                $rules[$field][] = Rule::in(array_keys($meta['options']));
+            }
+
+            if (($meta['type'] ?? null) === 'url') {
+                $rules[$field][] = 'url';
+            }
         }
 
         $validated = $request->validate($rules);
 
         $credentials = collect($validated)
-            ->mapWithKeys(fn ($value, $key) => [$key => is_string($value) ? trim($value) : $value])
+            ->mapWithKeys(function ($value, $key) use ($fields, $savedCredentials): array {
+                $value = is_string($value) ? trim($value) : $value;
+
+                if (($fields[$key]['secret'] ?? false) && ($value === null || $value === '') && array_key_exists($key, $savedCredentials)) {
+                    return [$key => $savedCredentials[$key]];
+                }
+
+                return [$key => $value];
+            })
             ->filter(fn ($value) => $value !== null && $value !== '')
             ->all();
 
@@ -338,28 +352,35 @@ class DashboardController extends Controller
     }
 
     /**
-     * @return array<string, array{label: string, max?: int}>
+     * @return array<string, array{label: string, max?: int, secret?: bool, type?: string, options?: array<string, string>}>
      */
     protected function platformFields(string $platform): array
     {
         return match ($platform) {
             'facebook' => [
                 'app_id' => ['label' => 'App ID'],
-                'app_secret' => ['label' => 'App Secret'],
+                'app_secret' => ['label' => 'App Secret', 'secret' => true],
                 'api_version' => ['label' => 'API Version', 'max' => 64],
             ],
             'twitter' => [
-                'backend' => ['label' => 'Backend', 'max' => 32],
+                'backend' => [
+                    'label' => 'Backend',
+                    'max' => 32,
+                    'options' => [
+                        'twitter' => 'Twitter / X OAuth',
+                        'xquik' => 'Xquik API key',
+                    ],
+                ],
                 'client_id' => ['label' => 'Client ID'],
-                'client_secret' => ['label' => 'Client Secret'],
+                'client_secret' => ['label' => 'Client Secret', 'secret' => true],
                 'api_version' => ['label' => 'API Version', 'max' => 16],
-                'xquik_api_key' => ['label' => 'Xquik API Key'],
+                'xquik_api_key' => ['label' => 'Xquik API Key', 'secret' => true],
                 'xquik_account' => ['label' => 'Xquik Account', 'max' => 128],
-                'xquik_api_base_url' => ['label' => 'Xquik API Base URL'],
+                'xquik_api_base_url' => ['label' => 'Xquik API Base URL', 'type' => 'url'],
             ],
             'linkedin' => [
                 'client_id' => ['label' => 'Client ID'],
-                'client_secret' => ['label' => 'Client Secret'],
+                'client_secret' => ['label' => 'Client Secret', 'secret' => true],
             ],
             default => [],
         };
@@ -419,6 +440,8 @@ class DashboardController extends Controller
 
     protected function twitterBackend(array $effective): string
     {
-        return strtolower(trim((string) ($effective['backend'] ?? 'twitter')));
+        $backend = strtolower(trim((string) ($effective['backend'] ?? 'twitter')));
+
+        return in_array($backend, ['twitter', 'xquik'], true) ? $backend : 'twitter';
     }
 }

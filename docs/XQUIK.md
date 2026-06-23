@@ -10,9 +10,10 @@ XQUIK_ACCOUNT=@your_handle
 XQUIK_API_BASE_URL=https://xquik.com/api/v1
 ```
 
-The backend sends text posts to `POST /x/tweets`. Media, replies, and OAuth
-account discovery stay on the default Twitter driver because this package does
-not yet normalize those Xquik payloads.
+The backend sends text posts to `POST /api/v1/x/tweets` with the documented
+`x-api-key` header. Media, replies, and OAuth account discovery stay on the
+default Twitter driver because this package does not yet normalize those Xquik
+payloads.
 
 If Xquik accepts the write for later confirmation, LaraPost stores the returned
 write action as `xquik-write-action:{id}` in the publish response.
@@ -42,7 +43,10 @@ endpoint.
 ## Response Shape
 
 The public OpenAPI document at `https://xquik.com/openapi.json` documents
-`POST /api/v1/x/tweets` with success statuses `200` and `202`. LaraPost accepts
-`tweetId`, `id`, or `data.id` as a published tweet ID. A `writeActionId` means
-Xquik accepted the write for later confirmation, so LaraPost returns status
-`accepted` and stores `write_action_id`.
+`POST /api/v1/x/tweets` with success statuses `200` and `202`, `tweetId` for a
+confirmed tweet, and `writeActionId` for writes that need later confirmation.
+LaraPost also accepts `id` and `data.id` defensively for compatible response
+wrappers. A pending `writeActionId` means Xquik accepted the write for later
+confirmation, so LaraPost returns status `accepted` and stores
+`write_action_id`. Xquik exposes `GET /api/v1/x/write-actions/{id}` for polling
+that pending write outside this package.

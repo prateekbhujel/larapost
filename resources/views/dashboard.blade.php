@@ -183,19 +183,34 @@
                             @csrf
                             @foreach ($platform['fields'] as $field => $meta)
                                 @php
-                                    $isSecret = str_contains($field, 'secret') || str_contains($field, 'api_key');
+                                    $isSecret = (bool) ($meta['secret'] ?? false);
                                     $value = old($field, $isSecret ? '' : ($platform['saved_credentials'][$field] ?? ($platform['effective_credentials'][$field] ?? '')));
+                                    $placeholder = $isSecret && isset($platform['saved_credentials'][$field])
+                                        ? 'Saved (enter to replace)'
+                                        : ($isSecret && filled($platform['effective_credentials'][$field] ?? null) ? 'Configured by env' : '');
                                 @endphp
                                 <div>
                                     <label for="{{ $platform['key'] }}_{{ $field }}" class="mb-1 block text-sm font-medium text-slate-700">{{ $meta['label'] }}</label>
-                                    <input
-                                        id="{{ $platform['key'] }}_{{ $field }}"
-                                        name="{{ $field }}"
-                                        type="{{ $isSecret ? 'password' : 'text' }}"
-                                        value="{{ $value }}"
-                                        placeholder="{{ $isSecret && isset($platform['saved_credentials'][$field]) ? 'Saved (enter to replace)' : '' }}"
-                                        class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
-                                    >
+                                    @if (isset($meta['options']))
+                                        <select
+                                            id="{{ $platform['key'] }}_{{ $field }}"
+                                            name="{{ $field }}"
+                                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+                                        >
+                                            @foreach ($meta['options'] as $optionValue => $optionLabel)
+                                                <option value="{{ $optionValue }}" @selected((string) $value === (string) $optionValue)>{{ $optionLabel }}</option>
+                                            @endforeach
+                                        </select>
+                                    @else
+                                        <input
+                                            id="{{ $platform['key'] }}_{{ $field }}"
+                                            name="{{ $field }}"
+                                            type="{{ $isSecret ? 'password' : ($meta['type'] ?? 'text') }}"
+                                            value="{{ $value }}"
+                                            placeholder="{{ $placeholder }}"
+                                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+                                        >
+                                    @endif
                                 </div>
                             @endforeach
 

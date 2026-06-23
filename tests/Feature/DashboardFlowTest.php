@@ -105,6 +105,33 @@ class DashboardFlowTest extends TestCase
         $this->assertSame('@db-account', $record->credentials['xquik_account']);
     }
 
+    public function test_it_preserves_saved_secret_credentials_when_inputs_are_blank(): void
+    {
+        PlatformCredential::query()->create([
+            'platform' => 'twitter',
+            'credentials' => [
+                'backend' => 'xquik',
+                'xquik_api_key' => 'saved-key',
+                'xquik_account' => '@saved-account',
+            ],
+        ]);
+
+        $response = $this->post('/larapost/settings/twitter', [
+            'backend' => 'xquik',
+            'xquik_api_key' => '',
+            'xquik_account' => '@updated-account',
+            'xquik_api_base_url' => 'https://xquik.com/api/v1',
+        ]);
+
+        $response->assertRedirect();
+
+        $record = PlatformCredential::query()->where('platform', 'twitter')->first();
+
+        $this->assertNotNull($record);
+        $this->assertSame('saved-key', $record->credentials['xquik_api_key']);
+        $this->assertSame('@updated-account', $record->credentials['xquik_account']);
+    }
+
     public function test_it_publishes_from_dashboard_form(): void
     {
         SocialAccount::query()->create([

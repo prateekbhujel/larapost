@@ -68,7 +68,7 @@ class TwitterDriver extends AbstractDriver
             'headers' => [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-                'X-API-Key' => $this->xquikConfigValue($credentials, 'api_key', 'xquik_api_key'),
+                'x-api-key' => $this->xquikConfigValue($credentials, 'api_key', 'xquik_api_key'),
             ],
             'json' => [
                 'account' => $this->xquikConfigValue($credentials, 'account', 'xquik_account'),
