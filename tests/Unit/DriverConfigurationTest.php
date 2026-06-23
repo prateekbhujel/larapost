@@ -2,10 +2,16 @@
 
 namespace SocialSync\Tests\Unit;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use SocialSync\Drivers\FacebookDriver;
 use SocialSync\Drivers\LinkedInDriver;
 use SocialSync\Drivers\TwitterDriver;
+use SocialSync\Exceptions\SocialSyncException;
+use SocialSync\Models\SocialAccount;
 
 class DriverConfigurationTest extends TestCase
 {
@@ -89,6 +95,58 @@ class DriverConfigurationTest extends TestCase
         $this->assertStringContainsString('client_id=client-id', $url);
         $this->assertStringContainsString('code_challenge=', $url);
         $this->assertStringContainsString('state=', $url);
+    }
+
+    public function test_twitter_driver_can_publish_text_with_xquik_backend(): void
+    {
+        $mock = new MockHandler([
+            new Response(202, ['Content-Type' => 'application/json'], json_encode(['writeActionId' => 'write-123'])),
+        ]);
+        $driver = new TwitterDriver([
+            'backend' => 'xquik',
+            'xquik_api_key' => 'key-123',
+            'xquik_account' => '@fallback',
+            'xquik_api_base_url' => 'https://xquik.com/api/v1',
+        ], new Client(['handler' => HandlerStack::create($mock)]));
+        $account = new SocialAccount();
+        $account->setRawAttributes([
+            'credentials' => json_encode(['account' => '@account']),
+        ], true);
+
+        $response = $driver->publish($account, [
+            'content' => 'Launch update',
+            'media' => [],
+        ]);
+        $request = $mock->getLastRequest();
+
+        $this->assertSame('xquik-write-action:write-123', $response['id']);
+        $this->assertSame('accepted', $response['status']);
+        $this->assertSame('POST', $request->getMethod());
+        $this->assertSame('https://xquik.com/api/v1/x/tweets', (string) $request->getUri());
+        $this->assertSame('key-123', $request->getHeaderLine('x-api-key'));
+        $this->assertSame([
+            'account' => '@account',
+            'text' => 'Launch update',
+        ], json_decode((string) $request->getBody(), true));
+    }
+
+    public function test_twitter_driver_rejects_media_for_xquik_backend(): void
+    {
+        $driver = new TwitterDriver([
+            'backend' => 'xquik',
+            'xquik_api_key' => 'key-123',
+            'xquik_account' => '@account',
+        ], new Client(['handler' => HandlerStack::create(new MockHandler())]));
+        $account = new SocialAccount();
+        $account->setRawAttributes(['credentials' => json_encode([])], true);
+
+        $this->expectException(SocialSyncException::class);
+        $this->expectExceptionMessage('text posts only');
+
+        $driver->publish($account, [
+            'content' => 'Launch update',
+            'media' => [['path' => 'media-1']],
+        ]);
     }
 
     public function test_linkedin_driver_can_generate_authorization_url_without_laravel_context(): void

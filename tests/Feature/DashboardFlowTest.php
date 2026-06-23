@@ -72,6 +72,66 @@ class DashboardFlowTest extends TestCase
         $this->assertSame('db-secret', $platformConfig['client_secret']);
     }
 
+    public function test_dashboard_supports_xquik_backend_configuration(): void
+    {
+        config()->set('larapost.platforms.twitter.backend', 'xquik');
+        config()->set('larapost.platforms.twitter.xquik_api_key', 'env-key');
+        config()->set('larapost.platforms.twitter.xquik_account', '@env-account');
+
+        $response = $this->get('/larapost/dashboard');
+
+        $response->assertOk();
+        $response->assertSee('Manual account setup');
+        $response->assertSee('Create active accounts manually for this backend.');
+        $response->assertDontSee('Login with Twitter / X');
+    }
+
+    public function test_it_saves_xquik_dashboard_credentials(): void
+    {
+        $response = $this->post('/larapost/settings/twitter', [
+            'backend' => 'xquik',
+            'xquik_api_key' => 'db-key',
+            'xquik_account' => '@db-account',
+            'xquik_api_base_url' => 'https://xquik.com/api/v1',
+        ]);
+
+        $response->assertRedirect();
+
+        $record = PlatformCredential::query()->where('platform', 'twitter')->first();
+
+        $this->assertNotNull($record);
+        $this->assertSame('xquik', $record->credentials['backend']);
+        $this->assertSame('db-key', $record->credentials['xquik_api_key']);
+        $this->assertSame('@db-account', $record->credentials['xquik_account']);
+    }
+
+    public function test_it_preserves_saved_secret_credentials_when_inputs_are_blank(): void
+    {
+        PlatformCredential::query()->create([
+            'platform' => 'twitter',
+            'credentials' => [
+                'backend' => 'xquik',
+                'xquik_api_key' => 'saved-key',
+                'xquik_account' => '@saved-account',
+            ],
+        ]);
+
+        $response = $this->post('/larapost/settings/twitter', [
+            'backend' => 'xquik',
+            'xquik_api_key' => '',
+            'xquik_account' => '@updated-account',
+            'xquik_api_base_url' => 'https://xquik.com/api/v1',
+        ]);
+
+        $response->assertRedirect();
+
+        $record = PlatformCredential::query()->where('platform', 'twitter')->first();
+
+        $this->assertNotNull($record);
+        $this->assertSame('saved-key', $record->credentials['xquik_api_key']);
+        $this->assertSame('@updated-account', $record->credentials['xquik_account']);
+    }
+
     public function test_it_publishes_from_dashboard_form(): void
     {
         SocialAccount::query()->create([

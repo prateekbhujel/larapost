@@ -51,17 +51,35 @@ class DashboardController extends Controller
     {
         $platform = $this->assertSupportedPlatform($platform);
         $fields = $this->platformFields($platform);
+        $saved = PlatformCredential::query()->platform($platform)->first();
+        $savedCredentials = is_array($saved?->credentials) ? $saved->credentials : [];
 
         $rules = [];
 
         foreach ($fields as $field => $meta) {
             $rules[$field] = ['nullable', 'string', 'max:' . ($meta['max'] ?? 2048)];
+
+            if (isset($meta['options'])) {
+                $rules[$field][] = Rule::in(array_keys($meta['options']));
+            }
+
+            if (($meta['type'] ?? null) === 'url') {
+                $rules[$field][] = 'url';
+            }
         }
 
         $validated = $request->validate($rules);
 
         $credentials = collect($validated)
-            ->mapWithKeys(fn ($value, $key) => [$key => is_string($value) ? trim($value) : $value])
+            ->mapWithKeys(function ($value, $key) use ($fields, $savedCredentials): array {
+                $value = is_string($value) ? trim($value) : $value;
+
+                if (($fields[$key]['secret'] ?? false) && ($value === null || $value === '') && array_key_exists($key, $savedCredentials)) {
+                    return [$key => $savedCredentials[$key]];
+                }
+
+                return [$key => $value];
+            })
             ->filter(fn ($value) => $value !== null && $value !== '')
             ->all();
 
@@ -334,24 +352,35 @@ class DashboardController extends Controller
     }
 
     /**
-     * @return array<string, array{label: string, max?: int}>
+     * @return array<string, array{label: string, max?: int, secret?: bool, type?: string, options?: array<string, string>}>
      */
     protected function platformFields(string $platform): array
     {
         return match ($platform) {
             'facebook' => [
                 'app_id' => ['label' => 'App ID'],
-                'app_secret' => ['label' => 'App Secret'],
+                'app_secret' => ['label' => 'App Secret', 'secret' => true],
                 'api_version' => ['label' => 'API Version', 'max' => 64],
             ],
             'twitter' => [
+                'backend' => [
+                    'label' => 'Backend',
+                    'max' => 32,
+                    'options' => [
+                        'twitter' => 'Twitter / X OAuth',
+                        'xquik' => 'Xquik API key',
+                    ],
+                ],
                 'client_id' => ['label' => 'Client ID'],
-                'client_secret' => ['label' => 'Client Secret'],
+                'client_secret' => ['label' => 'Client Secret', 'secret' => true],
                 'api_version' => ['label' => 'API Version', 'max' => 16],
+                'xquik_api_key' => ['label' => 'Xquik API Key', 'secret' => true],
+                'xquik_account' => ['label' => 'Xquik Account', 'max' => 128],
+                'xquik_api_base_url' => ['label' => 'Xquik API Base URL', 'type' => 'url'],
             ],
             'linkedin' => [
                 'client_id' => ['label' => 'Client ID'],
-                'client_secret' => ['label' => 'Client Secret'],
+                'client_secret' => ['label' => 'Client Secret', 'secret' => true],
             ],
             default => [],
         };
@@ -360,11 +389,14 @@ class DashboardController extends Controller
     /**
      * @return array<int, string>
      */
-    protected function requiredFields(string $platform): array
+    protected function requiredFields(string $platform, array $effective = []): array
     {
         return match ($platform) {
             'facebook' => ['app_id', 'app_secret'],
-            'twitter', 'linkedin' => ['client_id', 'client_secret'],
+            'twitter' => $this->twitterBackend($effective) === 'xquik'
+                ? ['backend', 'xquik_api_key', 'xquik_account']
+                : ['client_id', 'client_secret'],
+            'linkedin' => ['client_id', 'client_secret'],
             default => [],
         };
     }
@@ -378,9 +410,10 @@ class DashboardController extends Controller
         $savedCredentials = is_array($saved?->credentials) ? $saved->credentials : [];
 
         $effective = SocialMedia::platformConfig($platform);
-        $required = $this->requiredFields($platform);
+        $required = $this->requiredFields($platform, $effective);
 
         $configured = collect($required)->every(fn (string $key): bool => filled($effective[$key] ?? null));
+        $oauthEnabled = !($platform === 'twitter' && $this->twitterBackend($effective) === 'xquik');
 
         return [
             'key' => $platform,
@@ -390,6 +423,7 @@ class DashboardController extends Controller
             'saved_credentials' => $savedCredentials,
             'effective_credentials' => $effective,
             'configured' => $configured,
+            'oauth_enabled' => $oauthEnabled,
             'source' => $saved ? 'database' : 'env',
             'active_accounts' => SocialAccount::query()->active()->where('platform', $platform)->count(),
             'total_accounts' => SocialAccount::query()->where('platform', $platform)->count(),
@@ -402,5 +436,12 @@ class DashboardController extends Controller
     protected function supportedPlatforms(): array
     {
         return SocialMedia::supportedPlatforms();
+    }
+
+    protected function twitterBackend(array $effective): string
+    {
+        $backend = strtolower(trim((string) ($effective['backend'] ?? 'twitter')));
+
+        return in_array($backend, ['twitter', 'xquik'], true) ? $backend : 'twitter';
     }
 }

@@ -4,8 +4,8 @@
 
 [![CI](https://github.com/prateekbhujel/larapost/actions/workflows/ci.yml/badge.svg)](https://github.com/prateekbhujel/larapost/actions/workflows/ci.yml)
 [![Packagist](https://img.shields.io/packagist/v/prateekbhujel/larapost.svg)](https://packagist.org/packages/prateekbhujel/larapost)
-[![PHP](https://img.shields.io/badge/php-%5E8.1-777BB4.svg)](https://php.net)
-[![Laravel](https://img.shields.io/badge/laravel-10%20%7C%2011%20%7C%2012%20%7C%2013-FF2D20.svg)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/php-%5E8.2-777BB4.svg)](https://php.net)
+[![Laravel](https://img.shields.io/badge/laravel-11%20%7C%2012%20%7C%2013-FF2D20.svg)](https://laravel.com)
 [![License](https://img.shields.io/badge/license-MIT-111111.svg)](./LICENSE)
 
 LaraPost is a Laravel package for publishing and scheduling content to Facebook Pages, Twitter / X, and LinkedIn from one API and one dashboard.
@@ -21,14 +21,14 @@ LaraPost supports publishing and scheduling for Facebook Pages, Twitter / X, and
 - Immediate publishing and scheduled publishing
 - Bulk composer for different content across different accounts
 - Retry and scheduled runner commands
-- CI for PHP `8.1`, `8.2`, `8.3`, `8.4`, and `8.5`
+- CI for PHP `8.2`, `8.3`, `8.4`, and `8.5`
 
 ## Support Matrix
 
 | Platform | Connect | Publish | Notes |
 | --- | --- | --- | --- |
 | Facebook | OAuth to Facebook login | Page posts with text, image URL, and video URL | Facebook Pages only. Personal profile posting is not supported. |
-| Twitter / X | OAuth 2.0 | Text posts | Your X app still needs write access plus billing or credits. The dashboard does not upload media to X. |
+| Twitter / X | OAuth 2.0 or manual Xquik account setup | Text posts | Your X app still needs write access plus billing or credits. The optional Xquik backend is API-key based and text-only in LaraPost. |
 | LinkedIn | OAuth 2.0 | Member profile text posts | LinkedIn organization pages are not supported. Image upload expects a readable local file path when used programmatically. |
 
 
@@ -62,9 +62,15 @@ FACEBOOK_API_VERSION=v20.0
 
 TWITTER_CLIENT_ID=
 TWITTER_CLIENT_SECRET=
+TWITTER_BACKEND=twitter
 
 LINKEDIN_CLIENT_ID=
 LINKEDIN_CLIENT_SECRET=
+
+# Optional Xquik backend for Twitter text posts
+XQUIK_API_KEY=
+XQUIK_ACCOUNT=
+XQUIK_API_BASE_URL=https://xquik.com/api/v1
 ```
 
 Dashboard-saved provider credentials override `.env` values.
@@ -134,6 +140,7 @@ Useful commands:
 ## Docs
 
 - Docs portal: [https://prateekbhujel.github.io/larapost/](https://prateekbhujel.github.io/larapost/)
+- Xquik backend: [docs/XQUIK.md](./docs/XQUIK.md)
 - Contributing guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
 - Security policy: [SECURITY.md](./SECURITY.md)
 - Release playbook: [RELEASE.md](./RELEASE.md)

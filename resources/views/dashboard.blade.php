@@ -153,8 +153,10 @@
                         <p class="mt-2 text-sm text-slate-600">Accounts: {{ $platform['active_accounts'] }}/{{ $platform['total_accounts'] }} active</p>
 
                         <div class="mt-3">
-                            @if ($platform['configured'])
+                            @if ($platform['configured'] && $platform['oauth_enabled'])
                                 <a class="inline-flex w-full items-center justify-center rounded-xl bg-brand-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-600" data-larapost-oauth-popup="1" href="{{ route('larapost.connect', ['platform' => $platform['key'], 'mode' => 'popup']) }}">Login with {{ $platformLabel }}</a>
+                            @elseif ($platform['configured'])
+                                <button type="button" class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-500" disabled>Manual account setup</button>
                             @else
                                 <button type="button" class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-500" disabled>Save credentials first</button>
                             @endif
@@ -162,6 +164,8 @@
 
                         @if (! $platform['configured'])
                             <p class="mt-2 text-xs text-slate-500">Save credentials below, then click Login with {{ $platformLabel }}.</p>
+                        @elseif (! $platform['oauth_enabled'])
+                            <p class="mt-2 text-xs text-slate-500">Create active accounts manually for this backend.</p>
                         @else
                             <p class="mt-2 text-xs text-slate-500">Connect again anytime to sync newly granted Pages or accounts.</p>
                         @endif
@@ -179,19 +183,34 @@
                             @csrf
                             @foreach ($platform['fields'] as $field => $meta)
                                 @php
-                                    $isSecret = str_contains($field, 'secret');
-                                    $value = old($field, $isSecret ? '' : ($platform['saved_credentials'][$field] ?? ''));
+                                    $isSecret = (bool) ($meta['secret'] ?? false);
+                                    $value = old($field, $isSecret ? '' : ($platform['saved_credentials'][$field] ?? ($platform['effective_credentials'][$field] ?? '')));
+                                    $placeholder = $isSecret && isset($platform['saved_credentials'][$field])
+                                        ? 'Saved (enter to replace)'
+                                        : ($isSecret && filled($platform['effective_credentials'][$field] ?? null) ? 'Configured by env' : '');
                                 @endphp
                                 <div>
                                     <label for="{{ $platform['key'] }}_{{ $field }}" class="mb-1 block text-sm font-medium text-slate-700">{{ $meta['label'] }}</label>
-                                    <input
-                                        id="{{ $platform['key'] }}_{{ $field }}"
-                                        name="{{ $field }}"
-                                        type="{{ $isSecret ? 'password' : 'text' }}"
-                                        value="{{ $value }}"
-                                        placeholder="{{ $isSecret && isset($platform['saved_credentials'][$field]) ? 'Saved (enter to replace)' : '' }}"
-                                        class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
-                                    >
+                                    @if (isset($meta['options']))
+                                        <select
+                                            id="{{ $platform['key'] }}_{{ $field }}"
+                                            name="{{ $field }}"
+                                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+                                        >
+                                            @foreach ($meta['options'] as $optionValue => $optionLabel)
+                                                <option value="{{ $optionValue }}" @selected((string) $value === (string) $optionValue)>{{ $optionLabel }}</option>
+                                            @endforeach
+                                        </select>
+                                    @else
+                                        <input
+                                            id="{{ $platform['key'] }}_{{ $field }}"
+                                            name="{{ $field }}"
+                                            type="{{ $isSecret ? 'password' : ($meta['type'] ?? 'text') }}"
+                                            value="{{ $value }}"
+                                            placeholder="{{ $placeholder }}"
+                                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+                                        >
+                                    @endif
                                 </div>
                             @endforeach
 

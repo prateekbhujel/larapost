@@ -20,6 +20,10 @@ return [
             'client_id' => env('TWITTER_CLIENT_ID'),
             'client_secret' => env('TWITTER_CLIENT_SECRET'),
             'api_version' => env('TWITTER_API_VERSION', '2'),
+            'backend' => env('TWITTER_BACKEND', 'twitter'),
+            'xquik_api_key' => env('XQUIK_API_KEY'),
+            'xquik_account' => env('XQUIK_ACCOUNT'),
+            'xquik_api_base_url' => env('XQUIK_API_BASE_URL', 'https://xquik.com/api/v1'),
         ],
 
         'linkedin' => [

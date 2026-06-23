@@ -22,6 +22,10 @@ class TwitterDriver extends AbstractDriver
 
     public function publish(SocialAccount $account, array $payload): array
     {
+        if ($this->backend() === 'xquik') {
+            return $this->publishWithXquik($account, $payload);
+        }
+
         $credentials = $this->credentials($account);
         $accessToken = $this->credentialValue($credentials, 'access_token');
 
@@ -46,8 +50,60 @@ class TwitterDriver extends AbstractDriver
         ]);
     }
 
+    protected function publishWithXquik(SocialAccount $account, array $payload): array
+    {
+        $credentials = $this->credentials($account);
+
+        if (($payload['media'] ?? []) !== []) {
+            throw new SocialSyncException('Xquik backend currently supports Twitter / X text posts only.');
+        }
+
+        $content = trim((string) ($payload['content'] ?? ''));
+
+        if ($content === '') {
+            throw new SocialSyncException('Post content is required for Xquik publishing.');
+        }
+
+        $response = $this->requestJson('POST', $this->xquikEndpoint('/x/tweets'), [
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'x-api-key' => $this->xquikConfigValue($credentials, 'api_key', 'xquik_api_key'),
+            ],
+            'json' => [
+                'account' => $this->xquikConfigValue($credentials, 'account', 'xquik_account'),
+                'text' => $content,
+            ],
+        ]);
+
+        $tweetId = $response['tweetId'] ?? $response['id'] ?? ($response['data']['id'] ?? null);
+
+        if ($tweetId !== null && $tweetId !== '') {
+            return array_merge($response, [
+                'id' => (string) $tweetId,
+                'status' => 'published',
+            ]);
+        }
+
+        $writeActionId = $response['writeActionId'] ?? null;
+
+        if ($writeActionId !== null && $writeActionId !== '') {
+            return array_merge($response, [
+                'id' => 'xquik-write-action:' . (string) $writeActionId,
+                'status' => 'accepted',
+                'write_action_id' => (string) $writeActionId,
+            ]);
+        }
+
+        return $response;
+    }
+
     public function getAuthorizationUrl(string $redirectUri): string
     {
+        if ($this->backend() === 'xquik') {
+            throw new SocialSyncException('Xquik backend uses API key configuration and does not start Twitter OAuth.');
+        }
+
         $clientId = $this->configValue('client_id');
         $state = bin2hex(random_bytes(16));
         $codeVerifier = $this->codeVerifier();
@@ -77,6 +133,10 @@ class TwitterDriver extends AbstractDriver
 
     public function handleCallback(string $code, string $redirectUri): array
     {
+        if ($this->backend() === 'xquik') {
+            throw new SocialSyncException('Xquik backend uses API key configuration and does not handle Twitter OAuth callbacks.');
+        }
+
         $returnedState = $this->requestInput('state');
         $oauthContext = $this->pullOauthContext('twitter', $returnedState);
         $expectedState = (string) ($oauthContext['state'] ?? $this->sessionValue('twitter_oauth_state', ''));
@@ -136,6 +196,10 @@ class TwitterDriver extends AbstractDriver
 
     public function refreshToken(array $credentials): array
     {
+        if ($this->backend() === 'xquik') {
+            return $credentials;
+        }
+
         $refreshToken = $this->credentialValue($credentials, 'refresh_token');
         $client = new Client(['timeout' => 30]);
 
@@ -148,6 +212,11 @@ class TwitterDriver extends AbstractDriver
 
     public function verifyCredentials(array $credentials): bool
     {
+        if ($this->backend() === 'xquik') {
+            return $this->hasXquikValue($credentials, 'api_key', 'xquik_api_key')
+                && $this->hasXquikValue($credentials, 'account', 'xquik_account');
+        }
+
         try {
             $this->requestJson('GET', 'users/me', [
                 'headers' => [
@@ -159,6 +228,48 @@ class TwitterDriver extends AbstractDriver
         } catch (SocialSyncException) {
             return false;
         }
+    }
+
+    protected function backend(): string
+    {
+        $backend = strtolower(trim((string) ($this->config['backend'] ?? 'twitter')));
+
+        if (!in_array($backend, ['twitter', 'xquik'], true)) {
+            throw new SocialSyncException('Unsupported Twitter backend "' . $backend . '".');
+        }
+
+        return $backend;
+    }
+
+    protected function xquikEndpoint(string $path): string
+    {
+        return rtrim((string) ($this->config['xquik_api_base_url'] ?? 'https://xquik.com/api/v1'), '/')
+            . '/'
+            . ltrim($path, '/');
+    }
+
+    protected function xquikConfigValue(array $credentials, string $credentialKey, string $configKey): string
+    {
+        $value = $credentials[$credentialKey]
+            ?? $credentials['xquik_' . $credentialKey]
+            ?? $this->config[$configKey]
+            ?? null;
+
+        if ($value === null || $value === '') {
+            throw new SocialSyncException(sprintf('Missing required Xquik value "%s".', $credentialKey));
+        }
+
+        return (string) $value;
+    }
+
+    protected function hasXquikValue(array $credentials, string $credentialKey, string $configKey): bool
+    {
+        $value = $credentials[$credentialKey]
+            ?? $credentials['xquik_' . $credentialKey]
+            ?? $this->config[$configKey]
+            ?? null;
+
+        return $value !== null && $value !== '';
     }
 
     protected function requestToken(Client $client, array $params): array
