@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en" data-base="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Upgrade from 1.x | LaraPost</title>
+  <meta name="description" content="LaraPost 2.x is a deliberate major release. It narrows the supported framework baseline and changes security defaults before adding TikTok, queue hardening, and optional MCP.">
+  <link rel="icon" href="../favicon.ico">
+  <link rel="stylesheet" href="../assets/docs.css">
+</head>
+<body data-page="upgrade">
+<header class="topbar">
+  <a class="brand" href="../"><span class="brand-mark">L</span><span>LaraPost</span></a>
+  <nav class="top-links">
+    <span class="version">2.x</span>
+    <a class="hide-mobile" href="https://packagist.org/packages/prateekbhujel/larapost">Packagist</a>
+    <a href="https://github.com/prateekbhujel/larapost">GitHub</a>
+  </nav>
+</header>
+<nav class="mobile-nav" data-docs-nav></nav>
+<div class="shell">
+  <aside class="sidebar" data-docs-nav></aside>
+  <main class="content">
+    <article class="article">
+      <div class="eyebrow">Getting Started</div>
+      <h1>Upgrade from 1.x</h1>
+      <p class="lead">LaraPost 2.x is a deliberate major release. It narrows the supported framework baseline and changes security defaults before adding TikTok, queue hardening, and optional MCP.</p>
+      
+<h2 id="why-major">Why this is 2.0</h2>
+<ul>
+<li>PHP 8.3+ replaces the PHP 8.2 baseline.</li>
+<li>Laravel 12 and 13 are supported; Laravel 11 moved out of its security support window.</li>
+<li>The operator dashboard is authenticated by default.</li>
+<li>OAuth state validation is stricter.</li>
+</ul>
+
+<h2 id="composer">1. Update Composer requirements</h2>
+<pre><code>composer require prateekbhujel/larapost:^2.0 -W</code></pre>
+
+<h2 id="config">2. Republish and compare config</h2>
+<pre><code>php artisan vendor:publish --tag=larapost-config --force</code></pre>
+<p>If you maintain custom config changes, compare before overwriting. The important additions are <code>enabled_platforms</code>, scheduler settings, separate operator/callback middleware, and optional MCP settings.</p>
+
+<h2 id="platforms">3. Choose enabled platforms</h2>
+<pre><code>LARAPOST_PLATFORMS=facebook,twitter,linkedin,tiktok</code></pre>
+<p>You can omit providers you do not use.</p>
+
+<h2 id="auth">4. Review dashboard authorization</h2>
+<p>The v2 default is <code>['web', 'auth']</code>. If your app uses a custom guard, tenant middleware, or admin authorization layer, configure <code>operator_middleware</code> explicitly rather than making the dashboard public.</p>
+
+<h2 id="mcp">5. MCP is opt-in</h2>
+<p>Existing publishing installations do not need <code>laravel/mcp</code>. Install it only if you want the remote AI integration:</p>
+<pre><code>composer require laravel/mcp:^1.0
+php artisan larapost:install --mcp</code></pre>
+
+<h2 id="verify">6. Verify</h2>
+<pre><code>php artisan migrate
+php artisan larapost:doctor
+php artisan test</code></pre>
+
+<h2 id="branch">1.x backports</h2>
+<p>The <code>1.x</code> branch is reserved for critical fixes that still apply to the original release line. New features belong on <code>main</code>.</p>
+
+      <footer class="footer">LaraPost is MIT licensed. Documentation tracks the current 2.x line.</footer>
+    </article>
+  </main>
+</div>
+<script src="../assets/docs.js"></script>
+</body>
+</html>

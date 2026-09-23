@@ -1,94 +1,66 @@
 <?php
 
+use Composer\InstalledVersions;
+
 if (!function_exists('social_sync_version')) {
-    /**
-     * Get the Social Sync package version
-     *
-     * @return string
-     */
-    function social_sync_version()
+    function social_sync_version(): string
     {
-        return '1.0.0';
+        try {
+            return InstalledVersions::getPrettyVersion('prateekbhujel/larapost') ?: 'dev-main';
+        } catch (\Throwable) {
+            return 'dev-main';
+        }
     }
 }
 
 if (!function_exists('social_sync_platform_icon')) {
-    /**
-     * Get the icon class for a social platform
-     *
-     * @param string $platform
-     * @return string
-     */
-    function social_sync_platform_icon($platform)
+    function social_sync_platform_icon(string $platform): string
     {
-        $icons = [
+        return [
             'facebook' => 'fab fa-facebook',
-            'twitter' => 'fab fa-twitter',
+            'twitter' => 'fab fa-x-twitter',
             'linkedin' => 'fab fa-linkedin',
-        ];
-
-        return $icons[$platform] ?? 'fas fa-share-nodes';
+            'tiktok' => 'fab fa-tiktok',
+        ][$platform] ?? 'fas fa-share-nodes';
     }
 }
 
 if (!function_exists('social_sync_platform_color')) {
-    /**
-     * Get the brand color for a social platform
-     *
-     * @param string $platform
-     * @return string
-     */
-    function social_sync_platform_color($platform)
+    function social_sync_platform_color(string $platform): string
     {
-        $colors = [
+        return [
             'facebook' => 'bg-blue-600',
-            'twitter' => 'bg-blue-400',
+            'twitter' => 'bg-slate-950',
             'linkedin' => 'bg-blue-700',
-        ];
-
-        return $colors[$platform] ?? 'bg-gray-600';
+            'tiktok' => 'bg-slate-950',
+        ][$platform] ?? 'bg-gray-600';
     }
 }
 
 if (!function_exists('social_sync_status_badge')) {
-    /**
-     * Get the badge class for post status
-     *
-     * @param string $status
-     * @return string
-     */
-    function social_sync_status_badge($status)
+    function social_sync_status_badge(string $status): string
     {
-        $badges = [
+        return [
             'pending' => 'bg-yellow-100 text-yellow-800',
+            'processing' => 'bg-sky-100 text-sky-800',
             'published' => 'bg-green-100 text-green-800',
             'failed' => 'bg-red-100 text-red-800',
             'cancelled' => 'bg-gray-100 text-gray-800',
-        ];
-
-        return $badges[$status] ?? 'bg-gray-100 text-gray-800';
+        ][$status] ?? 'bg-gray-100 text-gray-800';
     }
 }
 
 if (!function_exists('social_sync_format_error')) {
-    /**
-     * Format error message for display
-     *
-     * @param string $error
-     * @return string
-     */
-    function social_sync_format_error($error)
+    function social_sync_format_error(string $error): string
     {
-        $error = preg_replace('/\s*\(.*?\)/', '', $error);
+        $error = preg_replace('/\s*\(.*?\)/', '', $error) ?: $error;
 
-        $errorMap = [
+        foreach ([
             'ECONNREFUSED' => 'Unable to connect to the social platform',
             'Invalid OAuth' => 'Authentication failed. Please reconnect your account',
             'Rate limit' => 'Posting limit reached. Please try again later',
             'Token expired' => 'Your access token has expired. Please reconnect',
-        ];
-
-        foreach ($errorMap as $pattern => $message) {
+        ] as $pattern => $message) {
             if (stripos($error, $pattern) !== false) {
                 return $message;
             }
@@ -99,34 +71,22 @@ if (!function_exists('social_sync_format_error')) {
 }
 
 if (!function_exists('social_sync_can_retry')) {
-    /**
-     * Check if a failed post can be retried
-     *
-     * @param \SocialSync\Models\ScheduledPost $post
-     * @return bool
-     */
-    function social_sync_can_retry($post)
+    function social_sync_can_retry($post): bool
     {
-        $maxRetries = config('larapost.retry.max_attempts', 3);
+        $maxRetries = (int) config('larapost.retry.max_attempts', 3);
+
         return $post->status === 'failed' && $post->retry_count < $maxRetries;
     }
 }
 
 if (!function_exists('social_sync_humanize_platform')) {
-    /**
-     * Get human-readable platform name
-     *
-     * @param string $platform
-     * @return string
-     */
-    function social_sync_humanize_platform($platform)
+    function social_sync_humanize_platform(string $platform): string
     {
-        $names = [
-            'facebook' => 'Facebook',
+        return [
+            'facebook' => 'Facebook Pages',
             'twitter' => 'Twitter / X',
             'linkedin' => 'LinkedIn',
-        ];
-
-        return $names[$platform] ?? ucfirst($platform);
+            'tiktok' => 'TikTok',
+        ][$platform] ?? ucfirst($platform);
     }
 }

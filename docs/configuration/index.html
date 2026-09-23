@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en" data-base="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Configuration | LaraPost</title>
+  <meta name="description" content="Keep the package surface as small as your application needs. Platforms, UI, queues, scheduling, and MCP are independently configurable.">
+  <link rel="icon" href="../favicon.ico">
+  <link rel="stylesheet" href="../assets/docs.css">
+</head>
+<body data-page="configuration">
+<header class="topbar">
+  <a class="brand" href="../"><span class="brand-mark">L</span><span>LaraPost</span></a>
+  <nav class="top-links">
+    <span class="version">2.x</span>
+    <a class="hide-mobile" href="https://packagist.org/packages/prateekbhujel/larapost">Packagist</a>
+    <a href="https://github.com/prateekbhujel/larapost">GitHub</a>
+  </nav>
+</header>
+<nav class="mobile-nav" data-docs-nav></nav>
+<div class="shell">
+  <aside class="sidebar" data-docs-nav></aside>
+  <main class="content">
+    <article class="article">
+      <div class="eyebrow">Getting Started</div>
+      <h1>Configuration</h1>
+      <p class="lead">Keep the package surface as small as your application needs. Platforms, UI, queues, scheduling, and MCP are independently configurable.</p>
+      
+<h2 id="platforms">Enabled platforms</h2>
+<pre><code>LARAPOST_PLATFORMS=facebook,tiktok</code></pre>
+<p>The manager exposes only enabled drivers. The dashboard and MCP capability list follow the same setting.</p>
+
+<h2 id="dashboard">Dashboard</h2>
+<pre><code>LARAPOST_UI_ENABLED=true</code></pre>
+<p>The dashboard can publish content and change provider credentials, so its routes use <code>['web', 'auth']</code> by default. Replace <code>operator_middleware</code> in the published config if your application uses a different authorization layer.</p>
+
+<h2 id="queue">Queue</h2>
+<pre><code>LARAPOST_QUEUE_ENABLED=true
+LARAPOST_QUEUE_CONNECTION=redis
+LARAPOST_QUEUE_NAME=larapost</code></pre>
+<p>When queue mode is enabled, due scheduled posts are dispatched as unique Laravel jobs. Immediate code paths can also opt into the queue with <code>->queue()</code>.</p>
+
+<h2 id="scheduler">Scheduler</h2>
+<pre><code>LARAPOST_SCHEDULER_ENABLED=true
+LARAPOST_SCHEDULER_LIMIT=50</code></pre>
+<p>LaraPost registers its due-post command with Laravel's scheduler. Your application still needs the normal Laravel scheduler process or cron entry.</p>
+
+<h2 id="mcp">MCP</h2>
+<pre><code>LARAPOST_MCP_ENABLED=true
+LARAPOST_MCP_PATH=/larapost/mcp
+LARAPOST_MCP_TOKEN=replace-with-a-long-random-secret
+
+LARAPOST_BUSINESS_NAME="Acme"
+LARAPOST_BUSINESS_DESCRIPTION="What the company actually does"
+LARAPOST_TARGET_AUDIENCE="Who the content is for"
+LARAPOST_BRAND_VOICE="Clear, practical, no hype"
+LARAPOST_CONTENT_GUIDELINES="Never invent prices or guarantees"</code></pre>
+<p>See <a href="../ai-mcp/">AI & MCP</a> for client setup and security guidance.</p>
+
+      <footer class="footer">LaraPost is MIT licensed. Documentation tracks the current 2.x line.</footer>
+    </article>
+  </main>
+</div>
+<script src="../assets/docs.js"></script>
+</body>
+</html>

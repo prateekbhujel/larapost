@@ -9,6 +9,7 @@ use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use SocialSync\Drivers\FacebookDriver;
 use SocialSync\Drivers\LinkedInDriver;
+use SocialSync\Drivers\TikTokDriver;
 use SocialSync\Drivers\TwitterDriver;
 use SocialSync\Exceptions\SocialSyncException;
 use SocialSync\Models\SocialAccount;
@@ -26,6 +27,7 @@ class DriverConfigurationTest extends TestCase
         $url = $driver->getAuthorizationUrl('https://example.com/callback');
 
         $this->assertStringContainsString('https://www.facebook.com/v25.0/dialog/oauth?', $url);
+        $this->assertStringContainsString('state=', $url);
     }
 
     public function test_facebook_driver_prefers_page_access_token_for_page_posts(): void
@@ -161,6 +163,100 @@ class DriverConfigurationTest extends TestCase
         $this->assertStringContainsString('https://www.linkedin.com/oauth/v2/authorization?', $url);
         $this->assertStringContainsString('client_id=client-id', $url);
         $this->assertStringContainsString('state=', $url);
+    }
+
+    public function test_tiktok_driver_publishes_video_by_url_and_accepts_success_envelope(): void
+    {
+        $mock = new MockHandler([
+            new Response(200, ['Content-Type' => 'application/json'], json_encode([
+                'data' => [
+                    'privacy_level_options' => ['SELF_ONLY'],
+                ],
+                'error' => [
+                    'code' => 'ok',
+                    'message' => '',
+                    'log_id' => 'creator-log',
+                ],
+            ])),
+            new Response(200, ['Content-Type' => 'application/json'], json_encode([
+                'data' => [
+                    'publish_id' => 'v_pub_url~123',
+                ],
+                'error' => [
+                    'code' => 'ok',
+                    'message' => '',
+                    'log_id' => 'publish-log',
+                ],
+            ])),
+        ]);
+
+        $driver = new TikTokDriver([
+            'client_key' => 'client-key',
+            'client_secret' => 'client-secret',
+            'default_privacy_level' => 'SELF_ONLY',
+        ], new Client([
+            'base_uri' => 'https://open.tiktokapis.com/',
+            'handler' => HandlerStack::create($mock),
+        ]));
+
+        $account = new SocialAccount();
+        $account->setRawAttributes([
+            'credentials' => json_encode(['access_token' => 'access-token']),
+        ], true);
+
+        $response = $driver->publish($account, [
+            'content' => 'TikTok video',
+            'media' => [[
+                'type' => 'video',
+                'path' => 'https://cdn.example.com/video.mp4',
+            ]],
+            'metadata' => [],
+        ]);
+
+        $this->assertSame('v_pub_url~123', $response['publish_id']);
+        $this->assertSame('processing', $response['status']);
+
+        $request = $mock->getLastRequest();
+        $payload = json_decode((string) $request->getBody(), true);
+
+        $this->assertSame('/v2/post/publish/video/init/', $request->getUri()->getPath());
+        $this->assertSame('PULL_FROM_URL', $payload['source_info']['source']);
+        $this->assertSame('https://cdn.example.com/video.mp4', $payload['source_info']['video_url']);
+    }
+
+    public function test_tiktok_driver_rejects_non_https_media(): void
+    {
+        $mock = new MockHandler([
+            new Response(200, ['Content-Type' => 'application/json'], json_encode([
+                'data' => ['privacy_level_options' => ['SELF_ONLY']],
+                'error' => ['code' => 'ok', 'message' => '', 'log_id' => 'creator-log'],
+            ])),
+        ]);
+
+        $driver = new TikTokDriver([
+            'client_key' => 'client-key',
+            'client_secret' => 'client-secret',
+        ], new Client([
+            'base_uri' => 'https://open.tiktokapis.com/',
+            'handler' => HandlerStack::create($mock),
+        ]));
+
+        $account = new SocialAccount();
+        $account->setRawAttributes([
+            'credentials' => json_encode(['access_token' => 'access-token']),
+        ], true);
+
+        $this->expectException(SocialSyncException::class);
+        $this->expectExceptionMessage('public HTTPS URL');
+
+        $driver->publish($account, [
+            'content' => 'Nope',
+            'media' => [[
+                'type' => 'video',
+                'path' => '/tmp/video.mp4',
+            ]],
+            'metadata' => [],
+        ]);
     }
 }
 

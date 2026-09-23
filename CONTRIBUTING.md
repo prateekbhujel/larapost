@@ -2,75 +2,56 @@
 
 Thanks for contributing.
 
-## Contribution Model
+## Which branch?
 
-LaraPost accepts community changes through **forks + pull requests**.
+New features, provider work, architecture changes, and bug fixes that affect the current release line target `main`.
 
-- Do not push contribution branches directly to `prateekbhujel/larapost`
-- Fork the repository to your own GitHub account
-- Open pull requests from your fork branch into `main`
+The `1.x` branch is only for critical backports. See [BACKPORTING.md](./BACKPORTING.md).
 
-## Ground Rules
+## Contribution model
 
-- Keep changes focused and small
-- Add or update tests for behavior changes
-- Avoid breaking behavior without documenting it in the PR and release notes
-- Do not commit secrets or API tokens
-
-## Local Setup (Fork Workflow)
+Use a fork and pull request:
 
 ```bash
-# 1) Fork on GitHub, then clone your fork
 git clone https://github.com/<your-username>/larapost.git
 cd larapost
-
-# 2) Add upstream remote
 git remote add upstream https://github.com/prateekbhujel/larapost.git
-
-# 3) Install and test
 composer install
 composer test
 ```
 
-## Branching
+## Expectations
 
-Create branches from latest upstream `main` with clear names, for example:
+- Solve one concrete problem per pull request.
+- Add regression coverage for behavior fixes.
+- Keep provider behavior aligned with current provider documentation.
+- Do not weaken OAuth state checks, route authorization, or MCP authentication to make a test pass.
+- Never commit API tokens, access tokens, client secrets, or production account data.
+- Update public docs when behavior, configuration, or supported platforms change.
+- Treat unrelated CI failures separately rather than changing production code to satisfy them.
 
-- `feature/oauth-state-validation`
-- `fix/linkedin-image-upload-error`
-- `docs/release-checklist`
+## Provider changes
 
-## Keep Your Fork in Sync
+Provider APIs change frequently. A provider pull request should explain:
 
-```bash
-git fetch upstream
-git checkout main
-git rebase upstream/main
-git push origin main
-```
+- the provider API/version involved
+- required scopes/permissions
+- media limitations
+- authentication flow
+- expected error handling
+- how the behavior was tested
 
-## Pull Request Checklist
+## MCP changes
 
-- [ ] PR opened from a fork branch
-- [ ] Tests pass locally (`composer test`)
+MCP tools that mutate data or publish externally must be marked as side-effecting and must not return provider credentials.
+
+Read tools should expose the minimum data an AI client needs.
+
+## Pull request checklist
+
+- [ ] Tests pass locally
+- [ ] New behavior has regression coverage
 - [ ] Public API/config impact is documented
-- [ ] README or docs updated when behavior changed
+- [ ] Security implications were considered
+- [ ] Provider restrictions are described accurately
 - [ ] Changelog entry added for notable user-facing changes
-
-## Commit Messages
-
-Use concise conventional-style commits where possible:
-
-- `feat: add queued retry backoff override`
-- `fix: prevent duplicate scheduled post claims`
-- `docs: clarify production cron setup`
-
-## Reporting Issues
-
-Use GitHub Issues and include:
-
-- package version
-- Laravel version
-- PHP version
-- exact error message
-- minimal reproduction steps

@@ -1,12 +1,19 @@
 <?php
 
+$enabledPlatforms = array_values(array_filter(array_map(
+    static fn ($platform): string => strtolower(trim($platform)),
+    explode(',', (string) env('LARAPOST_PLATFORMS', 'facebook,twitter,linkedin,tiktok'))
+)));
+
 return [
     'default_platform' => env('LARAPOST_DEFAULT_PLATFORM', 'facebook'),
+    'enabled_platforms' => $enabledPlatforms,
 
     'drivers' => [
         'facebook' => \SocialSync\Drivers\FacebookDriver::class,
         'twitter' => \SocialSync\Drivers\TwitterDriver::class,
         'linkedin' => \SocialSync\Drivers\LinkedInDriver::class,
+        'tiktok' => \SocialSync\Drivers\TikTokDriver::class,
     ],
 
     'platforms' => [
@@ -15,7 +22,6 @@ return [
             'app_secret' => env('FACEBOOK_APP_SECRET'),
             'api_version' => env('FACEBOOK_API_VERSION', 'v20.0'),
         ],
-
         'twitter' => [
             'client_id' => env('TWITTER_CLIENT_ID'),
             'client_secret' => env('TWITTER_CLIENT_SECRET'),
@@ -25,24 +31,24 @@ return [
             'xquik_account' => env('XQUIK_ACCOUNT'),
             'xquik_api_base_url' => env('XQUIK_API_BASE_URL', 'https://xquik.com/api/v1'),
         ],
-
         'linkedin' => [
             'client_id' => env('LINKEDIN_CLIENT_ID'),
             'client_secret' => env('LINKEDIN_CLIENT_SECRET'),
         ],
+        'tiktok' => [
+            'client_key' => env('TIKTOK_CLIENT_KEY'),
+            'client_secret' => env('TIKTOK_CLIENT_SECRET'),
+            'default_privacy_level' => env('TIKTOK_DEFAULT_PRIVACY_LEVEL', 'SELF_ONLY'),
+        ],
     ],
 
     'queue' => [
-        // Scheduled publishing remains synchronous unless explicitly enabled.
-        // SocialMedia::post()->queue() always dispatches through Laravel's queue.
         'enabled' => env('LARAPOST_QUEUE_ENABLED', false),
         'connection' => env('LARAPOST_QUEUE_CONNECTION', env('QUEUE_CONNECTION')),
         'queue_name' => env('LARAPOST_QUEUE_NAME', 'larapost'),
     ],
 
     'scheduler' => [
-        // Registers larapost:run-scheduled with Laravel's scheduler. Your app still
-        // needs schedule:run / schedule:work to be running in production.
         'enabled' => env('LARAPOST_SCHEDULER_ENABLED', true),
         'limit' => (int) env('LARAPOST_SCHEDULER_LIMIT', 50),
         'without_overlapping' => true,
@@ -52,21 +58,6 @@ return [
     'retry' => [
         'max_attempts' => (int) env('LARAPOST_MAX_RETRY_ATTEMPTS', 3),
         'backoff_minutes' => [1, 5, 15],
-    ],
-
-    'rate_limits' => [
-        'facebook' => [
-            'posts_per_hour' => 30,
-            'posts_per_day' => 200,
-        ],
-        'twitter' => [
-            'posts_per_hour' => 50,
-            'posts_per_day' => 300,
-        ],
-        'linkedin' => [
-            'posts_per_hour' => 20,
-            'posts_per_day' => 100,
-        ],
     ],
 
     'media' => [
@@ -80,12 +71,7 @@ return [
     'routes' => [
         'enabled' => env('LARAPOST_ROUTES_ENABLED', true),
         'prefix' => env('LARAPOST_ROUTE_PREFIX', 'larapost'),
-
-        // Kept for compatibility and used as the base middleware for callbacks.
         'middleware' => ['web'],
-
-        // Operator actions are protected by authentication by default. Applications
-        // with a different authorization model can override this published config.
         'operator_middleware' => ['web', 'auth'],
         'callback_middleware' => ['web'],
     ],
@@ -93,5 +79,19 @@ return [
     'ui' => [
         'enabled' => env('LARAPOST_UI_ENABLED', true),
         'title' => env('LARAPOST_UI_TITLE', 'LaraPost Dashboard'),
+    ],
+
+    'mcp' => [
+        'enabled' => env('LARAPOST_MCP_ENABLED', false),
+        'path' => env('LARAPOST_MCP_PATH', '/larapost/mcp'),
+        'token' => env('LARAPOST_MCP_TOKEN'),
+        'business' => [
+            'name' => env('LARAPOST_BUSINESS_NAME'),
+            'website' => env('LARAPOST_BUSINESS_WEBSITE'),
+            'description' => env('LARAPOST_BUSINESS_DESCRIPTION'),
+            'audience' => env('LARAPOST_TARGET_AUDIENCE'),
+            'voice' => env('LARAPOST_BRAND_VOICE'),
+            'guidelines' => env('LARAPOST_CONTENT_GUIDELINES'),
+        ],
     ],
 ];

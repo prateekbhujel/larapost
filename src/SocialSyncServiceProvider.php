@@ -5,9 +5,12 @@ namespace SocialSync;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\ServiceProvider;
 use SocialSync\Console\Commands\AddAccountCommand;
+use SocialSync\Console\Commands\DoctorCommand;
 use SocialSync\Console\Commands\InstallCommand;
 use SocialSync\Console\Commands\RunScheduledPostsCommand;
 use SocialSync\Console\Commands\TestPostCommand;
+use SocialSync\Http\Middleware\AuthenticateMcp;
+use SocialSync\Mcp\LaraPostServer;
 
 class SocialSyncServiceProvider extends ServiceProvider
 {
@@ -27,6 +30,7 @@ class SocialSyncServiceProvider extends ServiceProvider
             $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
         }
 
+        $this->registerMcp();
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'larapost');
 
         if (!$this->app->runningInConsole()) {
@@ -50,11 +54,32 @@ class SocialSyncServiceProvider extends ServiceProvider
             AddAccountCommand::class,
             TestPostCommand::class,
             RunScheduledPostsCommand::class,
+            DoctorCommand::class,
         ]);
 
         if (config('larapost.scheduler.enabled', true)) {
             $this->registerSchedule();
         }
+    }
+
+    protected function registerMcp(): void
+    {
+        if (!config('larapost.mcp.enabled', false)) {
+            return;
+        }
+
+        if (!class_exists(\Laravel\Mcp\Facades\Mcp::class)) {
+            return;
+        }
+
+        if (!filled(config('larapost.mcp.token'))) {
+            return;
+        }
+
+        $path = '/' . ltrim((string) config('larapost.mcp.path', '/larapost/mcp'), '/');
+
+        \Laravel\Mcp\Facades\Mcp::web($path, LaraPostServer::class)
+            ->middleware(AuthenticateMcp::class);
     }
 
     protected function registerSchedule(): void

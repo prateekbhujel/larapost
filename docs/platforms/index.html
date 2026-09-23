@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en" data-base="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Platforms | LaraPost</title>
+  <meta name="description" content="Each driver has different provider rules. LaraPost normalizes the workflow, but it does not pretend every social API has the same capabilities.">
+  <link rel="icon" href="../favicon.ico">
+  <link rel="stylesheet" href="../assets/docs.css">
+</head>
+<body data-page="platforms">
+<header class="topbar">
+  <a class="brand" href="../"><span class="brand-mark">L</span><span>LaraPost</span></a>
+  <nav class="top-links">
+    <span class="version">2.x</span>
+    <a class="hide-mobile" href="https://packagist.org/packages/prateekbhujel/larapost">Packagist</a>
+    <a href="https://github.com/prateekbhujel/larapost">GitHub</a>
+  </nav>
+</header>
+<nav class="mobile-nav" data-docs-nav></nav>
+<div class="shell">
+  <aside class="sidebar" data-docs-nav></aside>
+  <main class="content">
+    <article class="article">
+      <div class="eyebrow">Publishing</div>
+      <h1>Platforms</h1>
+      <p class="lead">Each driver has different provider rules. LaraPost normalizes the workflow, but it does not pretend every social API has the same capabilities.</p>
+      
+<h2 id="facebook">Facebook Pages</h2>
+<p>Facebook support is for Pages. OAuth syncs available Pages and preserves page-specific access tokens. Text, image URL, and video URL publishing are supported.</p>
+<div class="callout note">Personal Facebook profile publishing is not supported.</div>
+
+<h2 id="x">Twitter / X</h2>
+<p>The native X driver uses OAuth 2.0 and currently focuses on text publishing. The optional Xquik backend provides an API-key based text path for teams that already use Xquik.</p>
+<p>Provider billing, credits, write scopes, and product access are still controlled by X.</p>
+
+<h2 id="linkedin">LinkedIn</h2>
+<p>LaraPost connects member profiles and can publish text. Programmatic image publishing expects a readable local file path because LinkedIn uses an upload flow.</p>
+<div class="callout note">Organization Pages are not part of the current built-in LinkedIn driver.</div>
+
+<h2 id="tiktok">TikTok</h2>
+<p>TikTok support uses the Content Posting API. The driver queries creator information before each publish so requested privacy is validated against the account's current options.</p>
+<p>Video and photo Direct Post currently use TikTok's <code>PULL_FROM_URL</code> flow. Media must be available over HTTPS from a domain or URL prefix verified for the TikTok developer app.</p>
+<pre><code>SocialMedia::post()
+    ->content('Behind the scenes from launch day')
+    ->video('https://media.example.com/launch.mp4')
+    ->platform('tiktok')
+    ->metadata([
+        'tiktok' => [
+            'privacy_level' => 'SELF_ONLY',
+            'disable_comment' => false,
+            'is_aigc' => false,
+        ],
+    ])
+    ->publish();</code></pre>
+<div class="callout"><strong>Production review:</strong> TikTok Direct Post access is subject to TikTok app review, scopes, creator eligibility, and content posting requirements. LaraPost cannot bypass provider review or account restrictions.</div>
+
+<h2 id="custom">Custom drivers</h2>
+<p>You can replace or add a platform driver at runtime without editing LaraPost:</p>
+<pre><code>use SocialSync\Facades\SocialMedia;
+
+SocialMedia::extend('mastodon', App\Social\MastodonDriver::class);</code></pre>
+
+      <footer class="footer">LaraPost is MIT licensed. Documentation tracks the current 2.x line.</footer>
+    </article>
+  </main>
+</div>
+<script src="../assets/docs.js"></script>
+</body>
+</html>

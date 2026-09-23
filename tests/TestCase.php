@@ -30,6 +30,7 @@ abstract class TestCase extends Orchestra
             'facebook' => FakeDriver::class,
             'twitter' => FakeDriver::class,
             'linkedin' => FakeDriver::class,
+            'tiktok' => FakeDriver::class,
         ]);
         $app['config']->set('larapost.routes.enabled', false);
         $app['config']->set('larapost.queue.enabled', false);

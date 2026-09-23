@@ -1,6 +1,6 @@
 {
     "name": "prateekbhujel/larapost",
-    "description": "Laravel publishing and scheduling for Facebook Pages, Twitter/X, and LinkedIn",
+    "description": "Laravel-native social publishing infrastructure for Facebook, X, LinkedIn, TikTok, queues, scheduling, and optional MCP clients",
     "type": "library",
     "license": "MIT",
     "homepage": "https://github.com/prateekbhujel/larapost",
@@ -8,11 +8,18 @@
     "keywords": [
         "laravel",
         "social-media",
+        "social-publishing",
         "facebook",
         "twitter",
         "x",
         "linkedin",
-        "scheduling"
+        "tiktok",
+        "scheduling",
+        "queue",
+        "mcp",
+        "model-context-protocol",
+        "chatgpt",
+        "claude"
     ],
     "authors": [
         {
@@ -26,14 +33,25 @@
         "docs": "https://prateekbhujel.github.io/larapost/"
     },
     "require": {
-        "php": "^8.2",
-        "illuminate/support": "^11.0|^12.0|^13.0",
+        "php": "^8.3",
         "guzzlehttp/guzzle": "^7.0",
+        "illuminate/bus": "^12.41.1|^13.0",
+        "illuminate/console": "^12.41.1|^13.0",
+        "illuminate/contracts": "^12.41.1|^13.0",
+        "illuminate/database": "^12.41.1|^13.0",
+        "illuminate/http": "^12.41.1|^13.0",
+        "illuminate/queue": "^12.41.1|^13.0",
+        "illuminate/routing": "^12.41.1|^13.0",
+        "illuminate/support": "^12.41.1|^13.0",
         "nesbot/carbon": "^2.0|^3.0"
     },
+    "suggest": {
+        "laravel/mcp": "Required only when you enable LaraPost's MCP server for ChatGPT, Claude, Codex, or another MCP client."
+    },
     "require-dev": {
-        "orchestra/testbench": "^9.0|^10.0|^11.0",
-        "phpunit/phpunit": "^10.0|^11.0|^12.0"
+        "laravel/mcp": "^1.0",
+        "orchestra/testbench": "^10.8|^11.0",
+        "phpunit/phpunit": "^10.5|^11.0|^12.0"
     },
     "autoload": {
         "psr-4": {

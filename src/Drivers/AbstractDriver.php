@@ -40,11 +40,18 @@ abstract class AbstractDriver implements SocialDriverInterface
             }
 
             if (is_array($decoded) && isset($decoded['error'])) {
-                $message = is_array($decoded['error'])
-                    ? ($decoded['error']['message'] ?? json_encode($decoded['error']))
-                    : (string) $decoded['error'];
+                $error = $decoded['error'];
+                $isSuccessEnvelope = is_array($error)
+                    && isset($error['code'])
+                    && in_array(strtolower((string) $error['code']), ['ok', 'success'], true);
 
-                throw new SocialSyncException('Platform API error: ' . $message);
+                if (!$isSuccessEnvelope) {
+                    $message = is_array($error)
+                        ? ($error['message'] ?? $error['code'] ?? json_encode($error))
+                        : (string) $error;
+
+                    throw new SocialSyncException('Platform API error: ' . $message);
+                }
             }
 
             return $decoded;

@@ -10,6 +10,7 @@ class AccountDataResolver
             'facebook' => self::facebook($credentials),
             'twitter' => self::twitter($credentials),
             'linkedin' => self::linkedin($credentials),
+            'tiktok' => self::tiktok($credentials),
             default => self::fallback($platform),
         };
     }
@@ -60,6 +61,18 @@ class AccountDataResolver
             'name' => $fullName !== '' ? $fullName : 'LinkedIn Profile',
             'username' => null,
             'metadata' => ['profile' => $profile],
+        ];
+    }
+
+    protected static function tiktok(array $credentials): array
+    {
+        $user = (array) ($credentials['user'] ?? []);
+
+        return [
+            'id' => (string) ($user['open_id'] ?? $credentials['open_id'] ?? 'unknown'),
+            'name' => (string) ($user['display_name'] ?? 'TikTok Account'),
+            'username' => $user['username'] ?? null,
+            'metadata' => ['user' => $user],
         ];
     }
 

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" data-base="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AI & MCP | LaraPost</title>
+  <meta name="description" content="Expose LaraPost as a standard remote MCP server so compatible AI clients can inspect publishing context and, with user intent, create or cancel posts.">
+  <link rel="icon" href="../favicon.ico">
+  <link rel="stylesheet" href="../assets/docs.css">
+</head>
+<body data-page="ai-mcp">
+<header class="topbar">
+  <a class="brand" href="../"><span class="brand-mark">L</span><span>LaraPost</span></a>
+  <nav class="top-links">
+    <span class="version">2.x</span>
+    <a class="hide-mobile" href="https://packagist.org/packages/prateekbhujel/larapost">Packagist</a>
+    <a href="https://github.com/prateekbhujel/larapost">GitHub</a>
+  </nav>
+</header>
+<nav class="mobile-nav" data-docs-nav></nav>
+<div class="shell">
+  <aside class="sidebar" data-docs-nav></aside>
+  <main class="content">
+    <article class="article">
+      <div class="eyebrow">Publishing</div>
+      <h1>AI & MCP</h1>
+      <p class="lead">Expose LaraPost as a standard remote MCP server so compatible AI clients can inspect publishing context and, with user intent, create or cancel posts.</p>
+      
+<h2 id="what">What the MCP server exposes</h2>
+<table>
+<thead><tr><th>Tool</th><th>Purpose</th><th>Side effect</th></tr></thead>
+<tbody>
+<tr><td><code>get_business_context</code></td><td>Read brand facts, audience, voice, and guidelines</td><td>No</td></tr>
+<tr><td><code>get_capabilities</code></td><td>Read enabled networks and media support</td><td>No</td></tr>
+<tr><td><code>list_accounts</code></td><td>Read connected account metadata without credentials</td><td>No</td></tr>
+<tr><td><code>list_posts</code></td><td>Read publishing history and schedule</td><td>No</td></tr>
+<tr><td><code>create_post</code></td><td>Publish, queue, or schedule content</td><td>Yes</td></tr>
+<tr><td><code>cancel_scheduled_post</code></td><td>Cancel a pending scheduled post</td><td>Yes</td></tr>
+</tbody></table>
+
+<h2 id="install">1. Install the optional MCP dependency</h2>
+<pre><code>composer require laravel/mcp:^1.0</code></pre>
+
+<h2 id="enable">2. Enable LaraPost MCP</h2>
+<pre><code>LARAPOST_MCP_ENABLED=true
+LARAPOST_MCP_PATH=/larapost/mcp
+LARAPOST_MCP_TOKEN=use-a-long-random-secret</code></pre>
+<p>Add real business context so an AI client does not have to guess:</p>
+<pre><code>LARAPOST_BUSINESS_NAME="Acme"
+LARAPOST_BUSINESS_DESCRIPTION="..."
+LARAPOST_TARGET_AUDIENCE="..."
+LARAPOST_BRAND_VOICE="..."
+LARAPOST_CONTENT_GUIDELINES="..."</code></pre>
+
+<h2 id="url">3. Use the remote server URL</h2>
+<pre><code>https://your-app.example/larapost/mcp</code></pre>
+<p>The built-in authentication expects <code>Authorization: Bearer &lt;LARAPOST_MCP_TOKEN&gt;</code>. Clients that require OAuth rather than static bearer tokens should place LaraPost behind your application's normal Laravel MCP OAuth or authenticated proxy setup.</p>
+
+<h2 id="chatgpt">ChatGPT and OpenAI clients</h2>
+<p>Use LaraPost as a remote MCP server in an OpenAI surface that supports custom MCP apps or remote MCP servers. Write tools should remain approval-gated in the client whenever possible. LaraPost marks publishing and cancellation tools as destructive side effects so MCP clients can treat them differently from read-only tools.</p>
+
+<h2 id="claude">Claude and other MCP clients</h2>
+<p>Point the client at the same remote MCP URL and supply the bearer token when the client supports custom authorization headers. Because LaraPost uses the MCP protocol instead of an OpenAI-specific API, the server is not tied to one model vendor.</p>
+
+<h2 id="security">Security model</h2>
+<ul>
+<li>MCP is disabled by default.</li>
+<li>No MCP route is registered without a configured token.</li>
+<li>Account credentials and provider tokens are not returned by read tools.</li>
+<li>Publishing tools are explicitly side-effecting.</li>
+<li>Business context is guidance, not permission to invent facts or publish without clear intent.</li>
+</ul>
+<div class="callout"><strong>Do not expose an unauthenticated MCP server to the public internet.</strong> MCP tools can trigger real external actions. Treat this endpoint like any other privileged application API.</div>
+
+      <footer class="footer">LaraPost is MIT licensed. Documentation tracks the current 2.x line.</footer>
+    </article>
+  </main>
+</div>
+<script src="../assets/docs.js"></script>
+</body>
+</html>
