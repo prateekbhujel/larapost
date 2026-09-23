@@ -33,29 +33,10 @@ jobs:
           if gh release view v2.0.0 >/dev/null 2>&1; then
             echo "v2.0.0 already exists; leaving the release unchanged."
           else
-            cat > /tmp/larapost-v2-notes.md <<'EOF'
-# LaraPost v2.0.0
-
-LaraPost 2.0 is the production hardening release.
-
-Highlights:
-- PHP 8.3+ with Laravel 12 and 13 support
-- protected operator routes by default
-- queued and scheduled delivery hardening with atomic claims and retry backoff
-- token expiry tracking and refresh where supported
-- selective provider enablement
-- TikTok Content Posting API with upload-to-inbox as the safe default
-- explicit TikTok Direct Post mode for applications that implement TikTok's required creator UX
-- optional authenticated MCP server for ChatGPT, Claude, Codex, and other compatible clients
-- production diagnostics with `php artisan larapost:doctor`
-- rebuilt documentation, upgrade guidance, security policy, and backport policy
-
-See `CHANGELOG.md` and `UPGRADE.md` for the complete release notes.
-EOF
             gh release create v2.0.0 \
               --target "$RELEASE_SHA" \
               --title "LaraPost v2.0.0" \
-              --notes-file /tmp/larapost-v2-notes.md
+              --notes "LaraPost 2.0 is the production hardening release. Highlights: PHP 8.3+ with Laravel 12 and 13, protected operator routes, hardened queued and scheduled delivery, token refresh support, selective providers, TikTok upload-to-inbox by default with explicit Direct Post opt-in, optional authenticated MCP integration, production diagnostics, and rebuilt documentation. See CHANGELOG.md and UPGRADE.md for details."
           fi
 
       - name: Remove inactive maintenance and preparation branches
