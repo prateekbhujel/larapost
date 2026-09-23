@@ -1,36 +1,45 @@
 # Changelog
 
-All notable changes to LaraPost are documented in this file.
+All notable changes to LaraPost are documented here.
 
-## [Unreleased]
+## [Unreleased]\n\nPlanned as the LaraPost 2.0 release line.
 
 ### Added
 
-- Optional Xquik API-key backend for Twitter / X text posts.
-- Dashboard support for saving Xquik backend settings and documenting manual account setup.
+- TikTok Content Posting API support for video and photo Direct Post using verified HTTPS media URLs.
+- Optional MCP server for compatible AI clients, with business context, capabilities, account/history lookup, publishing, scheduling, and cancellation tools.
+- `larapost:doctor` diagnostics for database, queue, scheduler, dashboard middleware, platforms, and MCP.
+- Selective platform enablement with `LARAPOST_PLATFORMS`.
+- Queued publishing with persisted jobs, unique scheduled-post jobs, and retry/backoff handling.
+- Token expiry tracking and refresh-before-publish support.
+- Custom driver registration through `SocialMedia::extend()`.
 
 ### Changed
 
-- Package metadata and CI now target PHP `8.2` and Laravel `11` or newer.
+- PHP 8.3+ is required.
+- Laravel 12 and 13 are supported. Laravel 11 support remains on the `1.x` branch.
+- Dashboard/operator routes require authentication by default.
+- OAuth state validation is strict for built-in OAuth drivers.
+- The installation command can configure only the providers and optional surfaces an application actually needs.
+- Documentation has been rebuilt around installation, configuration, platforms, publishing, MCP, and upgrading.
+
+### Fixed
+
+- Platform API success envelopes that contain an `error` object with an `ok` / `success` code are no longer treated as failures.
+- Scheduled posts are claimed before execution to reduce duplicate publication risk.
+- OAuth callback token metadata now preserves expiry information where providers expose it.
 
 ## [1.0.0] - 2026-03-30
 
 ### Added
 
-- Stable package branding, docs assets, and refreshed GitHub-facing README
-- Bulk composer for publishing different content across different connected accounts
-- Multi-Page Facebook sync from one OAuth login
-- CI coverage for PHP `8.1`, `8.2`, `8.3`, `8.4`, and `8.5`
-
-### Changed
-
-- Stable support surface is now explicitly limited to Facebook Pages, Twitter / X, and LinkedIn member profiles
-- Legacy unsupported provider references have been removed from the published docs and release copy
-- Dashboard copy now reflects provider-specific limits instead of promising unsupported flows
-- Package metadata now targets the `v1.0.0` stable release line
+- Stable package branding and initial docs.
+- Facebook Pages, Twitter / X, and LinkedIn member-profile publishing.
+- Dashboard, account connection, scheduled posts, retries, and bulk composer.
+- Multi-Page Facebook sync from one OAuth login.
 
 ### Fixed
 
-- Facebook publishing now uses the correct Page access token for Page posts
-- Facebook OAuth URL generation normalizes Meta API versions correctly
-- Twitter confidential-client OAuth token exchange now sends client credentials correctly
+- Facebook publishing uses Page access tokens for Page posts.
+- Facebook API versions are normalized.
+- Twitter confidential-client OAuth token exchange sends client credentials correctly.

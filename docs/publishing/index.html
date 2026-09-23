@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" data-base="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Publishing & scheduling | LaraPost</title>
+  <meta name="description" content="Use the same fluent builder for one account, many accounts, immediate publishing, durable scheduling, or queued execution.">
+  <link rel="icon" href="../favicon.ico">
+  <link rel="stylesheet" href="../assets/docs.css">
+</head>
+<body data-page="publishing">
+<header class="topbar">
+  <a class="brand" href="../"><span class="brand-mark">L</span><span>LaraPost</span></a>
+  <nav class="top-links">
+    <span class="version">2.x</span>
+    <a class="hide-mobile" href="https://packagist.org/packages/prateekbhujel/larapost">Packagist</a>
+    <a href="https://github.com/prateekbhujel/larapost">GitHub</a>
+  </nav>
+</header>
+<nav class="mobile-nav" data-docs-nav></nav>
+<div class="shell">
+  <aside class="sidebar" data-docs-nav></aside>
+  <main class="content">
+    <article class="article">
+      <div class="eyebrow">Publishing</div>
+      <h1>Publishing & scheduling</h1>
+      <p class="lead">Use the same fluent builder for one account, many accounts, immediate publishing, durable scheduling, or queued execution.</p>
+      
+<h2 id="immediate">Immediate publishing</h2>
+<pre><code>SocialMedia::post()
+    ->content('A new release is live.')
+    ->platforms(['facebook', 'twitter'])
+    ->publish();</code></pre>
+
+<h2 id="accounts">Target exact accounts</h2>
+<pre><code>SocialMedia::post()
+    ->content('Only these connected destinations')
+    ->platforms(['facebook'])
+    ->accounts([
+        'facebook' => [12, 19],
+    ])
+    ->publish();</code></pre>
+
+<h2 id="schedule">Schedule for later</h2>
+<pre><code>SocialMedia::post()
+    ->content('Publish tomorrow morning')
+    ->platform('linkedin')
+    ->scheduleFor(now()->addDay()->setTime(9, 0))
+    ->publish();</code></pre>
+<p>The record is stored as pending. LaraPost's scheduler claims due rows before publishing so concurrent scheduler runs do not publish the same pending row twice.</p>
+
+<h2 id="queue">Queue immediate work</h2>
+<pre><code>SocialMedia::post()
+    ->content('Process this through Laravel queues')
+    ->platform('facebook')
+    ->queue();</code></pre>
+<p>The post is persisted first, then dispatched as a unique job. Future scheduled posts wait for the scheduler instead of being pushed early.</p>
+
+<h2 id="retries">Retries</h2>
+<p>Scheduled failures use configured retry attempts and backoff. Failed terminal attempts remain visible in publishing history with the provider error message.</p>
+<pre><code>'retry' => [
+    'max_attempts' => 3,
+    'backoff_minutes' => [1, 5, 15],
+],</code></pre>
+
+<h2 id="tokens">Token refresh</h2>
+<p>OAuth callback responses are normalized with expiry timestamps where providers expose them. Before publishing, LaraPost refreshes credentials that are close to expiry when the driver supports refresh.</p>
+
+<h2 id="media">Media validation</h2>
+<p>Local files are validated against configured file sizes and extensions before provider dispatch. URL-based provider flows, such as TikTok pull-from-URL, are validated by the driver against the provider's URL requirements.</p>
+
+      <footer class="footer">LaraPost is MIT licensed. Documentation tracks the current 2.x line.</footer>
+    </article>
+  </main>
+</div>
+<script src="../assets/docs.js"></script>
+</body>
+</html>

@@ -46,7 +46,7 @@
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600">LaraPost</p>
                     <h1 class="mt-1 font-display text-3xl font-semibold text-slate-900">{{ config('larapost.ui.title', 'Social Publishing Control Panel') }}</h1>
-                    <p class="mt-2 max-w-3xl text-sm text-slate-600">Connect Facebook Pages, Twitter / X accounts, and LinkedIn profiles, then publish or schedule content across the exact destinations you want.</p>
+                    <p class="mt-2 max-w-3xl text-sm text-slate-600">Connect your publishing accounts, then publish or schedule content from one Laravel-native control plane.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <span class="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">Timezone · {{ $dashboardTimezone }}</span>
@@ -58,9 +58,9 @@
         <section class="mb-6 rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-sm backdrop-blur sm:p-6">
             <div>
                 <h2 class="font-display text-2xl font-semibold text-slate-900">Connected Platforms</h2>
-                <p class="mt-1 text-sm text-slate-600">Facebook Pages, Twitter / X, and LinkedIn.</p>
+                <p class="mt-1 text-sm text-slate-600">Facebook Pages, Twitter / X, LinkedIn, and TikTok.</p>
             </div>
-            <div class="mt-4 grid gap-3 md:grid-cols-3">
+            <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <article class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                     <h3 class="font-display text-lg font-semibold text-slate-900">Facebook Pages</h3>
                     <p class="mt-2 text-sm text-slate-600">Connect one Facebook login, sync multiple Pages, and publish or schedule Page posts. Personal profile posting is not supported.</p>
@@ -72,6 +72,10 @@
                 <article class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                     <h3 class="font-display text-lg font-semibold text-slate-900">LinkedIn Profiles</h3>
                     <p class="mt-2 text-sm text-slate-600">OAuth and personal profile posting are supported. Organization pages are not supported.</p>
+                </article>
+                <article class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                    <h3 class="font-display text-lg font-semibold text-slate-900">TikTok</h3>
+                    <p class="mt-2 text-sm text-slate-600">OAuth plus Content Posting API support for video and photo posts using verified HTTPS media URLs.</p>
                 </article>
             </div>
         </section>
@@ -129,6 +133,7 @@
                             'facebook' => 'Facebook Pages',
                             'twitter' => 'Twitter / X',
                             'linkedin' => 'LinkedIn Profiles',
+                            'tiktok' => 'TikTok',
                             default => ucfirst($platform['key']),
                         };
 
@@ -136,6 +141,7 @@
                             'facebook' => 'https://developers.facebook.com/apps/',
                             'twitter' => 'https://developer.x.com/en/portal/dashboard',
                             'linkedin' => 'https://www.linkedin.com/developers/apps',
+                            'tiktok' => 'https://developers.tiktok.com/apps/',
                             default => '#',
                         };
                     @endphp
@@ -267,7 +273,7 @@
                     @endphp
 
                     <h2 class="font-display text-2xl font-semibold text-slate-900">Publish / Schedule</h2>
-                    <p class="mt-1 text-sm text-slate-600">Publish instantly or schedule for later. Leave account selection empty to target every active Facebook Page, Twitter / X account, or LinkedIn profile on the selected platforms. All schedule times use {{ $dashboardTimezone }}.</p>
+                    <p class="mt-1 text-sm text-slate-600">Publish instantly or schedule for later. Leave account selection empty to target every active account on the selected platforms. All schedule times use {{ $dashboardTimezone }}.</p>
 
                     <form method="POST" action="{{ route('larapost.publish') }}" class="mt-4 space-y-4">
                         @csrf
@@ -285,6 +291,7 @@
                                             'facebook' => 'Facebook Pages',
                                             'twitter' => 'Twitter / X',
                                             'linkedin' => 'LinkedIn Profiles',
+                                            'tiktok' => 'TikTok',
                                             default => ucfirst($platform['key']),
                                         };
                                     @endphp
@@ -458,6 +465,7 @@
                                                         $accountPlatformLabel = match ($account->platform) {
                                                             'twitter' => 'Twitter / X',
                                                             'linkedin' => 'LinkedIn',
+                                                            'tiktok' => 'TikTok',
                                                             default => ucfirst($account->platform),
                                                         };
                                                     @endphp
@@ -518,7 +526,7 @@
                         <tbody class="divide-y divide-slate-100">
                         @forelse ($accounts as $account)
                             <tr>
-                                <td class="py-2 pr-3">{{ match ($account->platform) { 'facebook' => 'Facebook Pages', 'twitter' => 'Twitter / X', 'linkedin' => 'LinkedIn Profiles', default => ucfirst($account->platform) } }}</td>
+                                <td class="py-2 pr-3">{{ match ($account->platform) { 'facebook' => 'Facebook Pages', 'twitter' => 'Twitter / X', 'linkedin' => 'LinkedIn Profiles', 'tiktok' => 'TikTok', default => ucfirst($account->platform) } }}</td>
                                 <td class="py-2 pr-3">
                                     <div class="font-medium text-slate-800">{{ $account->account_name }}</div>
                                     <div class="text-xs text-slate-500">{{ $account->account_username ?: $account->account_id_on_platform }}</div>

@@ -1,36 +1,38 @@
 # LaraPost
 
-![LaraPost banner](./docs/assets/brand/larapost-banner.png)
-
 [![CI](https://github.com/prateekbhujel/larapost/actions/workflows/ci.yml/badge.svg)](https://github.com/prateekbhujel/larapost/actions/workflows/ci.yml)
 [![Packagist](https://img.shields.io/packagist/v/prateekbhujel/larapost.svg)](https://packagist.org/packages/prateekbhujel/larapost)
-[![PHP](https://img.shields.io/badge/php-%5E8.2-777BB4.svg)](https://php.net)
-[![Laravel](https://img.shields.io/badge/laravel-11%20%7C%2012%20%7C%2013-FF2D20.svg)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4.svg)](https://php.net)
+[![Laravel](https://img.shields.io/badge/Laravel-12%20%7C%2013-FF2D20.svg)](https://laravel.com)
 [![License](https://img.shields.io/badge/license-MIT-111111.svg)](./LICENSE)
 
-LaraPost is a Laravel package for publishing and scheduling content to Facebook Pages, Twitter / X, and LinkedIn from one API and one dashboard.
+LaraPost is Laravel-native social publishing infrastructure for applications that need to connect accounts, publish or schedule content, run work through Laravel queues, and optionally expose the same workflow to MCP clients such as ChatGPT, Claude, Codex, or another compatible client.
 
-LaraPost supports publishing and scheduling for Facebook Pages, Twitter / X, and LinkedIn from one Laravel API and dashboard.
+It is not a separate social-media SaaS. It lives inside your Laravel application, so your app owns the database records, business rules, connected accounts, publishing history, and provider credentials.
 
-## Features
+## What ships in 2.x
 
-- One fluent API via `SocialSync\Facades\SocialMedia`
-- Built-in dashboard at `/larapost/dashboard`
-- OAuth connect flow for Facebook, Twitter / X, and LinkedIn
-- Multi-Page Facebook sync from one Meta login
-- Immediate publishing and scheduled publishing
-- Bulk composer for different content across different accounts
-- Retry and scheduled runner commands
-- CI for PHP `8.2`, `8.3`, `8.4`, and `8.5`
+- Facebook Pages
+- Twitter / X with OAuth 2.0 plus the optional Xquik backend
+- LinkedIn member profiles
+- TikTok Content Posting API for photo and video Direct Post using verified HTTPS media URLs
+- Immediate, scheduled, and queued publishing
+- Multi-account targeting
+- Retry and backoff for scheduled work
+- Token-expiry tracking and refresh where the provider supports it
+- Authenticated operator dashboard
+- Custom driver registration
+- Optional remote MCP server for AI clients
+- A diagnostic command with `php artisan larapost:doctor`
 
-## Support Matrix
+## Requirements
 
-| Platform | Connect | Publish | Notes |
-| --- | --- | --- | --- |
-| Facebook | OAuth to Facebook login | Page posts with text, image URL, and video URL | Facebook Pages only. Personal profile posting is not supported. |
-| Twitter / X | OAuth 2.0 or manual Xquik account setup | Text posts | Your X app still needs write access plus billing or credits. The optional Xquik backend is API-key based and text-only in LaraPost. |
-| LinkedIn | OAuth 2.0 | Member profile text posts | LinkedIn organization pages are not supported. Image upload expects a readable local file path when used programmatically. |
+LaraPost 2.x targets:
 
+- PHP 8.3+
+- Laravel 12 or 13
+
+Laravel 11 is no longer in its security support window, so LaraPost 2.x does not carry that compatibility burden. The `1.x` branch is retained for critical backports to the original release line.
 
 ## Installation
 
@@ -39,116 +41,217 @@ composer require prateekbhujel/larapost
 php artisan larapost:install
 ```
 
-Manual setup:
+The installer asks which platforms you want. You can enable one provider, several, or all of them.
+
+Non-interactive examples:
 
 ```bash
-php artisan vendor:publish --tag=larapost-config
-php artisan vendor:publish --tag=larapost-migrations
-php artisan vendor:publish --tag=larapost-views
-php artisan migrate
+# Facebook only
+php artisan larapost:install --platforms=facebook
+
+# Facebook + TikTok
+php artisan larapost:install --platforms=facebook,tiktok
+
+# API/package usage without the built-in dashboard
+php artisan larapost:install --platforms=linkedin --no-dashboard
+
+# Prepare the optional MCP integration too
+php artisan larapost:install --platforms=facebook,tiktok --mcp
 ```
 
-## Configuration
+Enabled platforms are controlled by:
 
 ```env
-LARAPOST_DEFAULT_PLATFORM=facebook
-LARAPOST_QUEUE_ENABLED=true
-LARAPOST_MAX_RETRY_ATTEMPTS=3
-LARAPOST_UI_ENABLED=true
-
-FACEBOOK_APP_ID=
-FACEBOOK_APP_SECRET=
-FACEBOOK_API_VERSION=v20.0
-
-TWITTER_CLIENT_ID=
-TWITTER_CLIENT_SECRET=
-TWITTER_BACKEND=twitter
-
-LINKEDIN_CLIENT_ID=
-LINKEDIN_CLIENT_SECRET=
-
-# Optional Xquik backend for Twitter text posts
-XQUIK_API_KEY=
-XQUIK_ACCOUNT=
-XQUIK_API_BASE_URL=https://xquik.com/api/v1
+LARAPOST_PLATFORMS=facebook,tiktok
 ```
 
-Dashboard-saved provider credentials override `.env` values.
+Disabled drivers do not appear in the manager, dashboard, or MCP capability list.
 
-## Quick Start
-
-Connect at least one provider account, then publish from code:
+## Publish
 
 ```php
 use SocialSync\Facades\SocialMedia;
 
 $results = SocialMedia::post()
-    ->content('Release update from LaraPost')
-    ->platforms(['facebook', 'twitter'])
+    ->content('We just shipped a new release.')
+    ->platform('facebook')
+    ->publish();
+```
+
+Target exact connected accounts:
+
+```php
+SocialMedia::post()
+    ->content('Only these destinations')
+    ->platform('facebook')
+    ->accounts([
+        'facebook' => [12, 19],
+    ])
     ->publish();
 ```
 
 Schedule for later:
 
 ```php
-use SocialSync\Facades\SocialMedia;
-
-$results = SocialMedia::post()
-    ->content('Tomorrow morning post')
-    ->platforms(['facebook'])
-    ->scheduleFor(now()->addHours(12))
+SocialMedia::post()
+    ->content('Tomorrow morning')
+    ->platform('linkedin')
+    ->scheduleFor(now()->addDay()->setTime(9, 0))
     ->publish();
 ```
 
-Connect an account from the CLI:
+Queue immediate work:
+
+```php
+SocialMedia::post()
+    ->content('Process this through Laravel queues')
+    ->platform('facebook')
+    ->queue();
+```
+
+## TikTok
+
+TikTok uses the Content Posting API. LaraPost queries creator information before publish and validates privacy against the account's current options.
+
+```php
+SocialMedia::post()
+    ->content('Behind the scenes from launch day')
+    ->video('https://media.example.com/launch.mp4')
+    ->platform('tiktok')
+    ->metadata([
+        'tiktok' => [
+            'privacy_level' => 'SELF_ONLY',
+            'disable_comment' => false,
+            'is_aigc' => false,
+        ],
+    ])
+    ->publish();
+```
+
+The built-in TikTok driver currently uses `PULL_FROM_URL`, so media must be served over HTTPS from a domain or URL prefix verified for the TikTok developer app. TikTok app review, scopes, account eligibility, and provider policy still apply.
+
+## Optional MCP for ChatGPT, Claude, Codex, and other clients
+
+MCP is not required for normal LaraPost installations.
+
+Install it only when you want an AI client to interact with LaraPost:
 
 ```bash
-php artisan larapost:add-account facebook
-php artisan larapost:add-account twitter
-php artisan larapost:add-account linkedin
+composer require laravel/mcp:^1.0
+php artisan larapost:install --mcp
 ```
 
-## Dashboard
+Then configure:
 
-The built-in dashboard lives at `GET /larapost/dashboard`.
+```env
+LARAPOST_MCP_ENABLED=true
+LARAPOST_MCP_PATH=/larapost/mcp
+LARAPOST_MCP_TOKEN=replace-with-a-long-random-secret
 
-It includes:
-
-- Provider credential forms with encrypted database storage
-- Login popups for Facebook Pages, Twitter / X, and LinkedIn profiles
-- Account targeting for exact Pages and accounts
-- Bulk composer for different copy per connected account
-- Recent publish history and account toggles
-
-The dashboard is a real operator surface, not a demo screen. It only exposes the support that ships in `v1.0.0`.
-
-## Scheduling
-
-Run the scheduled runner every minute:
-
-```cron
-* * * * * php /path/to/artisan larapost:run-scheduled >> /dev/null 2>&1
+LARAPOST_BUSINESS_NAME="Acme"
+LARAPOST_BUSINESS_DESCRIPTION="What the company actually does"
+LARAPOST_TARGET_AUDIENCE="Who the content is for"
+LARAPOST_BRAND_VOICE="Clear, practical, no hype"
+LARAPOST_CONTENT_GUIDELINES="Never invent prices or guarantees"
 ```
 
-Useful commands:
+The MCP server exposes read-only business/account/history tools plus explicit write tools for publishing and cancelling pending posts. Provider tokens and account credentials are never returned by read tools.
 
-- `php artisan larapost:install`
-- `php artisan larapost:add-account {platform}`
-- `php artisan larapost:test`
-- `php artisan larapost:run-scheduled`
+Use the remote server URL:
 
-## Docs
+```text
+https://your-app.example/larapost/mcp
+```
 
-- Docs portal: [https://prateekbhujel.github.io/larapost/](https://prateekbhujel.github.io/larapost/)
-- Xquik backend: [docs/XQUIK.md](./docs/XQUIK.md)
-- Contributing guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
-- Security policy: [SECURITY.md](./SECURITY.md)
-- Release playbook: [RELEASE.md](./RELEASE.md)
-- Changelog: [CHANGELOG.md](./CHANGELOG.md)
+Authentication uses:
 
-## Contributing
+```http
+Authorization: Bearer <LARAPOST_MCP_TOKEN>
+```
 
-Community contributions should come from forks. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the expected workflow.
+For MCP clients that require OAuth rather than a static bearer token, integrate LaraPost with your application's Laravel MCP OAuth/authorization layer instead of exposing the endpoint anonymously.
+
+## Dashboard security
+
+The dashboard is an operator surface, not a demo route. It can publish content and change provider credentials.
+
+LaraPost 2.x protects operator routes with:
+
+```php
+['web', 'auth']
+```
+
+by default. If your application uses another guard, tenant middleware, or admin authorization layer, override `operator_middleware` in the published config.
+
+OAuth callbacks use a separate callback middleware stack so provider redirects do not inherit an application-specific operator policy accidentally.
+
+## Scheduler and queues
+
+LaraPost registers its scheduled runner with Laravel's scheduler automatically.
+
+Your application still needs Laravel's scheduler process:
+
+```bash
+php artisan schedule:work
+```
+
+or the normal `schedule:run` cron entry.
+
+Enable queued scheduled publishing with:
+
+```env
+LARAPOST_QUEUE_ENABLED=true
+LARAPOST_QUEUE_CONNECTION=redis
+LARAPOST_QUEUE_NAME=larapost
+```
+
+Due posts are claimed before publishing, and queued publishing uses a unique job per scheduled post.
+
+## Custom drivers
+
+Register another implementation without editing package internals:
+
+```php
+use SocialSync\Facades\SocialMedia;
+
+SocialMedia::extend('mastodon', App\Social\MastodonDriver::class);
+```
+
+Custom drivers implement `SocialSync\Contracts\SocialDriverInterface`.
+
+## Diagnostics
+
+Before production rollout:
+
+```bash
+php artisan larapost:doctor
+```
+
+The command checks database tables, enabled platforms, scheduler status, queue mode, dashboard access middleware, and MCP configuration.
+
+## Documentation
+
+Full documentation:
+
+https://prateekbhujel.github.io/larapost/
+
+Start here:
+
+- [Installation](https://prateekbhujel.github.io/larapost/getting-started/)
+- [Configuration](https://prateekbhujel.github.io/larapost/configuration/)
+- [Platforms](https://prateekbhujel.github.io/larapost/platforms/)
+- [Publishing & scheduling](https://prateekbhujel.github.io/larapost/publishing/)
+- [AI & MCP](https://prateekbhujel.github.io/larapost/ai-mcp/)
+- [Upgrade from 1.x](https://prateekbhujel.github.io/larapost/upgrade/)
+
+Repository docs:
+
+- [UPGRADE.md](./UPGRADE.md)
+- [BACKPORTING.md](./BACKPORTING.md)
+- [CONTRIBUTING.md](./CONTRIBUTING.md)
+- [SECURITY.md](./SECURITY.md)
+- [RELEASE.md](./RELEASE.md)
+- [CHANGELOG.md](./CHANGELOG.md)
 
 ## License
 

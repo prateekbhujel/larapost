@@ -382,6 +382,20 @@ class DashboardController extends Controller
                 'client_id' => ['label' => 'Client ID'],
                 'client_secret' => ['label' => 'Client Secret', 'secret' => true],
             ],
+            'tiktok' => [
+                'client_key' => ['label' => 'Client Key'],
+                'client_secret' => ['label' => 'Client Secret', 'secret' => true],
+                'default_privacy_level' => [
+                    'label' => 'Default Privacy',
+                    'max' => 64,
+                    'options' => [
+                        'SELF_ONLY' => 'Only me',
+                        'MUTUAL_FOLLOW_FRIENDS' => 'Friends',
+                        'FOLLOWER_OF_CREATOR' => 'Followers',
+                        'PUBLIC_TO_EVERYONE' => 'Public',
+                    ],
+                ],
+            ],
             default => [],
         };
     }
@@ -397,6 +411,7 @@ class DashboardController extends Controller
                 ? ['backend', 'xquik_api_key', 'xquik_account']
                 : ['client_id', 'client_secret'],
             'linkedin' => ['client_id', 'client_secret'],
+            'tiktok' => ['client_key', 'client_secret'],
             default => [],
         };
     }

@@ -122,6 +122,7 @@ class LinkedInDriver extends AbstractDriver
 
         return [
             'access_token' => $accessToken,
+            'expires_in' => $tokenData['expires_in'] ?? null,
             'person_urn' => 'urn:li:person:' . ($profile['id'] ?? ''),
             'profile' => $profile,
         ];

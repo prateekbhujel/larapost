@@ -19,12 +19,12 @@ class SocialMediaManager
     protected ?Container $container;
 
     /**
-     * @var array<string, \SocialSync\Contracts\SocialDriverInterface>
+     * @var array<string, SocialDriverInterface>
      */
     protected array $resolvedDrivers = [];
 
     /**
-     * @var array<string, class-string<\SocialSync\Contracts\SocialDriverInterface>|callable>
+     * @var array<string, class-string<SocialDriverInterface>|callable>
      */
     protected array $customDrivers = [];
 
@@ -53,7 +53,7 @@ class SocialMediaManager
 
         if (!$driverDefinition) {
             throw new SocialSyncException(sprintf(
-                'Unsupported platform "%s". Supported platforms: %s',
+                'Unsupported or disabled platform "%s". Enabled platforms: %s',
                 $platform,
                 implode(', ', $this->supportedPlatforms())
             ));
@@ -76,7 +76,7 @@ class SocialMediaManager
     /**
      * Register or replace a driver without editing the package config file.
      *
-     * @param class-string<SocialDriverInterface>|callable $driver
+     * @param  class-string<SocialDriverInterface>|callable  $driver
      */
     public function extend(string $platform, string|callable $driver): void
     {
@@ -141,7 +141,13 @@ class SocialMediaManager
 
     public function defaultPlatform(): string
     {
-        return (string) ($this->config['default_platform'] ?? 'facebook');
+        $default = strtolower((string) ($this->config['default_platform'] ?? 'facebook'));
+
+        if (!in_array($default, $this->supportedPlatforms(), true)) {
+            return $this->supportedPlatforms()[0] ?? $default;
+        }
+
+        return $default;
     }
 
     public function platformConfig(string $platform): array
@@ -157,7 +163,17 @@ class SocialMediaManager
 
     protected function driverMap(): array
     {
-        return array_replace((array) ($this->config['drivers'] ?? []), $this->customDrivers);
+        $drivers = array_replace((array) ($this->config['drivers'] ?? []), $this->customDrivers);
+        $enabled = array_values(array_unique(array_filter(array_map(
+            static fn ($platform): string => strtolower(trim((string) $platform)),
+            (array) ($this->config['enabled_platforms'] ?? array_keys($drivers))
+        ))));
+
+        if ($enabled === []) {
+            return [];
+        }
+
+        return array_intersect_key($drivers, array_flip($enabled));
     }
 
     protected function resolveDriverDefinition(mixed $definition, string $platform, array $platformConfig): mixed
