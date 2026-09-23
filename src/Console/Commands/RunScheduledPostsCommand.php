@@ -3,18 +3,17 @@
 namespace SocialSync\Console\Commands;
 
 use Illuminate\Console\Command;
-use SocialSync\Events\PostFailed;
-use SocialSync\Events\PostPublished;
-use SocialSync\Facades\SocialMedia;
+use SocialSync\Jobs\PublishScheduledPost;
 use SocialSync\Models\ScheduledPost;
+use SocialSync\Services\ScheduledPostPublisher;
 
 class RunScheduledPostsCommand extends Command
 {
     protected $signature = 'larapost:run-scheduled {--limit=50 : Maximum posts to process in one run}';
 
-    protected $description = 'Publish pending scheduled posts that are due.';
+    protected $description = 'Publish or queue pending LaraPost posts that are due.';
 
-    public function handle(): int
+    public function handle(ScheduledPostPublisher $publisher): int
     {
         $limit = max(1, (int) $this->option('limit'));
 
@@ -32,106 +31,49 @@ class RunScheduledPostsCommand extends Command
         }
 
         foreach ($duePostIds as $postId) {
-            $post = $this->claimPost((int) $postId);
+            $postId = (int) $postId;
 
-            if ($post === null) {
-                continue;
-            }
-
-            $account = $post->account;
-
-            if (!$account || !$account->is_active) {
-                $post->forceFill([
-                    'status' => ScheduledPost::STATUS_FAILED,
-                    'error_message' => 'Account missing or inactive.',
-                    'retry_count' => $post->retry_count + 1,
-                ])->save();
-
-                event(new PostFailed($post, 'Account missing or inactive.'));
-
-                $this->error(sprintf('Failed scheduled post #%d: account missing or inactive.', $post->id));
+            if (config('larapost.queue.enabled', false)) {
+                $this->dispatchPost($postId);
+                $this->info(sprintf('Queued scheduled post #%d.', $postId));
 
                 continue;
             }
 
-            $result = SocialMedia::publish($account->id, [
-                'content' => $post->content,
-                'media' => $post->media ?? [],
-                'metadata' => $post->metadata ?? [],
-            ]);
+            $result = $publisher->publish($postId);
 
-            if (($result['success'] ?? false) === true) {
-                $post->forceFill([
-                    'status' => ScheduledPost::STATUS_PUBLISHED,
-                    'published_at' => now(),
-                    'published_response' => $result['response'] ?? null,
-                    'error_message' => null,
-                ])->save();
-
-                event(new PostPublished($post, $result));
-
-                $this->info(sprintf('Published scheduled post #%d.', $post->id));
-
-                continue;
-            }
-
-            $this->applyFailureStrategy($post, (string) ($result['error'] ?? 'Publishing failed.'));
+            match ($result['status']) {
+                'published' => $this->info(sprintf('Published scheduled post #%d.', $postId)),
+                'retrying' => $this->warn(sprintf(
+                    'Post #%d failed and was rescheduled in %d minute(s): %s',
+                    $postId,
+                    (int) ($result['retry_in_minutes'] ?? 1),
+                    (string) ($result['error'] ?? 'Publishing failed.')
+                )),
+                'failed' => $this->error(sprintf(
+                    'Failed scheduled post #%d: %s',
+                    $postId,
+                    (string) ($result['error'] ?? 'Publishing failed.')
+                )),
+                default => null,
+            };
         }
 
         return self::SUCCESS;
     }
 
-    protected function claimPost(int $postId): ?ScheduledPost
+    protected function dispatchPost(int $postId): void
     {
-        $claimed = ScheduledPost::query()
-            ->whereKey($postId)
-            ->pending()
-            ->update([
-                'status' => ScheduledPost::STATUS_PROCESSING,
-            ]);
+        $dispatch = PublishScheduledPost::dispatch($postId);
+        $connection = config('larapost.queue.connection');
+        $queue = config('larapost.queue.queue_name', 'larapost');
 
-        if ($claimed === 0) {
-            return null;
+        if (is_string($connection) && $connection !== '') {
+            $dispatch->onConnection($connection);
         }
 
-        return ScheduledPost::query()->with('account')->find($postId);
-    }
-
-    protected function applyFailureStrategy(ScheduledPost $post, string $error): void
-    {
-        $newRetryCount = $post->retry_count + 1;
-        $maxAttempts = max(1, (int) $post->max_attempts);
-
-        if ($newRetryCount < $maxAttempts) {
-            $backoff = (array) config('larapost.retry.backoff_minutes', [1, 5, 15]);
-            $index = min($newRetryCount - 1, count($backoff) - 1);
-            $minutes = (int) ($backoff[$index] ?? 1);
-
-            $post->forceFill([
-                'status' => ScheduledPost::STATUS_PENDING,
-                'retry_count' => $newRetryCount,
-                'scheduled_for' => now()->addMinutes($minutes),
-                'error_message' => $error,
-            ])->save();
-
-            $this->warn(sprintf(
-                'Post #%d failed and was rescheduled in %d minute(s): %s',
-                $post->id,
-                $minutes,
-                $error
-            ));
-
-            return;
+        if (is_string($queue) && $queue !== '') {
+            $dispatch->onQueue($queue);
         }
-
-        $post->forceFill([
-            'status' => ScheduledPost::STATUS_FAILED,
-            'retry_count' => $newRetryCount,
-            'error_message' => $error,
-        ])->save();
-
-        event(new PostFailed($post, $error));
-
-        $this->error(sprintf('Post #%d permanently failed: %s', $post->id, $error));
     }
 }

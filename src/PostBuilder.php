@@ -8,8 +8,10 @@ use Illuminate\Support\Collection;
 use SocialSync\Events\PostFailed;
 use SocialSync\Events\PostPublished;
 use SocialSync\Exceptions\SocialSyncException;
+use SocialSync\Jobs\PublishScheduledPost;
 use SocialSync\Models\ScheduledPost;
 use SocialSync\Models\SocialAccount;
+use SocialSync\Support\MediaValidator;
 
 class PostBuilder
 {
@@ -92,6 +94,7 @@ class PostBuilder
 
     public function media(string|array $paths, string $type = 'image'): self
     {
+        $type = strtolower(trim($type));
         $entries = is_array($paths) ? $paths : [$paths];
 
         foreach ($entries as $path) {
@@ -100,6 +103,8 @@ class PostBuilder
             if ($path === '') {
                 continue;
             }
+
+            MediaValidator::validate($path, $type);
 
             $this->media[] = [
                 'type' => $type,
@@ -147,10 +152,47 @@ class PostBuilder
         return $this->publishNow($accounts);
     }
 
+    /**
+     * Persist the post first and hand immediate work to Laravel's queue.
+     * Future posts are persisted and picked up by LaraPost's scheduler when due.
+     */
+    public function queue(): array
+    {
+        $this->validateBeforePublish();
+
+        $accounts = $this->resolveAccounts();
+
+        if ($accounts->isEmpty()) {
+            throw new SocialSyncException('No active accounts matched your platform and account filters.');
+        }
+
+        $scheduledFor = $this->scheduledFor ?? now();
+        $rows = $this->persistPendingPosts($accounts, $scheduledFor);
+        $future = $this->scheduledFor !== null;
+
+        if (!$future) {
+            foreach ($rows as $row) {
+                $this->dispatchScheduledPost($row->id);
+            }
+        }
+
+        return $rows->map(function (ScheduledPost $row) use ($future): array {
+            return [
+                'success' => true,
+                'queued' => !$future,
+                'scheduled' => $future,
+                'platform' => $row->account?->platform,
+                'account_id' => $row->account_id,
+                'scheduled_post_id' => $row->id,
+                'scheduled_for' => $row->scheduled_for?->toIso8601String(),
+            ];
+        })->all();
+    }
+
     protected function validateBeforePublish(): void
     {
-        if ($this->content === null || $this->content === '') {
-            throw new SocialSyncException('Post content is required.');
+        if (($this->content === null || $this->content === '') && $this->media === []) {
+            throw new SocialSyncException('Post content or media is required.');
         }
 
         if ($this->platforms === []) {
@@ -184,7 +226,7 @@ class PostBuilder
     protected function payload(): array
     {
         return [
-            'content' => $this->content,
+            'content' => $this->content ?? '',
             'media' => $this->media,
             'metadata' => $this->metadata,
         ];
@@ -192,10 +234,26 @@ class PostBuilder
 
     protected function schedulePosts(Collection $accounts): array
     {
-        $payload = $this->payload();
-        $maxAttempts = (int) config('larapost.retry.max_attempts', 3);
+        return $this->persistPendingPosts($accounts, $this->scheduledFor)
+            ->map(function (ScheduledPost $scheduledPost): array {
+                return [
+                    'success' => true,
+                    'scheduled' => true,
+                    'platform' => $scheduledPost->account?->platform,
+                    'account_id' => $scheduledPost->account_id,
+                    'scheduled_post_id' => $scheduledPost->id,
+                    'scheduled_for' => $scheduledPost->scheduled_for?->toIso8601String(),
+                ];
+            })
+            ->all();
+    }
 
-        return $accounts->map(function (SocialAccount $account) use ($payload, $maxAttempts): array {
+    protected function persistPendingPosts(Collection $accounts, DateTimeInterface $scheduledFor): Collection
+    {
+        $payload = $this->payload();
+        $maxAttempts = max(1, (int) config('larapost.retry.max_attempts', 3));
+
+        return $accounts->map(function (SocialAccount $account) use ($payload, $maxAttempts, $scheduledFor): ScheduledPost {
             $scheduledPost = ScheduledPost::query()->create([
                 'account_id' => $account->id,
                 'content' => $payload['content'],
@@ -204,18 +262,13 @@ class PostBuilder
                 'status' => ScheduledPost::STATUS_PENDING,
                 'retry_count' => 0,
                 'max_attempts' => $maxAttempts,
-                'scheduled_for' => $this->scheduledFor,
+                'scheduled_for' => $scheduledFor,
             ]);
 
-            return [
-                'success' => true,
-                'scheduled' => true,
-                'platform' => $account->platform,
-                'account_id' => $account->id,
-                'scheduled_post_id' => $scheduledPost->id,
-                'scheduled_for' => $this->scheduledFor?->toIso8601String(),
-            ];
-        })->all();
+            $scheduledPost->setRelation('account', $account);
+
+            return $scheduledPost;
+        })->values();
     }
 
     protected function publishNow(Collection $accounts): array
@@ -230,7 +283,7 @@ class PostBuilder
                 'metadata' => $payload['metadata'],
                 'status' => ScheduledPost::STATUS_PENDING,
                 'retry_count' => 0,
-                'max_attempts' => (int) config('larapost.retry.max_attempts', 3),
+                'max_attempts' => max(1, (int) config('larapost.retry.max_attempts', 3)),
                 'scheduled_for' => now(),
             ]);
 
@@ -261,5 +314,20 @@ class PostBuilder
                 'account_id' => $account->id,
             ]);
         })->all();
+    }
+
+    protected function dispatchScheduledPost(int $postId): void
+    {
+        $dispatch = PublishScheduledPost::dispatch($postId);
+        $connection = config('larapost.queue.connection');
+        $queue = config('larapost.queue.queue_name', 'larapost');
+
+        if (is_string($connection) && $connection !== '') {
+            $dispatch->onConnection($connection);
+        }
+
+        if (is_string($queue) && $queue !== '') {
+            $dispatch->onQueue($queue);
+        }
     }
 }
