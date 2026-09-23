@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en" data-base="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Agent Guide | LaraPost</title>
+  <meta name="description" content="A deterministic LaraPost reference for coding agents: supported versions, installation, publishing APIs, queues, scheduling, MCP safety, TikTok rules, and verification steps.">
+  <link rel="icon" href="../favicon.ico">
+  <link rel="stylesheet" href="../assets/docs.css">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="LaraPost LLM documentation">
+</head>
+<body data-page="agents">
+<header class="topbar">
+  <a class="brand" href="../"><span class="brand-mark">L</span><span>LaraPost</span></a>
+  <nav class="top-links">
+    <span class="version">2.x</span>
+    <a class="hide-mobile" href="https://packagist.org/packages/prateekbhujel/larapost">Packagist</a>
+    <a href="https://github.com/prateekbhujel/larapost">GitHub</a>
+  </nav>
+</header>
+<nav class="mobile-nav" data-docs-nav></nav>
+<div class="shell">
+  <aside class="sidebar" data-docs-nav></aside>
+  <main class="content">
+    <article class="article">
+      <div class="eyebrow">Reference</div>
+      <h1>Agent guide</h1>
+      <p class="lead">Use this page when an AI coding agent is installing, configuring, integrating, or modifying LaraPost. It is intentionally explicit about supported behavior so agents do not invent provider capabilities or unsafe defaults.</p>
+
+      <div class="callout"><strong>Ground truth:</strong> for LaraPost 2.x, prefer the installed package code and configuration over assumptions from older LaraPost versions or generic social-media examples. This documentation tracks the current 2.x line.</div>
+
+      <h2 id="baseline">Runtime baseline</h2>
+      <table>
+        <thead><tr><th>Area</th><th>Supported contract</th></tr></thead>
+        <tbody>
+          <tr><td>PHP</td><td>8.3+</td></tr>
+          <tr><td>Laravel</td><td>12 or 13</td></tr>
+          <tr><td>Built-in platforms</td><td>Facebook, Twitter / X, LinkedIn, TikTok</td></tr>
+          <tr><td>Default TikTok mode</td><td><code>upload</code>, completed by the creator in TikTok</td></tr>
+          <tr><td>Operator routes</td><td>Protected by <code>web</code> + <code>auth</code> by default</td></tr>
+          <tr><td>MCP</td><td>Optional; requires <code>laravel/mcp</code> and an authentication token</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="install">Deterministic installation</h2>
+      <p>For interactive local setup:</p>
+      <pre><code>composer require prateekbhujel/larapost
+php artisan larapost:install
+php artisan larapost:doctor</code></pre>
+
+      <p>For an agent-controlled non-interactive setup, declare choices explicitly. Use <code>--no-migrate</code> when the agent is not authorized to change the database.</p>
+      <pre><code>php artisan larapost:install \
+  --platforms=facebook,linkedin \
+  --no-dashboard \
+  --no-env \
+  --no-migrate</code></pre>
+
+      <div class="callout note"><strong>Do not silently edit secrets.</strong> If <code>--no-env</code> is used, report the required environment variables to the developer instead of inventing credentials.</div>
+
+      <h2 id="verify">Verify before real publishing</h2>
+      <pre><code>php artisan larapost:doctor</code></pre>
+      <p>The doctor checks database tables, enabled platforms, active accounts, queue mode, scheduler registration, dashboard protection, TikTok mode, and optional MCP requirements. Treat failures as configuration work, not something to bypass.</p>
+
+      <h2 id="api">Canonical publishing API</h2>
+      <h3 id="immediate">Publish immediately</h3>
+      <pre><code>use SocialSync\Facades\SocialMedia;
+
+$result = SocialMedia::post()
+    ->content('We just shipped a new release.')
+    ->platform('facebook')
+    ->publish();</code></pre>
+
+      <h3 id="queued">Queue immediate work</h3>
+      <pre><code>SocialMedia::post()
+    ->content('Queued from Laravel.')
+    ->platform('linkedin')
+    ->queue();</code></pre>
+
+      <h3 id="scheduled">Schedule for the future</h3>
+      <pre><code>SocialMedia::post()
+    ->content('Publishing tomorrow.')
+    ->platform('facebook')
+    ->scheduleFor(now()->addDay())
+    ->publish();</code></pre>
+      <p>A future <code>scheduleFor()</code> call persists the post for LaraPost's scheduler. The Laravel scheduler must actually be running in production.</p>
+
+      <h3 id="multi-platform">Target multiple platforms</h3>
+      <pre><code>SocialMedia::post()
+    ->content('One message, selected networks.')
+    ->platforms(['facebook', 'linkedin'])
+    ->publish();</code></pre>
+
+      <h3 id="accounts">Target selected connected accounts</h3>
+      <pre><code>SocialMedia::post()
+    ->content('Account-specific post.')
+    ->platform('facebook')
+    ->accounts([
+        'facebook' => [12, 18],
+    ])
+    ->publish();</code></pre>
+
+      <h2 id="configuration">Configuration invariants</h2>
+      <p>The enabled platform list is the runtime boundary. Disabled drivers should not be assumed to exist.</p>
+      <pre><code>LARAPOST_PLATFORMS=facebook,twitter,linkedin,tiktok
+LARAPOST_DEFAULT_PLATFORM=facebook
+
+LARAPOST_QUEUE_ENABLED=true
+LARAPOST_QUEUE_NAME=larapost
+
+LARAPOST_SCHEDULER_ENABLED=true
+
+LARAPOST_UI_ENABLED=true
+LARAPOST_ROUTE_PREFIX=larapost</code></pre>
+      <p>When queueing is enabled, ensure a worker consumes the configured LaraPost queue. When scheduling is enabled, ensure Laravel's scheduler runs continuously or every minute according to the host application's deployment model.</p>
+
+      <h2 id="provider-rules">Provider rules agents must not invent</h2>
+      <table>
+        <thead><tr><th>Provider</th><th>Current LaraPost behavior</th><th>Agent rule</th></tr></thead>
+        <tbody>
+          <tr><td>Facebook</td><td>Facebook Pages; text and supported media publishing</td><td>Do not assume personal-profile publishing.</td></tr>
+          <tr><td>Twitter / X</td><td>OAuth 2.0 or opt-in Xquik backend; text publishing</td><td>Respect the configured backend.</td></tr>
+          <tr><td>LinkedIn</td><td>Member profile text and image publishing</td><td>Do not claim organization-page support unless the installed driver adds it.</td></tr>
+          <tr><td>TikTok</td><td>Upload-to-inbox by default; Direct Post is explicit opt-in</td><td>Never turn on Direct Post just to make an automation easier.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="tiktok">TikTok safety contract</h2>
+      <pre><code>TIKTOK_PUBLISH_MODE=upload</code></pre>
+      <p><code>upload</code> is the built-in safe default. LaraPost transfers media and the creator reviews and completes the post in TikTok.</p>
+      <p><code>direct</code> is only for a host application that implements TikTok's required creator-facing flow. It must obtain current creator information, an explicit creator-selected privacy level, interaction choices, and consent. Switching modes changes OAuth scope, so reconnect affected accounts.</p>
+      <div class="callout"><strong>MCP rule:</strong> LaraPost intentionally refuses TikTok Direct Post from its MCP write tool. AI-assisted TikTok workflows should use upload mode so the creator completes the post in TikTok.</div>
+
+      <h2 id="mcp">MCP and AI clients</h2>
+      <p>MCP is optional and side-effecting tools must be treated like privileged application operations.</p>
+      <pre><code>composer require laravel/mcp:^1.0
+
+LARAPOST_MCP_ENABLED=true
+LARAPOST_MCP_TOKEN=replace-with-a-long-random-secret</code></pre>
+      <p>Available tools include business context, capabilities, account/history lookup, create post, schedule post, and cancellation. Never expose provider credentials or access tokens to an AI client.</p>
+
+      <h2 id="modifying">When modifying LaraPost itself</h2>
+      <ul>
+        <li>Keep public behavior compatible within the current major version.</li>
+        <li>Do not weaken default dashboard authentication or OAuth state validation.</li>
+        <li>Do not add silent provider defaults when the provider requires a user choice or consent.</li>
+        <li>Add regression tests for publishing, OAuth, scheduler, retry, or provider behavior that changes.</li>
+        <li>Update the relevant documentation page when configuration, commands, environment variables, or public APIs change.</li>
+      </ul>
+      <pre><code>composer validate --strict --no-check-lock
+composer test</code></pre>
+
+      <h2 id="source-map">Source map</h2>
+      <table>
+        <thead><tr><th>Need to understand</th><th>Start here</th></tr></thead>
+        <tbody>
+          <tr><td>Configuration and environment variables</td><td><code>config/larapost.php</code></td></tr>
+          <tr><td>Fluent publishing API</td><td><code>src/PostBuilder.php</code></td></tr>
+          <tr><td>Driver resolution and token refresh</td><td><code>src/SocialMediaManager.php</code></td></tr>
+          <tr><td>Install behavior</td><td><code>src/Console/Commands/InstallCommand.php</code></td></tr>
+          <tr><td>Production diagnostics</td><td><code>src/Console/Commands/DoctorCommand.php</code></td></tr>
+          <tr><td>Dashboard and OAuth routes</td><td><code>routes/web.php</code></td></tr>
+          <tr><td>MCP behavior</td><td><code>src/Mcp/</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="machine-readable">Machine-readable entry point</h2>
+      <p>Agents that support documentation discovery can start with <a href="../llms.txt"><code>/larapost/llms.txt</code></a>. Repository coding agents should also read the root <code>AGENTS.md</code>.</p>
+
+      <footer class="footer">LaraPost is MIT licensed. Documentation tracks the current 2.x line.</footer>
+    </article>
+  </main>
+</div>
+<script src="../assets/docs.js"></script>
+</body>
+</html>
