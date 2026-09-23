@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 1.x]
   pull_request:
 
 jobs:
@@ -13,12 +13,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - php: '8.2'
-            laravel: '11'
-            testbench: '^9.15'
-          - php: '8.3'
-            laravel: '11'
-            testbench: '^9.15'
           - php: '8.3'
             laravel: '12'
             testbench: '^10.8'
@@ -34,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2

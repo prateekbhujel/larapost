@@ -2,7 +2,7 @@
 
 All notable changes to LaraPost are documented here.
 
-## [2.0.0] - 2026-09-23
+## [Unreleased]\n\nPlanned as the LaraPost 2.0 release line.
 
 ### Added
 
