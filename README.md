@@ -6,7 +6,7 @@
 [![Laravel](https://img.shields.io/badge/Laravel-12%20%7C%2013-FF2D20.svg)](https://laravel.com)
 [![License](https://img.shields.io/badge/license-MIT-111111.svg)](./LICENSE)
 
-LaraPost is Laravel-native social publishing infrastructure for applications that need to connect accounts, publish or schedule content, run work through Laravel queues, and optionally expose the same workflow to MCP clients such as ChatGPT, Claude, Codex, or another compatible client.
+LaraPost is Laravel-native social publishing for Facebook, X, LinkedIn, and TikTok, with OAuth, queues, scheduling, retries, multi-account publishing, and optional MCP support for AI-assisted workflows.
 
 It is not a separate social-media SaaS. It lives inside your Laravel application, so your app owns the database records, business rules, connected accounts, publishing history, and provider credentials.
 
