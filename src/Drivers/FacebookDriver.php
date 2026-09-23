@@ -62,11 +62,18 @@ class FacebookDriver extends AbstractDriver
 
     public function getAuthorizationUrl(string $redirectUri): string
     {
+        $state = bin2hex(random_bytes(16));
+
+        $this->rememberOauthContext('facebook', $state, [
+            'state' => $state,
+        ]);
+
         $params = http_build_query([
             'client_id' => $this->configValue('app_id'),
             'redirect_uri' => $redirectUri,
             'scope' => 'pages_show_list,pages_manage_posts,pages_read_engagement',
             'response_type' => 'code',
+            'state' => $state,
         ]);
 
         return sprintf('https://www.facebook.com/%s/dialog/oauth?%s', $this->apiVersion, $params);
@@ -74,6 +81,8 @@ class FacebookDriver extends AbstractDriver
 
     public function handleCallback(string $code, string $redirectUri): array
     {
+        $this->assertOauthState('facebook');
+
         $tokenData = $this->requestJson('GET', 'oauth/access_token', [
             'query' => [
                 'client_id' => $this->configValue('app_id'),
@@ -100,6 +109,7 @@ class FacebookDriver extends AbstractDriver
 
         return [
             'access_token' => $accessToken,
+            'expires_in' => $tokenData['expires_in'] ?? null,
             'page_access_token' => $pages[0]['access_token'] ?? null,
             'page_id' => $pages[0]['id'] ?? null,
             'pages' => $pages,
@@ -131,6 +141,17 @@ class FacebookDriver extends AbstractDriver
             return true;
         } catch (SocialSyncException) {
             return false;
+        }
+    }
+
+    protected function assertOauthState(string $platform): void
+    {
+        $returnedState = $this->requestInput('state');
+        $oauthContext = $this->pullOauthContext($platform, $returnedState);
+        $expectedState = (string) ($oauthContext['state'] ?? '');
+
+        if ($returnedState === '' || $expectedState === '' || !hash_equals($expectedState, $returnedState)) {
+            throw new SocialSyncException('Facebook returned an invalid OAuth state. Start OAuth again.');
         }
     }
 

@@ -10,6 +10,7 @@ use Illuminate\Routing\Controller;
 use SocialSync\Facades\SocialMedia;
 use SocialSync\Models\SocialAccount;
 use SocialSync\Support\AccountDataResolver;
+use SocialSync\Support\TokenCredentials;
 
 class OAuthController extends Controller
 {
@@ -64,7 +65,7 @@ class OAuthController extends Controller
 
             $driver = SocialMedia::driver($platform);
             $callbackUrl = route('larapost.callback', ['platform' => $platform]);
-            $credentials = $driver->handleCallback($code, $callbackUrl);
+            $credentials = TokenCredentials::normalize([], $driver->handleCallback($code, $callbackUrl));
             $accounts = $this->persistConnectedAccounts($platform, $credentials);
             $message = $this->connectionMessage($platform, $accounts);
 

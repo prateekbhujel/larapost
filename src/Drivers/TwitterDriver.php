@@ -141,14 +141,12 @@ class TwitterDriver extends AbstractDriver
         $oauthContext = $this->pullOauthContext('twitter', $returnedState);
         $expectedState = (string) ($oauthContext['state'] ?? $this->sessionValue('twitter_oauth_state', ''));
 
-        if ($returnedState !== '') {
-            if ($expectedState === '') {
-                throw new SocialSyncException('Missing Twitter OAuth state context. Start OAuth again.');
-            }
+        if ($returnedState === '' || $expectedState === '') {
+            throw new SocialSyncException('Missing Twitter OAuth state context. Start OAuth again.');
+        }
 
-            if (!hash_equals($expectedState, $returnedState)) {
-                throw new SocialSyncException('Twitter returned an invalid OAuth state. Start OAuth again.');
-            }
+        if (!hash_equals($expectedState, $returnedState)) {
+            throw new SocialSyncException('Twitter returned an invalid OAuth state. Start OAuth again.');
         }
 
         $codeVerifier = $oauthContext['code_verifier'] ?? $this->sessionValue('twitter_code_verifier');

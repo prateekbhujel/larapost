@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static array supportedPlatforms()
  * @method static string defaultPlatform()
  * @method static array platformConfig(string $platform)
+ * @method static void extend(string $platform, string|callable $driver)
  * @method static void forgetDriver(string|null $name = null)
  *
  * @see \SocialSync\SocialMediaManager

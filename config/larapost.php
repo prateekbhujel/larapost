@@ -33,9 +33,20 @@ return [
     ],
 
     'queue' => [
-        'enabled' => env('LARAPOST_QUEUE_ENABLED', true),
-        'connection' => env('LARAPOST_QUEUE_CONNECTION', env('QUEUE_CONNECTION', 'database')),
+        // Scheduled publishing remains synchronous unless explicitly enabled.
+        // SocialMedia::post()->queue() always dispatches through Laravel's queue.
+        'enabled' => env('LARAPOST_QUEUE_ENABLED', false),
+        'connection' => env('LARAPOST_QUEUE_CONNECTION', env('QUEUE_CONNECTION')),
         'queue_name' => env('LARAPOST_QUEUE_NAME', 'larapost'),
+    ],
+
+    'scheduler' => [
+        // Registers larapost:run-scheduled with Laravel's scheduler. Your app still
+        // needs schedule:run / schedule:work to be running in production.
+        'enabled' => env('LARAPOST_SCHEDULER_ENABLED', true),
+        'limit' => (int) env('LARAPOST_SCHEDULER_LIMIT', 50),
+        'without_overlapping' => true,
+        'overlap_expiration_minutes' => 10,
     ],
 
     'retry' => [
@@ -69,7 +80,14 @@ return [
     'routes' => [
         'enabled' => env('LARAPOST_ROUTES_ENABLED', true),
         'prefix' => env('LARAPOST_ROUTE_PREFIX', 'larapost'),
+
+        // Kept for compatibility and used as the base middleware for callbacks.
         'middleware' => ['web'],
+
+        // Operator actions are protected by authentication by default. Applications
+        // with a different authorization model can override this published config.
+        'operator_middleware' => ['web', 'auth'],
+        'callback_middleware' => ['web'],
     ],
 
     'ui' => [

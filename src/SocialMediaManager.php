@@ -9,6 +9,8 @@ use SocialSync\Contracts\SocialDriverInterface;
 use SocialSync\Exceptions\SocialSyncException;
 use SocialSync\Models\PlatformCredential;
 use SocialSync\Models\SocialAccount;
+use SocialSync\Support\TokenCredentials;
+use Throwable;
 
 class SocialMediaManager
 {
@@ -20,6 +22,11 @@ class SocialMediaManager
      * @var array<string, \SocialSync\Contracts\SocialDriverInterface>
      */
     protected array $resolvedDrivers = [];
+
+    /**
+     * @var array<string, class-string<\SocialSync\Contracts\SocialDriverInterface>|callable>
+     */
+    protected array $customDrivers = [];
 
     protected ?bool $hasPlatformCredentialTable = null;
 
@@ -42,9 +49,9 @@ class SocialMediaManager
             return $this->resolvedDrivers[$platform];
         }
 
-        $driverClass = $this->driverMap()[$platform] ?? null;
+        $driverDefinition = $this->driverMap()[$platform] ?? null;
 
-        if (!$driverClass) {
+        if (!$driverDefinition) {
             throw new SocialSyncException(sprintf(
                 'Unsupported platform "%s". Supported platforms: %s',
                 $platform,
@@ -53,20 +60,34 @@ class SocialMediaManager
         }
 
         $platformConfig = $this->platformConfig($platform);
-
-        $driver = $this->container
-            ? $this->container->make($driverClass, ['config' => $platformConfig])
-            : new $driverClass($platformConfig);
+        $driver = $this->resolveDriverDefinition($driverDefinition, $platform, $platformConfig);
 
         if (!$driver instanceof SocialDriverInterface) {
             throw new SocialSyncException(sprintf(
-                'Driver "%s" must implement %s.',
-                $driverClass,
+                'Driver for "%s" must implement %s.',
+                $platform,
                 SocialDriverInterface::class
             ));
         }
 
         return $this->resolvedDrivers[$platform] = $driver;
+    }
+
+    /**
+     * Register or replace a driver without editing the package config file.
+     *
+     * @param class-string<SocialDriverInterface>|callable $driver
+     */
+    public function extend(string $platform, string|callable $driver): void
+    {
+        $platform = strtolower(trim($platform));
+
+        if ($platform === '') {
+            throw new SocialSyncException('Driver platform name cannot be empty.');
+        }
+
+        $this->customDrivers[$platform] = $driver;
+        unset($this->resolvedDrivers[$platform]);
     }
 
     public function forgetDriver(?string $name = null): void
@@ -85,6 +106,7 @@ class SocialMediaManager
         try {
             $account = SocialAccount::query()->active()->findOrFail($accountId);
             $driver = $this->driver($account->platform);
+            $account = $this->refreshExpiringCredentials($account, $driver);
 
             $response = $driver->publish($account, $payload);
 
@@ -94,7 +116,7 @@ class SocialMediaManager
                 'success' => true,
                 'platform' => $account->platform,
                 'account_id' => $account->id,
-                'post_id' => $response['id'] ?? $response['data']['id'] ?? null,
+                'post_id' => $response['id'] ?? $response['data']['id'] ?? $response['publish_id'] ?? null,
                 'response' => $response,
             ];
         } catch (ModelNotFoundException) {
@@ -103,7 +125,7 @@ class SocialMediaManager
                 'account_id' => $accountId,
                 'error' => 'Active social account not found.',
             ];
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             return [
                 'success' => false,
                 'account_id' => $accountId,
@@ -135,7 +157,54 @@ class SocialMediaManager
 
     protected function driverMap(): array
     {
-        return (array) ($this->config['drivers'] ?? []);
+        return array_replace((array) ($this->config['drivers'] ?? []), $this->customDrivers);
+    }
+
+    protected function resolveDriverDefinition(mixed $definition, string $platform, array $platformConfig): mixed
+    {
+        if (is_callable($definition) && !is_string($definition)) {
+            return $definition($platformConfig, $this->container, $platform);
+        }
+
+        if (!is_string($definition) || $definition === '') {
+            throw new SocialSyncException(sprintf('Invalid driver definition for "%s".', $platform));
+        }
+
+        return $this->container
+            ? $this->container->make($definition, ['config' => $platformConfig])
+            : new $definition($platformConfig);
+    }
+
+    protected function refreshExpiringCredentials(SocialAccount $account, SocialDriverInterface $driver): SocialAccount
+    {
+        $credentials = is_array($account->credentials) ? $account->credentials : [];
+
+        if (!TokenCredentials::expiresSoon($credentials)) {
+            return $account;
+        }
+
+        try {
+            $refreshed = $driver->refreshToken($credentials);
+
+            if ($refreshed === []) {
+                return $account;
+            }
+
+            $account->credentials = TokenCredentials::normalize($credentials, $refreshed);
+            $account->save();
+
+            return $account->refresh();
+        } catch (Throwable $exception) {
+            if (TokenCredentials::isExpired($credentials)) {
+                throw new SocialSyncException(
+                    sprintf('The %s access token expired and could not be refreshed. Reconnect the account.', $account->platform),
+                    0,
+                    $exception
+                );
+            }
+
+            return $account;
+        }
     }
 
     protected function databasePlatformConfig(string $platform): array
@@ -148,7 +217,7 @@ class SocialMediaManager
             $record = PlatformCredential::query()->platform($platform)->first();
 
             return is_array($record?->credentials) ? $record->credentials : [];
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return [];
         }
     }
@@ -161,7 +230,7 @@ class SocialMediaManager
 
         try {
             $this->hasPlatformCredentialTable = Schema::hasTable('larapost_platform_credentials');
-        } catch (\Throwable) {
+        } catch (Throwable) {
             $this->hasPlatformCredentialTable = false;
         }
 

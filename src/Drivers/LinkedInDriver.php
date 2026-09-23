@@ -88,14 +88,12 @@ class LinkedInDriver extends AbstractDriver
         $oauthContext = $this->pullOauthContext('linkedin', $returnedState);
         $expectedState = (string) ($oauthContext['state'] ?? $this->sessionValue('linkedin_oauth_state', ''));
 
-        if ($returnedState !== '') {
-            if ($expectedState === '') {
-                throw new SocialSyncException('Missing LinkedIn OAuth state context. Start OAuth again.');
-            }
+        if ($returnedState === '' || $expectedState === '') {
+            throw new SocialSyncException('Missing LinkedIn OAuth state context. Start OAuth again.');
+        }
 
-            if (!hash_equals($expectedState, $returnedState)) {
-                throw new SocialSyncException('LinkedIn returned an invalid OAuth state. Start OAuth again.');
-            }
+        if (!hash_equals($expectedState, $returnedState)) {
+            throw new SocialSyncException('LinkedIn returned an invalid OAuth state. Start OAuth again.');
         }
 
         $this->forgetSessionValues(['linkedin_oauth_state']);

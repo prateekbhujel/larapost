@@ -14,6 +14,10 @@ class DashboardFlowTest extends TestCase
     {
         parent::setUp();
 
+        // Existing dashboard flow tests exercise the operator surface directly.
+        // Production defaults require auth; this test suite opts out explicitly.
+        config()->set('larapost.routes.operator_middleware', ['web']);
+
         require dirname(__DIR__, 2) . '/routes/web.php';
     }
 
