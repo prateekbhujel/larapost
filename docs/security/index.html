@@ -1,82 +1,71 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LaraPost Security Policy</title>
-    <meta name="description" content="Security reporting policy for LaraPost." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <script>
-      window.tailwind = window.tailwind || {};
-      window.tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Manrope', 'ui-sans-serif', 'system-ui'],
-              mono: ['JetBrains Mono', 'ui-monospace', 'monospace']
-            },
-            colors: {
-              laravel: {
-                500: '#f7441f',
-                600: '#dc2f12'
-              }
-            }
-          }
-        }
-      };
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="bg-slate-100 text-slate-900 antialiased">
-    <header class="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 backdrop-blur">
-      <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-        <a href="../" class="text-sm font-extrabold tracking-wide sm:text-base">LaraPost Docs</a>
-        <a href="https://github.com/prateekbhujel/larapost" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold hover:bg-slate-100">GitHub</a>
-      </div>
-    </header>
+<html lang="en" data-base="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Security | LaraPost</title>
+  <meta name="description" content="Security support, private vulnerability reporting, and the LaraPost surfaces that must be treated as privileged.">
+  <link rel="icon" href="../favicon.ico">
+  <link rel="stylesheet" href="../assets/docs.css">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="LaraPost LLM documentation">
+</head>
+<body data-page="security">
+<header class="topbar">
+  <a class="brand" href="../"><span class="brand-mark">L</span><span>LaraPost</span></a>
+  <nav class="top-links">
+    <span class="version">2.x</span>
+    <a class="hide-mobile" href="https://packagist.org/packages/prateekbhujel/larapost">Packagist</a>
+    <a href="https://github.com/prateekbhujel/larapost">GitHub</a>
+  </nav>
+</header>
+<nav class="mobile-nav" data-docs-nav></nav>
+<div class="shell">
+  <aside class="sidebar" data-docs-nav></aside>
+  <main class="content">
+    <article class="article">
+      <div class="eyebrow">Reference</div>
+      <h1>Security</h1>
+      <p class="lead">Security support, private vulnerability reporting, and the LaraPost surfaces that must be treated as privileged.</p>
 
-    <main class="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-      <section class="rounded-3xl border border-laravel-500/20 bg-gradient-to-br from-white to-laravel-500/5 p-6">
-        <p class="text-xs font-extrabold uppercase tracking-[0.16em] text-laravel-600">Responsible Disclosure</p>
-        <h1 class="mt-2 text-3xl font-extrabold tracking-tight">Security Policy</h1>
-        <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
-          Report vulnerabilities privately so maintainers can triage and patch before public disclosure.
-        </p>
-      </section>
+      <h2 id="supported-versions">Supported versions</h2>
+      <table>
+        <thead><tr><th>Release line</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><code>2.x</code></td><td>Active fixes and security updates</td></tr>
+          <tr><td><code>1.x</code></td><td>Critical security and compatibility backports only, with a maintenance branch created from the relevant release tag when needed</td></tr>
+        </tbody>
+      </table>
 
-      <section class="mt-5 rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 class="text-2xl font-extrabold tracking-tight">Supported Versions</h2>
-        <p class="mt-3 text-sm leading-7 text-slate-700">Security fixes are provided for the latest <code class="font-mono text-[13px]">1.x</code> release line.</p>
-      </section>
+      <h2 id="reporting">Reporting a vulnerability</h2>
+      <p>Report unpatched vulnerabilities privately to <code>prateekbhujelpb@gmail.com</code>. Do not open a public GitHub issue for an unpatched vulnerability.</p>
+      <p>Include the affected version, reproduction steps or proof of concept, potential impact, and any suggested mitigation.</p>
 
-      <section class="mt-5 rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 class="text-2xl font-extrabold tracking-tight">How to Report</h2>
-        <p class="mt-3 text-sm text-slate-700">Send details to:</p>
-        <p class="mt-2 text-sm font-bold text-laravel-600">prateekbhujelpb@gmail.com</p>
-        <p class="mt-4 text-sm text-slate-700">Include:</p>
-        <ul class="mt-2 list-disc space-y-1.5 pl-5 text-sm text-slate-700">
-          <li>Impacted package version</li>
-          <li>Reproduction steps or proof of concept</li>
-          <li>Expected and observed behavior</li>
-          <li>Potential impact assessment</li>
-        </ul>
-        <p class="mt-4 text-sm text-slate-700">Do not open public GitHub issues for unpatched vulnerabilities.</p>
-      </section>
+      <h2 id="high-risk-surfaces">High-risk surfaces</h2>
+      <p>LaraPost handles provider credentials and can publish externally. Treat these as privileged:</p>
+      <ul>
+        <li>the operator dashboard</li>
+        <li>OAuth callback state and token exchange</li>
+        <li>queue workers and scheduled publishing</li>
+        <li>the optional MCP server</li>
+        <li>custom drivers that receive account credentials</li>
+      </ul>
+      <div class="callout"><strong>MCP is disabled by default.</strong> Never expose it without authentication. Publishing and cancellation tools can create real external side effects.</div>
 
-      <section class="mt-5 rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 class="text-2xl font-extrabold tracking-tight">Response Targets</h2>
-        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
-          <li>Initial acknowledgement: within 72 hours</li>
-          <li>Triage update: within 7 days</li>
-          <li>Patch release: prioritized by severity</li>
-        </ul>
-      </section>
+      <h2 id="default-protection">Default protection</h2>
+      <p>Operator routes use <code>web</code> and <code>auth</code> middleware by default. If an application replaces that middleware for tenancy or a custom admin guard, it remains responsible for ensuring the resulting route is restricted.</p>
+      <p>Run <code>php artisan larapost:doctor</code> after deployment or significant configuration changes; it reports when operator middleware needs review.</p>
 
-      <footer class="py-6 text-sm text-slate-500">
-        <a href="../" class="font-semibold text-laravel-600 hover:text-laravel-500">Back to docs home</a>
-      </footer>
-    </main>
-  </body>
+      <h2 id="response-targets">Response targets</h2>
+      <ul>
+        <li>Initial response: within 72 hours</li>
+        <li>Triage/update: within 7 days</li>
+        <li>Patch release: as quickly as practical based on severity</li>
+      </ul>
+
+      <footer class="footer">LaraPost is MIT licensed. Documentation tracks the current 2.x line.</footer>
+    </article>
+  </main>
+</div>
+<script src="../assets/docs.js"></script>
+</body>
 </html>
