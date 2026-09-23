@@ -67,6 +67,15 @@ class CreatePost extends Tool
             throw new SocialSyncException('Choose at least one platform or account.');
         }
 
+        if (
+            in_array('tiktok', $platforms, true)
+            && strtolower((string) config('larapost.platforms.tiktok.publish_mode', 'upload')) === 'direct'
+        ) {
+            throw new SocialSyncException(
+                'TikTok Direct Post is intentionally unavailable through LaraPost MCP. Use TIKTOK_PUBLISH_MODE=upload so the creator reviews and completes the post in TikTok.'
+            );
+        }
+
         $builder->platforms($platforms);
 
         $mediaUrls = (array) ($data['media_urls'] ?? []);

@@ -29,6 +29,9 @@
 <h2 id="platforms">Enabled platforms</h2>
 <pre><code>LARAPOST_PLATFORMS=facebook,tiktok</code></pre>
 <p>The manager exposes only enabled drivers. The dashboard and MCP capability list follow the same setting.</p>
+<h3>TikTok mode</h3>
+<pre><code>TIKTOK_PUBLISH_MODE=upload</code></pre>
+<p><code>upload</code> is the production-safe default: LaraPost transfers media to TikTok and the creator finishes the post from the TikTok inbox. <code>direct</code> is for host applications that implement TikTok's required creator-info, privacy, interaction, and consent UX.</p>
 
 <h2 id="dashboard">Dashboard</h2>
 <pre><code>LARAPOST_UI_ENABLED=true</code></pre>

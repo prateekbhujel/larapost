@@ -15,7 +15,7 @@ It is not a separate social-media SaaS. It lives inside your Laravel application
 - Facebook Pages
 - Twitter / X with OAuth 2.0 plus the optional Xquik backend
 - LinkedIn member profiles
-- TikTok Content Posting API for photo and video Direct Post using verified HTTPS media URLs
+- TikTok Content Posting API with safe upload-to-inbox by default and explicit Direct Post opt-in
 - Immediate, scheduled, and queued publishing
 - Multi-account targeting
 - Retry and backoff for scheduled work
@@ -32,7 +32,7 @@ LaraPost 2.x targets:
 - PHP 8.3+
 - Laravel 12 or 13
 
-Laravel 11 is no longer in its security support window, so LaraPost 2.x does not carry that compatibility burden. The `1.x` branch is retained for critical backports to the original release line.
+Laravel 11 is no longer in its security support window, so LaraPost 2.x does not carry that compatibility burden. Old maintenance branches are created from release tags only when a real backport is needed.
 
 ## Installation
 
@@ -111,24 +111,27 @@ SocialMedia::post()
 
 ## TikTok
 
-TikTok uses the Content Posting API. LaraPost queries creator information before publish and validates privacy against the account's current options.
+LaraPost defaults to TikTok's upload flow:
+
+```env
+TIKTOK_PUBLISH_MODE=upload
+```
+
+In upload mode, LaraPost sends the photo or video to the creator's TikTok inbox and the creator reviews and completes the post in TikTok. This is the safe default for the built-in dashboard, automation, and MCP clients.
 
 ```php
 SocialMedia::post()
     ->content('Behind the scenes from launch day')
     ->video('https://media.example.com/launch.mp4')
     ->platform('tiktok')
-    ->metadata([
-        'tiktok' => [
-            'privacy_level' => 'SELF_ONLY',
-            'disable_comment' => false,
-            'is_aigc' => false,
-        ],
-    ])
     ->publish();
 ```
 
-The built-in TikTok driver currently uses `PULL_FROM_URL`, so media must be served over HTTPS from a domain or URL prefix verified for the TikTok developer app. TikTok app review, scopes, account eligibility, and provider policy still apply.
+Media uses `PULL_FROM_URL`, so it must be available over HTTPS from a domain or URL prefix verified for the TikTok developer app.
+
+Direct Post is available only as an explicit application-level opt-in with `TIKTOK_PUBLISH_MODE=direct`. In that mode LaraPost requires current creator info, an explicit creator-selected privacy level, explicit interaction settings, and `metadata.tiktok.consent=true`. The built-in MCP tool intentionally refuses TikTok Direct Post. A host application using Direct Post must implement TikTok's required creator-facing sharing UX and pass those choices to LaraPost.
+
+Changing TikTok publish mode changes the OAuth scope, so reconnect existing TikTok accounts after changing between `upload` and `direct`.
 
 ## Optional MCP for ChatGPT, Claude, Codex, and other clients
 

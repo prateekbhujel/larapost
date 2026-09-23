@@ -165,35 +165,34 @@ class DriverConfigurationTest extends TestCase
         $this->assertStringContainsString('state=', $url);
     }
 
-    public function test_tiktok_driver_publishes_video_by_url_and_accepts_success_envelope(): void
+    public function test_tiktok_upload_mode_requests_upload_scope(): void
+    {
+        $driver = new TikTokDriver([
+            'client_key' => 'client-key',
+            'client_secret' => 'client-secret',
+            'publish_mode' => 'upload',
+        ]);
+
+        $url = $driver->getAuthorizationUrl('https://example.com/callback');
+
+        $this->assertStringContainsString('video.upload', urldecode($url));
+        $this->assertStringNotContainsString('video.publish', urldecode($url));
+        $this->assertStringContainsString('state=', $url);
+    }
+
+    public function test_tiktok_upload_mode_sends_video_to_creator_inbox(): void
     {
         $mock = new MockHandler([
             new Response(200, ['Content-Type' => 'application/json'], json_encode([
-                'data' => [
-                    'privacy_level_options' => ['SELF_ONLY'],
-                ],
-                'error' => [
-                    'code' => 'ok',
-                    'message' => '',
-                    'log_id' => 'creator-log',
-                ],
-            ])),
-            new Response(200, ['Content-Type' => 'application/json'], json_encode([
-                'data' => [
-                    'publish_id' => 'v_pub_url~123',
-                ],
-                'error' => [
-                    'code' => 'ok',
-                    'message' => '',
-                    'log_id' => 'publish-log',
-                ],
+                'data' => ['publish_id' => 'v_inbox_url~123'],
+                'error' => ['code' => 'ok', 'message' => '', 'log_id' => 'upload-log'],
             ])),
         ]);
 
         $driver = new TikTokDriver([
             'client_key' => 'client-key',
             'client_secret' => 'client-secret',
-            'default_privacy_level' => 'SELF_ONLY',
+            'publish_mode' => 'upload',
         ], new Client([
             'base_uri' => 'https://open.tiktokapis.com/',
             'handler' => HandlerStack::create($mock),
@@ -213,33 +212,156 @@ class DriverConfigurationTest extends TestCase
             'metadata' => [],
         ]);
 
-        $this->assertSame('v_pub_url~123', $response['publish_id']);
-        $this->assertSame('processing', $response['status']);
+        $this->assertSame('v_inbox_url~123', $response['publish_id']);
+        $this->assertSame('uploaded', $response['status']);
 
         $request = $mock->getLastRequest();
         $payload = json_decode((string) $request->getBody(), true);
 
-        $this->assertSame('/v2/post/publish/video/init/', $request->getUri()->getPath());
+        $this->assertSame('/v2/post/publish/inbox/video/init/', $request->getUri()->getPath());
         $this->assertSame('PULL_FROM_URL', $payload['source_info']['source']);
         $this->assertSame('https://cdn.example.com/video.mp4', $payload['source_info']['video_url']);
     }
 
-    public function test_tiktok_driver_rejects_non_https_media(): void
+    public function test_tiktok_upload_mode_sends_photos_for_in_app_completion(): void
     {
         $mock = new MockHandler([
             new Response(200, ['Content-Type' => 'application/json'], json_encode([
-                'data' => ['privacy_level_options' => ['SELF_ONLY']],
-                'error' => ['code' => 'ok', 'message' => '', 'log_id' => 'creator-log'],
+                'data' => ['publish_id' => 'p_pub_url~123'],
+                'error' => ['code' => 'ok', 'message' => '', 'log_id' => 'photo-log'],
             ])),
         ]);
 
         $driver = new TikTokDriver([
             'client_key' => 'client-key',
             'client_secret' => 'client-secret',
+            'publish_mode' => 'upload',
         ], new Client([
             'base_uri' => 'https://open.tiktokapis.com/',
             'handler' => HandlerStack::create($mock),
         ]));
+
+        $account = new SocialAccount();
+        $account->setRawAttributes([
+            'credentials' => json_encode(['access_token' => 'access-token']),
+        ], true);
+
+        $driver->publish($account, [
+            'content' => 'Photo draft',
+            'media' => [[
+                'type' => 'image',
+                'path' => 'https://cdn.example.com/photo.webp',
+            ]],
+            'metadata' => ['tiktok' => ['title' => 'Photo draft']],
+        ]);
+
+        $request = $mock->getLastRequest();
+        $payload = json_decode((string) $request->getBody(), true);
+
+        $this->assertSame('/v2/post/publish/content/init/', $request->getUri()->getPath());
+        $this->assertSame('MEDIA_UPLOAD', $payload['post_mode']);
+        $this->assertSame('PHOTO', $payload['media_type']);
+        $this->assertArrayNotHasKey('privacy_level', $payload['post_info']);
+    }
+
+    public function test_tiktok_direct_mode_requires_explicit_creator_consent(): void
+    {
+        $driver = new TikTokDriver([
+            'client_key' => 'client-key',
+            'client_secret' => 'client-secret',
+            'publish_mode' => 'direct',
+        ], new Client(['handler' => HandlerStack::create(new MockHandler())]));
+
+        $account = new SocialAccount();
+        $account->setRawAttributes([
+            'credentials' => json_encode(['access_token' => 'access-token']),
+        ], true);
+
+        $this->expectException(SocialSyncException::class);
+        $this->expectExceptionMessage('explicit creator consent');
+
+        $driver->publish($account, [
+            'content' => 'Direct post',
+            'media' => [[
+                'type' => 'video',
+                'path' => 'https://cdn.example.com/video.mp4',
+            ]],
+            'metadata' => [
+                'tiktok' => [
+                    'privacy_level' => 'SELF_ONLY',
+                    'disable_comment' => true,
+                    'disable_duet' => true,
+                    'disable_stitch' => true,
+                ],
+            ],
+        ]);
+    }
+
+    public function test_tiktok_direct_mode_honors_creator_disabled_interactions(): void
+    {
+        $mock = new MockHandler([
+            new Response(200, ['Content-Type' => 'application/json'], json_encode([
+                'data' => [
+                    'privacy_level_options' => ['SELF_ONLY'],
+                    'comment_disabled' => true,
+                    'duet_disabled' => true,
+                    'stitch_disabled' => true,
+                ],
+                'error' => ['code' => 'ok', 'message' => '', 'log_id' => 'creator-log'],
+            ])),
+            new Response(200, ['Content-Type' => 'application/json'], json_encode([
+                'data' => ['publish_id' => 'v_pub_url~123'],
+                'error' => ['code' => 'ok', 'message' => '', 'log_id' => 'publish-log'],
+            ])),
+        ]);
+
+        $driver = new TikTokDriver([
+            'client_key' => 'client-key',
+            'client_secret' => 'client-secret',
+            'publish_mode' => 'direct',
+        ], new Client([
+            'base_uri' => 'https://open.tiktokapis.com/',
+            'handler' => HandlerStack::create($mock),
+        ]));
+
+        $account = new SocialAccount();
+        $account->setRawAttributes([
+            'credentials' => json_encode(['access_token' => 'access-token']),
+        ], true);
+
+        $driver->publish($account, [
+            'content' => 'Direct post',
+            'media' => [[
+                'type' => 'video',
+                'path' => 'https://cdn.example.com/video.mp4',
+            ]],
+            'metadata' => [
+                'tiktok' => [
+                    'consent' => true,
+                    'privacy_level' => 'SELF_ONLY',
+                    'disable_comment' => false,
+                    'disable_duet' => false,
+                    'disable_stitch' => false,
+                ],
+            ],
+        ]);
+
+        $request = $mock->getLastRequest();
+        $payload = json_decode((string) $request->getBody(), true);
+
+        $this->assertSame('/v2/post/publish/video/init/', $request->getUri()->getPath());
+        $this->assertTrue($payload['post_info']['disable_comment']);
+        $this->assertTrue($payload['post_info']['disable_duet']);
+        $this->assertTrue($payload['post_info']['disable_stitch']);
+    }
+
+    public function test_tiktok_driver_rejects_non_https_media(): void
+    {
+        $driver = new TikTokDriver([
+            'client_key' => 'client-key',
+            'client_secret' => 'client-secret',
+            'publish_mode' => 'upload',
+        ], new Client(['handler' => HandlerStack::create(new MockHandler())]));
 
         $account = new SocialAccount();
         $account->setRawAttributes([
@@ -258,6 +380,7 @@ class DriverConfigurationTest extends TestCase
             'metadata' => [],
         ]);
     }
+
 }
 
 class InspectableTwitterDriver extends TwitterDriver

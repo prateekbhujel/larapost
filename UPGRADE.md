@@ -9,7 +9,7 @@ LaraPost 2.x is a major release because it changes runtime support and security 
 - PHP 8.3+
 - Laravel 12 or 13
 
-Laravel 11 is retained only on the `1.x` branch for critical backports.
+Older maintenance branches are not kept permanently. If a critical 1.x backport is needed, the maintenance branch is created from the relevant v1 release tag.
 
 ### Update Composer
 
@@ -45,6 +45,24 @@ If your application uses a different guard, tenant middleware, or admin authoriz
 LARAPOST_PLATFORMS=facebook,tiktok
 ```
 
+### TikTok
+
+TikTok now defaults to:
+
+```env
+TIKTOK_PUBLISH_MODE=upload
+```
+
+Upload mode sends content to the creator's TikTok inbox for review and completion.
+
+Direct Post is an explicit opt-in:
+
+```env
+TIKTOK_PUBLISH_MODE=direct
+```
+
+Direct mode requires a host application to render current creator information and collect explicit privacy, interaction, and consent choices. Reconnect TikTok accounts after switching modes because the required OAuth scope changes.
+
 ### Optional MCP
 
 Normal publishing does not require Laravel MCP.
@@ -61,6 +79,8 @@ Then enable:
 LARAPOST_MCP_ENABLED=true
 LARAPOST_MCP_TOKEN=replace-with-a-long-random-secret
 ```
+
+TikTok Direct Post is intentionally not exposed by LaraPost's MCP write tool. Use TikTok upload mode for AI-assisted workflows so the creator finishes the post in TikTok.
 
 ### Verify after upgrading
 

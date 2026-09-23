@@ -12,7 +12,7 @@ class DoctorCommand extends Command
 {
     protected $signature = 'larapost:doctor';
 
-    protected $description = 'Check LaraPost database, publishing, queue, scheduler, and MCP configuration.';
+    protected $description = 'Check LaraPost database, publishing, queue, scheduler, dashboard, TikTok, and MCP configuration.';
 
     public function handle(SocialMediaManager $manager): int
     {
@@ -37,7 +37,9 @@ class DoctorCommand extends Command
         $queueEnabled = (bool) config('larapost.queue.enabled', false);
         $rows[] = [
             'Queue',
-            $queueEnabled ? ((string) config('larapost.queue.connection', 'default') . ' / ' . (string) config('larapost.queue.queue_name', 'larapost')) : 'synchronous scheduler mode',
+            $queueEnabled
+                ? ((string) config('larapost.queue.connection', 'default') . ' / ' . (string) config('larapost.queue.queue_name', 'larapost'))
+                : 'synchronous scheduler mode',
             $queueEnabled ? 'ENABLED' : 'OPTIONAL',
         ];
 
@@ -47,10 +49,32 @@ class DoctorCommand extends Command
             config('larapost.scheduler.enabled', true) ? 'ENABLED' : 'DISABLED',
         ];
 
+        if (in_array('tiktok', $platforms, true)) {
+            $mode = strtolower(trim((string) config('larapost.platforms.tiktok.publish_mode', 'upload')));
+            $validMode = in_array($mode, ['upload', 'direct'], true);
+
+            $rows[] = [
+                'TikTok',
+                'publish mode',
+                $validMode ? strtoupper($mode) : 'INVALID',
+            ];
+
+            if (!$validMode) {
+                $failed = true;
+            } elseif ($mode === 'direct') {
+                $this->warn(
+                    'TikTok Direct Post requires a host application to render current creator info, collect privacy and interaction choices, and obtain explicit creator consent. LaraPost MCP intentionally does not perform TikTok Direct Post.'
+                );
+            }
+        }
+
         $mcpEnabled = (bool) config('larapost.mcp.enabled', false);
         $mcpToken = (string) config('larapost.mcp.token', '');
 
-        if ($mcpEnabled && $mcpToken === '') {
+        if ($mcpEnabled && !class_exists(\Laravel\Mcp\Server::class)) {
+            $rows[] = ['MCP', 'laravel/mcp runtime', 'PACKAGE MISSING'];
+            $failed = true;
+        } elseif ($mcpEnabled && $mcpToken === '') {
             $rows[] = ['MCP', 'remote AI server', 'TOKEN MISSING'];
             $failed = true;
         } else {
@@ -64,7 +88,9 @@ class DoctorCommand extends Command
         $operatorMiddleware = (array) config('larapost.routes.operator_middleware', []);
         $operatorProtected = $operatorMiddleware !== []
             && (in_array('auth', $operatorMiddleware, true)
-                || collect($operatorMiddleware)->contains(static fn ($middleware): bool => str_contains((string) $middleware, 'auth')));
+                || collect($operatorMiddleware)->contains(
+                    static fn ($middleware): bool => str_contains(strtolower((string) $middleware), 'auth')
+                ));
 
         $rows[] = [
             'Dashboard',
@@ -75,7 +101,9 @@ class DoctorCommand extends Command
         $this->table(['Area', 'Detail', 'Status'], $rows);
 
         if (!$operatorProtected) {
-            $this->warn('The operator dashboard can publish posts and change credentials. Confirm your custom middleware restricts access.');
+            $this->warn(
+                'The operator dashboard can publish posts and change credentials. Confirm your custom middleware restricts access.'
+            );
         }
 
         if ($failed) {

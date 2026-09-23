@@ -4,9 +4,11 @@ LaraPost follows semantic versioning.
 
 ## Branch model
 
-- `main` is the active release line and current development branch.
-- `1.x` exists only for critical backports to the original release line.
-- Short-lived feature/release preparation branches should be deleted after merge.
+- `main` is the only standing development branch.
+- Short-lived feature and release-preparation branches are deleted after merge.
+- Maintenance branches such as `1.x` are created from release tags only when a real backport is needed.
+
+See [BACKPORTING.md](./BACKPORTING.md).
 
 ## Before tagging
 
@@ -17,18 +19,22 @@ LaraPost follows semantic versioning.
 5. Smoke test installation in a fresh supported Laravel application.
 6. Run `php artisan larapost:doctor`.
 7. Verify dashboard access is protected.
-8. If MCP changed, test read and write tools against an MCP client with authentication.
-9. If provider code changed, test against provider sandbox/development credentials when available.
+8. If MCP changed, test authenticated read and write tools with an MCP client.
+9. If provider code changed, test against provider development credentials when available.
 10. Update `CHANGELOG.md`, README, docs, and `UPGRADE.md` when applicable.
 
-## Tagging
+## Stable release
+
+Tag the exact green `main` commit and create the GitHub release from that tag.
 
 ```bash
+git checkout main
+git pull --ff-only
 git tag vX.Y.Z
 git push origin vX.Y.Z
 ```
 
-Create the GitHub release from the tag and use the changelog entry as the basis for release notes.
+The v2.0.0 preparation includes a guarded release workflow that creates the v2.0.0 tag only after the final `main` CI run succeeds.
 
 ## Packagist
 
@@ -36,7 +42,7 @@ Confirm the new tag appears on Packagist and that a fresh Composer install resol
 
 ## Post-release
 
-- verify the docs deployment
-- verify the Packagist metadata and requirements
-- verify installation from a clean Laravel app
-- delete the merged preparation branch
+- verify GitHub Pages deployment
+- verify Packagist metadata and requirements
+- install the tagged package in a clean supported Laravel app
+- delete merged preparation branches

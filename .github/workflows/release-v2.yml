@@ -1,0 +1,68 @@
+name: Release LaraPost v2.0.0
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.RELEASE_SHA }}
+          fetch-depth: 0
+
+      - name: Refuse to tag a stale main commit
+        run: |
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$RELEASE_SHA"
+
+      - name: Publish v2.0.0
+        run: |
+          if gh release view v2.0.0 >/dev/null 2>&1; then
+            echo "v2.0.0 already exists; leaving the release unchanged."
+          else
+            cat > /tmp/larapost-v2-notes.md <<'EOF'
+# LaraPost v2.0.0
+
+LaraPost 2.0 is the production hardening release.
+
+Highlights:
+- PHP 8.3+ with Laravel 12 and 13 support
+- protected operator routes by default
+- queued and scheduled delivery hardening with atomic claims and retry backoff
+- token expiry tracking and refresh where supported
+- selective provider enablement
+- TikTok Content Posting API with upload-to-inbox as the safe default
+- explicit TikTok Direct Post mode for applications that implement TikTok's required creator UX
+- optional authenticated MCP server for ChatGPT, Claude, Codex, and other compatible clients
+- production diagnostics with `php artisan larapost:doctor`
+- rebuilt documentation, upgrade guidance, security policy, and backport policy
+
+See `CHANGELOG.md` and `UPGRADE.md` for the complete release notes.
+EOF
+            gh release create v2.0.0 \
+              --target "$RELEASE_SHA" \
+              --title "LaraPost v2.0.0" \
+              --notes-file /tmp/larapost-v2-notes.md
+          fi
+
+      - name: Remove inactive maintenance and preparation branches
+        run: |
+          for branch in "1.x" "release/v2-final-hardening"; do
+            if gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$branch" >/dev/null 2>&1; then
+              gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$branch"
+              echo "Deleted $branch"
+            fi
+          done

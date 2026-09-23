@@ -26,37 +26,40 @@ class TikTokDriver extends AbstractDriver
             throw new SocialSyncException('TikTok publishing requires at least one image or video.');
         }
 
-        $creator = $this->requestJson('POST', 'v2/post/publish/creator_info/query/', [
-            'headers' => $this->headers($accessToken),
-            'json' => (object) [],
-        ]);
-
-        $creatorInfo = (array) ($creator['data'] ?? []);
-        $privacy = $this->privacyLevel($payload, $creatorInfo);
-
         $types = array_values(array_unique(array_map(
             static fn (array $item): string => strtolower((string) ($item['type'] ?? 'image')),
             $media
         )));
 
-        if ($types === ['video']) {
-            if (count($media) !== 1) {
-                throw new SocialSyncException('TikTok video publishing accepts one video per post.');
-            }
-
-            return $this->publishVideo($accessToken, $payload, $media[0], $privacy);
+        if ($types === ['video'] && count($media) !== 1) {
+            throw new SocialSyncException('TikTok video publishing accepts one video per post.');
         }
 
-        if ($types === ['image']) {
-            return $this->publishPhotos($accessToken, $payload, $media, $privacy);
+        if (!in_array($types, [['video'], ['image']], true)) {
+            throw new SocialSyncException('TikTok posts cannot mix image and video media in one publish request.');
         }
 
-        throw new SocialSyncException('TikTok posts cannot mix image and video media in one publish request.');
+        if ($this->publishMode() === 'upload') {
+            return $types === ['video']
+                ? $this->uploadVideoDraft($accessToken, $media[0])
+                : $this->uploadPhotoDraft($accessToken, $payload, $media);
+        }
+
+        $metadata = $this->directPostMetadata($payload, $types[0]);
+        $creatorInfo = $this->creatorInfo($account);
+        $privacy = $this->privacyLevel($metadata, $creatorInfo);
+
+        return $types === ['video']
+            ? $this->directPostVideo($accessToken, $payload, $media[0], $privacy, $metadata, $creatorInfo)
+            : $this->directPostPhotos($accessToken, $payload, $media, $privacy, $metadata, $creatorInfo);
     }
 
     public function getAuthorizationUrl(string $redirectUri): string
     {
         $state = bin2hex(random_bytes(16));
+        $scope = $this->publishMode() === 'direct'
+            ? 'user.info.basic,video.publish'
+            : 'user.info.basic,video.upload';
 
         $this->rememberOauthContext('tiktok', $state, [
             'state' => $state,
@@ -64,7 +67,7 @@ class TikTokDriver extends AbstractDriver
 
         $params = http_build_query([
             'client_key' => $this->configValue('client_key'),
-            'scope' => 'user.info.basic,video.publish',
+            'scope' => $scope,
             'response_type' => 'code',
             'redirect_uri' => $redirectUri,
             'state' => $state,
@@ -137,24 +140,32 @@ class TikTokDriver extends AbstractDriver
         }
     }
 
-    protected function publishVideo(string $accessToken, array $payload, array $media, string $privacy): array
+    /**
+     * Current creator capabilities for building a TikTok Direct Post UI.
+     *
+     * Direct Post integrations should render these values to the creator before
+     * collecting privacy, interaction settings, and consent.
+     */
+    public function creatorInfo(SocialAccount $account): array
+    {
+        $credentials = $this->credentials($account);
+        $accessToken = (string) $this->credentialValue($credentials, 'access_token');
+
+        $response = $this->requestJson('POST', 'v2/post/publish/creator_info/query/', [
+            'headers' => $this->headers($accessToken),
+            'json' => (object) [],
+        ]);
+
+        return (array) ($response['data'] ?? []);
+    }
+
+    protected function uploadVideoDraft(string $accessToken, array $media): array
     {
         $url = $this->httpsMediaUrl((string) ($media['path'] ?? ''), 'video');
-        $metadata = (array) ($payload['metadata']['tiktok'] ?? []);
 
-        $response = $this->requestJson('POST', 'v2/post/publish/video/init/', [
+        $response = $this->requestJson('POST', 'v2/post/publish/inbox/video/init/', [
             'headers' => $this->headers($accessToken),
             'json' => [
-                'post_info' => [
-                    'title' => (string) ($payload['content'] ?? ''),
-                    'privacy_level' => $privacy,
-                    'disable_duet' => (bool) ($metadata['disable_duet'] ?? false),
-                    'disable_comment' => (bool) ($metadata['disable_comment'] ?? false),
-                    'disable_stitch' => (bool) ($metadata['disable_stitch'] ?? false),
-                    'brand_content_toggle' => (bool) ($metadata['brand_content'] ?? false),
-                    'brand_organic_toggle' => (bool) ($metadata['brand_organic'] ?? false),
-                    'is_aigc' => (bool) ($metadata['is_aigc'] ?? false),
-                ],
                 'source_info' => [
                     'source' => 'PULL_FROM_URL',
                     'video_url' => $url,
@@ -162,13 +173,13 @@ class TikTokDriver extends AbstractDriver
             ],
         ]);
 
-        return $this->publishResponse($response);
+        return $this->publishResponse($response, 'uploaded');
     }
 
-    protected function publishPhotos(string $accessToken, array $payload, array $media, string $privacy): array
+    protected function uploadPhotoDraft(string $accessToken, array $payload, array $media): array
     {
         if (count($media) > 35) {
-            throw new SocialSyncException('TikTok photo posts support at most 35 images.');
+            throw new SocialSyncException('TikTok photo uploads support at most 35 images.');
         }
 
         $metadata = (array) ($payload['metadata']['tiktok'] ?? []);
@@ -183,8 +194,82 @@ class TikTokDriver extends AbstractDriver
                 'post_info' => [
                     'title' => (string) ($metadata['title'] ?? ''),
                     'description' => (string) ($payload['content'] ?? ''),
+                ],
+                'source_info' => [
+                    'source' => 'PULL_FROM_URL',
+                    'photo_cover_index' => (int) ($metadata['photo_cover_index'] ?? 0),
+                    'photo_images' => $urls,
+                ],
+                'post_mode' => 'MEDIA_UPLOAD',
+                'media_type' => 'PHOTO',
+            ],
+        ]);
+
+        return $this->publishResponse($response, 'uploaded');
+    }
+
+    protected function directPostVideo(
+        string $accessToken,
+        array $payload,
+        array $media,
+        string $privacy,
+        array $metadata,
+        array $creatorInfo
+    ): array {
+        $url = $this->httpsMediaUrl((string) ($media['path'] ?? ''), 'video');
+
+        $response = $this->requestJson('POST', 'v2/post/publish/video/init/', [
+            'headers' => $this->headers($accessToken),
+            'json' => [
+                'post_info' => [
+                    'title' => (string) ($payload['content'] ?? ''),
                     'privacy_level' => $privacy,
-                    'disable_comment' => (bool) ($metadata['disable_comment'] ?? false),
+                    'disable_duet' => (bool) ($creatorInfo['duet_disabled'] ?? false)
+                        || (bool) $metadata['disable_duet'],
+                    'disable_comment' => (bool) ($creatorInfo['comment_disabled'] ?? false)
+                        || (bool) $metadata['disable_comment'],
+                    'disable_stitch' => (bool) ($creatorInfo['stitch_disabled'] ?? false)
+                        || (bool) $metadata['disable_stitch'],
+                    'brand_content_toggle' => (bool) ($metadata['brand_content'] ?? false),
+                    'brand_organic_toggle' => (bool) ($metadata['brand_organic'] ?? false),
+                    'is_aigc' => (bool) ($metadata['is_aigc'] ?? false),
+                ],
+                'source_info' => [
+                    'source' => 'PULL_FROM_URL',
+                    'video_url' => $url,
+                ],
+            ],
+        ]);
+
+        return $this->publishResponse($response, 'processing');
+    }
+
+    protected function directPostPhotos(
+        string $accessToken,
+        array $payload,
+        array $media,
+        string $privacy,
+        array $metadata,
+        array $creatorInfo
+    ): array {
+        if (count($media) > 35) {
+            throw new SocialSyncException('TikTok photo posts support at most 35 images.');
+        }
+
+        $urls = array_map(
+            fn (array $item): string => $this->httpsMediaUrl((string) ($item['path'] ?? ''), 'image'),
+            $media
+        );
+
+        $response = $this->requestJson('POST', 'v2/post/publish/content/init/', [
+            'headers' => $this->headers($accessToken),
+            'json' => [
+                'post_info' => [
+                    'title' => (string) ($metadata['title'] ?? ''),
+                    'description' => (string) ($payload['content'] ?? ''),
+                    'privacy_level' => $privacy,
+                    'disable_comment' => (bool) ($creatorInfo['comment_disabled'] ?? false)
+                        || (bool) $metadata['disable_comment'],
                     'auto_add_music' => (bool) ($metadata['auto_add_music'] ?? true),
                     'brand_content_toggle' => (bool) ($metadata['brand_content'] ?? false),
                     'brand_organic_toggle' => (bool) ($metadata['brand_organic'] ?? false),
@@ -200,39 +285,56 @@ class TikTokDriver extends AbstractDriver
             ],
         ]);
 
-        return $this->publishResponse($response);
+        return $this->publishResponse($response, 'processing');
     }
 
-    protected function publishResponse(array $response): array
+    protected function directPostMetadata(array $payload, string $mediaType): array
     {
-        $publishId = $response['data']['publish_id'] ?? null;
+        $metadata = (array) ($payload['metadata']['tiktok'] ?? []);
 
-        if (!is_string($publishId) || $publishId === '') {
-            throw new SocialSyncException('TikTok accepted the request without returning a publish ID.');
+        if (($metadata['consent'] ?? false) !== true) {
+            throw new SocialSyncException(
+                'TikTok Direct Post requires explicit creator consent. Set metadata.tiktok.consent=true only after the creator approves the post.'
+            );
         }
 
-        return [
-            'id' => $publishId,
-            'publish_id' => $publishId,
-            'status' => 'processing',
-            'response' => $response,
-        ];
+        if (!isset($metadata['privacy_level']) || trim((string) $metadata['privacy_level']) === '') {
+            throw new SocialSyncException(
+                'TikTok Direct Post requires an explicit privacy_level selected by the creator.'
+            );
+        }
+
+        $requiredInteractionFields = $mediaType === 'video'
+            ? ['disable_comment', 'disable_duet', 'disable_stitch']
+            : ['disable_comment'];
+
+        foreach ($requiredInteractionFields as $field) {
+            if (!array_key_exists($field, $metadata)) {
+                throw new SocialSyncException(sprintf(
+                    'TikTok Direct Post requires an explicit metadata.tiktok.%s value from the creator UI.',
+                    $field
+                ));
+            }
+        }
+
+        return $metadata;
     }
 
-    protected function privacyLevel(array $payload, array $creatorInfo): string
+    protected function privacyLevel(array $metadata, array $creatorInfo): string
     {
-        $requested = strtoupper((string) (
-            $payload['metadata']['tiktok']['privacy_level']
-            ?? $this->config['default_privacy_level']
-            ?? 'SELF_ONLY'
-        ));
-
+        $requested = strtoupper(trim((string) $metadata['privacy_level']));
         $options = array_map(
             static fn ($value): string => strtoupper((string) $value),
             (array) ($creatorInfo['privacy_level_options'] ?? [])
         );
 
-        if ($options !== [] && !in_array($requested, $options, true)) {
+        if ($options === []) {
+            throw new SocialSyncException(
+                'TikTok did not return privacy options for this creator. Direct Post cannot continue safely.'
+            );
+        }
+
+        if (!in_array($requested, $options, true)) {
             throw new SocialSyncException(sprintf(
                 'TikTok privacy level "%s" is not available for this account. Available values: %s.',
                 $requested,
@@ -243,11 +345,40 @@ class TikTokDriver extends AbstractDriver
         return $requested;
     }
 
+    protected function publishResponse(array $response, string $status): array
+    {
+        $publishId = $response['data']['publish_id'] ?? null;
+
+        if (!is_string($publishId) || $publishId === '') {
+            throw new SocialSyncException('TikTok accepted the request without returning a publish ID.');
+        }
+
+        return [
+            'id' => $publishId,
+            'publish_id' => $publishId,
+            'status' => $status,
+            'response' => $response,
+        ];
+    }
+
+    protected function publishMode(): string
+    {
+        $mode = strtolower(trim((string) ($this->config['publish_mode'] ?? 'upload')));
+
+        if (!in_array($mode, ['upload', 'direct'], true)) {
+            throw new SocialSyncException(
+                'Unsupported TikTok publish mode. Use "upload" or "direct".'
+            );
+        }
+
+        return $mode;
+    }
+
     protected function httpsMediaUrl(string $url, string $type): string
     {
         if (filter_var($url, FILTER_VALIDATE_URL) === false || !str_starts_with(strtolower($url), 'https://')) {
             throw new SocialSyncException(sprintf(
-                'TikTok %s publishing currently requires a public HTTPS URL from a domain or URL prefix verified with TikTok.',
+                'TikTok %s publishing requires a public HTTPS URL from a domain or URL prefix verified with TikTok.',
                 $type
             ));
         }

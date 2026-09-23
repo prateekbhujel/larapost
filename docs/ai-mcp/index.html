@@ -69,6 +69,7 @@ LARAPOST_CONTENT_GUIDELINES="..."</code></pre>
 <li>Account credentials and provider tokens are not returned by read tools.</li>
 <li>Publishing tools are explicitly side-effecting.</li>
 <li>Business context is guidance, not permission to invent facts or publish without clear intent.</li>
+<li>TikTok MCP publishing uses upload mode so the creator reviews and completes the post in TikTok. LaraPost rejects TikTok Direct Post from the MCP write tool.</li>
 </ul>
 <div class="callout"><strong>Do not expose an unauthenticated MCP server to the public internet.</strong> MCP tools can trigger real external actions. Treat this endpoint like any other privileged application API.</div>
 
