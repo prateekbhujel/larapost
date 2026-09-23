@@ -9,6 +9,7 @@ use SocialSync\Console\Commands\DoctorCommand;
 use SocialSync\Console\Commands\InstallCommand;
 use SocialSync\Console\Commands\RunScheduledPostsCommand;
 use SocialSync\Console\Commands\TestPostCommand;
+use SocialSync\Exceptions\SocialSyncException;
 use SocialSync\Http\Middleware\AuthenticateMcp;
 use SocialSync\Mcp\LaraPostServer;
 
@@ -69,11 +70,15 @@ class SocialSyncServiceProvider extends ServiceProvider
         }
 
         if (!class_exists(\Laravel\Mcp\Facades\Mcp::class)) {
-            return;
+            throw new SocialSyncException(
+                'LaraPost MCP is enabled but laravel/mcp is not installed. Run: composer require laravel/mcp:^1.0'
+            );
         }
 
         if (!filled(config('larapost.mcp.token'))) {
-            return;
+            throw new SocialSyncException(
+                'LaraPost MCP is enabled but LARAPOST_MCP_TOKEN is empty.'
+            );
         }
 
         $path = '/' . ltrim((string) config('larapost.mcp.path', '/larapost/mcp'), '/');

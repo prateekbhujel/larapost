@@ -201,7 +201,7 @@ class InstallCommand extends Command
             'tiktok' => [
                 'TIKTOK_CLIENT_KEY=',
                 'TIKTOK_CLIENT_SECRET=',
-                'TIKTOK_DEFAULT_PRIVACY_LEVEL=SELF_ONLY',
+                'TIKTOK_PUBLISH_MODE=upload',
             ],
         ];
 

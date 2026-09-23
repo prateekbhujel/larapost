@@ -38,7 +38,11 @@ return [
         'tiktok' => [
             'client_key' => env('TIKTOK_CLIENT_KEY'),
             'client_secret' => env('TIKTOK_CLIENT_SECRET'),
-            'default_privacy_level' => env('TIKTOK_DEFAULT_PRIVACY_LEVEL', 'SELF_ONLY'),
+
+            // "upload" sends media to the creator's TikTok inbox so they review
+            // and finish the post in TikTok. "direct" requires a host application
+            // to implement TikTok's creator-info, privacy, interaction, and consent UX.
+            'publish_mode' => env('TIKTOK_PUBLISH_MODE', 'upload'),
         ],
     ],
 

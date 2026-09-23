@@ -39,21 +39,16 @@
 <div class="callout note">Organization Pages are not part of the current built-in LinkedIn driver.</div>
 
 <h2 id="tiktok">TikTok</h2>
-<p>TikTok support uses the Content Posting API. The driver queries creator information before each publish so requested privacy is validated against the account's current options.</p>
-<p>Video and photo Direct Post currently use TikTok's <code>PULL_FROM_URL</code> flow. Media must be available over HTTPS from a domain or URL prefix verified for the TikTok developer app.</p>
+<p>LaraPost uses TikTok's Content Posting API with <code>TIKTOK_PUBLISH_MODE=upload</code> by default. Video uploads go to the creator's TikTok inbox, and photo uploads use <code>MEDIA_UPLOAD</code>. The creator reviews and completes the post inside TikTok.</p>
+<p>Both upload and direct modes use TikTok's <code>PULL_FROM_URL</code> transfer path. Media must be available over HTTPS from a domain or URL prefix verified for the TikTok developer app.</p>
 <pre><code>SocialMedia::post()
     ->content('Behind the scenes from launch day')
     ->video('https://media.example.com/launch.mp4')
     ->platform('tiktok')
-    ->metadata([
-        'tiktok' => [
-            'privacy_level' => 'SELF_ONLY',
-            'disable_comment' => false,
-            'is_aigc' => false,
-        ],
-    ])
     ->publish();</code></pre>
-<div class="callout"><strong>Production review:</strong> TikTok Direct Post access is subject to TikTok app review, scopes, creator eligibility, and content posting requirements. LaraPost cannot bypass provider review or account restrictions.</div>
+<div class="callout note"><strong>Direct Post is explicit opt-in.</strong> Set <code>TIKTOK_PUBLISH_MODE=direct</code> only in an application that renders current creator information, lets the creator choose privacy and interaction settings, and records explicit consent before calling LaraPost. Direct mode has no implicit privacy default.</div>
+<p>For a custom Direct Post UI, call <code>SocialMedia::driver('tiktok')->creatorInfo($account)</code> before rendering the creator choices, then pass the selected values in <code>metadata.tiktok</code>. Changing between upload and direct mode changes the OAuth scope, so reconnect TikTok accounts after switching modes.</p>
+<div class="callout"><strong>Provider review still applies.</strong> TikTok scopes, audit status, creator eligibility, media ownership verification, rate limits, and content policies are controlled by TikTok.</div>
 
 <h2 id="custom">Custom drivers</h2>
 <p>You can replace or add a platform driver at runtime without editing LaraPost:</p>

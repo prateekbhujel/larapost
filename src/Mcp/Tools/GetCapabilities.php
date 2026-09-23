@@ -46,7 +46,10 @@ class GetCapabilities extends Tool
                 'text' => false,
                 'images' => true,
                 'video' => true,
-                'notes' => 'Direct Post requires approved video.publish scope. LaraPost v2 uses public HTTPS media URLs from a TikTok-verified domain or URL prefix.',
+                'publish_mode' => (string) config('larapost.platforms.tiktok.publish_mode', 'upload'),
+                'notes' => config('larapost.platforms.tiktok.publish_mode', 'upload') === 'direct'
+                    ? 'Direct Post is configured for application code with a compliant creator UI. LaraPost MCP will not perform TikTok Direct Post.'
+                    : 'Upload mode sends media to TikTok for the creator to review and complete from the TikTok inbox.',
             ],
         ];
 
