@@ -3,10 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Social publishing infrastructure for Laravel | LaraPost</title>
-  <meta name="description" content="Connect only the networks you need, publish immediately or on a schedule, and optionally expose the same workflow to MCP clients without handing your social credentials to an AI provider.">
+  <title>Introduction | LaraPost 2.x</title>
+  <meta name="description" content="LaraPost is Laravel-native infrastructure for publishing to Facebook, X, LinkedIn, and TikTok with queues, scheduling, OAuth, and optional MCP support.">
+  <meta name="theme-color" content="#ffffff">
   <link rel="icon" href="./favicon.ico">
-  <link rel="stylesheet" href="./assets/docs.css">\n  <link rel="alternate" type="text/plain" href="./llms.txt" title="LaraPost LLM documentation">
+  <link rel="stylesheet" href="./assets/docs.css?v=20260923b">
+  <link rel="alternate" type="text/plain" href="./llms.txt" title="LaraPost LLM documentation">
 </head>
 <body data-page="home">
 <header class="topbar">
@@ -22,50 +24,73 @@
   <aside class="sidebar" data-docs-nav></aside>
   <main class="content">
     <article class="article">
-      <div class="eyebrow">LaraPost 2.x</div>
-      <h1>Social publishing infrastructure for Laravel</h1>
-      <p class="lead">Connect only the networks you need, publish immediately or on a schedule, and optionally expose the same workflow to MCP clients without handing your social credentials to an AI provider.</p>
-      
-<div class="grid">
-  <a class="card" href="./getting-started/"><h3>Start in ten minutes</h3><p>Install the package, choose your platforms, connect one account, and publish your first post.</p></a>
-  <a class="card" href="./ai-mcp/"><h3>Use ChatGPT, Claude, Codex, or another MCP client</h3><p>Enable a standard remote MCP server only when you want AI-assisted content operations.</p></a>\n  <a class="card" href="./agents/"><h3>Give coding agents the exact contract</h3><p>Use the agent guide and llms.txt for version-aware setup, supported capabilities, safety rules, and source-of-truth files.</p></a>
-  <a class="card" href="./platforms/"><h3>Facebook, X, LinkedIn, TikTok</h3><p>Enable one platform, several, or all of them. Disabled drivers stay out of the runtime surface.</p></a>
-  <a class="card" href="./publishing/"><h3>Queues and schedules</h3><p>Persist first, avoid duplicate claims, retry failures, and let Laravel's scheduler and queue do the operational work.</p></a>
-</div>
+      <h1>Introduction</h1>
+      <p class="lead">LaraPost is Laravel-native social publishing infrastructure. It keeps provider accounts, OAuth credentials, publishing history, queues, scheduling, and business rules inside your Laravel application.</p>
 
-<h2 id="why">What LaraPost is for</h2>
-<p>LaraPost is not a separate social media SaaS. It is infrastructure that lives inside your Laravel application. Your application keeps the account records, provider tokens, publishing history, queue configuration, and business rules.</p>
-<p>That makes it useful for SaaS products, CRMs, content systems, marketplaces, agency tools, and internal applications that need social publishing as a product capability rather than another browser tab.</p>
+      <h2 id="meet-larapos">Meet LaraPost</h2>
+      <p>LaraPost is built for applications that need social publishing as a product capability rather than as a separate browser-based SaaS. You can connect only the providers you need and publish through one Laravel-facing API.</p>
+      <p>The current 2.x line supports Facebook Pages, Twitter / X, LinkedIn member profiles, and TikTok Content Posting workflows. Publishing may happen immediately, through Laravel's queue, or at a scheduled time.</p>
 
-<h2 id="agents-and-humans">Documentation for developers and agents</h2>\n<p>The same docs are designed to be readable by humans and predictable for coding agents. Stable headings, explicit capability boundaries, copyable examples, an <a href="./agents/">agent guide</a>, and <a href="./llms.txt"><code>llms.txt</code></a> reduce guesswork when LaraPost is integrated through Codex, Claude Code, Copilot, or another agent.</p>\n\n<h2 id="install">Installation</h2>
-<pre><code>composer require prateekbhujel/larapost
-php artisan larapost:install</code></pre>
-<p>The installer asks which platforms you want and whether you want the optional MCP server. Nothing requires you to configure every provider.</p>
+      <h2 id="requirements">Requirements</h2>
+      <ul>
+        <li>PHP 8.3 or newer</li>
+        <li>Laravel 12 or 13</li>
+        <li>A Laravel-supported database</li>
+        <li>Provider developer credentials for each network you enable</li>
+      </ul>
 
-<h2 id="minimal">A minimal publishing example</h2>
-<pre><code>use SocialSync\Facades\SocialMedia;
+      <h2 id="installation">Installation</h2>
+      <p>Install LaraPost with Composer, run the installer, and verify the resulting application configuration before connecting production accounts.</p>
+      <pre><code>composer require prateekbhujel/larapost
+php artisan larapost:install
+php artisan larapost:doctor</code></pre>
+      <p>The installer lets you choose the publishing platforms, operator dashboard, and optional MCP integration instead of forcing every provider into the application.</p>
 
-SocialMedia::post()
+      <h2 id="first-post">Your first post</h2>
+      <p>Once an account is connected, publishing uses the <code>SocialMedia</code> facade and fluent post builder:</p>
+      <pre><code>use SocialSync\Facades\SocialMedia;
+
+$result = SocialMedia::post()
     ->content('We just shipped a new release.')
     ->platform('facebook')
     ->publish();</code></pre>
 
-<h2 id="support">Current support</h2>
-<table>
-<thead><tr><th>Platform</th><th>Connection</th><th>Publishing</th></tr></thead>
-<tbody>
-<tr><td>Facebook</td><td>OAuth</td><td>Pages, text, image URL, video URL</td></tr>
-<tr><td>Twitter / X</td><td>OAuth 2.0 or Xquik</td><td>Text publishing</td></tr>
-<tr><td>LinkedIn</td><td>OAuth 2.0</td><td>Member profile text and image publishing</td></tr>
-<tr><td>TikTok</td><td>Login Kit OAuth</td><td>Video and photo upload-to-inbox by default; Direct Post is explicit opt-in</td></tr>
-</tbody></table>
+      <h2 id="supported-platforms">Supported platforms</h2>
+      <table>
+        <thead>
+          <tr><th>Platform</th><th>Connection</th><th>Current publishing support</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Facebook</td><td>OAuth</td><td>Pages, text, image URL, video URL</td></tr>
+          <tr><td>Twitter / X</td><td>OAuth 2.0 or Xquik</td><td>Text publishing</td></tr>
+          <tr><td>LinkedIn</td><td>OAuth 2.0</td><td>Member profile text and image publishing</td></tr>
+          <tr><td>TikTok</td><td>Login Kit OAuth</td><td>Video and photo upload-to-inbox by default; Direct Post is explicit opt-in</td></tr>
+        </tbody>
+      </table>
 
-<div class="callout"><strong>Runtime baseline:</strong> LaraPost 2.x targets PHP 8.3+ and Laravel 12 or 13. Older maintenance branches are created from release tags only when a real backport is needed.</div>
+      <h2 id="queues-and-scheduling">Queues and scheduling</h2>
+      <p>LaraPost can persist work before dispatch, use Laravel queues for asynchronous publishing, and keep future posts pending until they are due. Production applications must run the queue worker and Laravel scheduler when those features are enabled.</p>
+      <p>See <a href="./publishing/">Publishing</a> for immediate, queued, scheduled, multi-platform, and account-targeted examples.</p>
+
+      <h2 id="tiktok">TikTok's safe default</h2>
+      <p>TikTok uses <code>TIKTOK_PUBLISH_MODE=upload</code> by default. LaraPost transfers media to TikTok and the creator reviews and completes the post inside TikTok.</p>
+      <p>Direct Post is an explicit application-level opt-in because it requires current creator information plus explicit privacy, interaction, and consent choices.</p>
+
+      <h2 id="ai-workflows">AI-assisted workflows</h2>
+      <p>The optional MCP server can expose selected LaraPost capabilities to compatible AI clients. It is disabled by default and must be authenticated when enabled. Coding agents working on the package can use the <a href="./agents/">Agent Guide</a> or <a href="./llms.txt"><code>llms.txt</code></a> for the version-specific contract.</p>
+
+      <h2 id="next-steps">Next steps</h2>
+      <ul>
+        <li><a href="./getting-started/">Install LaraPost</a> in a supported Laravel application.</li>
+        <li><a href="./configuration/">Configure</a> only the platforms and operational surfaces you need.</li>
+        <li>Read the <a href="./platforms/">platform notes</a> before connecting real provider accounts.</li>
+        <li>Run <code>php artisan larapost:doctor</code> before production publishing.</li>
+      </ul>
 
       <footer class="footer">LaraPost is MIT licensed. Documentation tracks the current 2.x line.</footer>
     </article>
   </main>
 </div>
-<script src="./assets/docs.js"></script>
+<script src="./assets/docs.js?v=20260923b"></script>
 </body>
 </html>
