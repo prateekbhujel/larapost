@@ -1,0 +1,52 @@
+# LaraPost
+
+> Laravel-native social publishing infrastructure for Facebook, Twitter/X, LinkedIn, TikTok, queues, scheduling, and optional MCP clients.
+
+Current documentation: https://prateekbhujel.github.io/larapost/
+Current major: 2.x
+Package: prateekbhujel/larapost
+Runtime: PHP 8.3+; Laravel 12 or 13
+
+## Documentation
+
+- Introduction: https://prateekbhujel.github.io/larapost/
+- Installation: https://prateekbhujel.github.io/larapost/getting-started/
+- Configuration: https://prateekbhujel.github.io/larapost/configuration/
+- Publishing and scheduling: https://prateekbhujel.github.io/larapost/publishing/
+- Platforms: https://prateekbhujel.github.io/larapost/platforms/
+- AI and MCP: https://prateekbhujel.github.io/larapost/ai-mcp/
+- Agent guide: https://prateekbhujel.github.io/larapost/agents/
+- Upgrade from 1.x: https://prateekbhujel.github.io/larapost/upgrade/
+- Security: https://prateekbhujel.github.io/larapost/security/
+- Release and maintenance: https://prateekbhujel.github.io/larapost/release/
+- Contributing: https://prateekbhujel.github.io/larapost/contributing/
+
+## Canonical commands
+
+composer require prateekbhujel/larapost
+php artisan larapost:install
+php artisan larapost:doctor
+composer test
+
+## Agent rules
+
+1. Prefer the installed 2.x package code and current documentation over examples from LaraPost 1.x.
+2. Never invent provider credentials, tokens, connected accounts, or provider capabilities.
+3. Operator routes are protected by auth by default; do not weaken that as a shortcut.
+4. TikTok defaults to TIKTOK_PUBLISH_MODE=upload. Direct Post requires explicit creator-facing choices and consent.
+5. LaraPost's MCP write tool intentionally does not perform TikTok Direct Post.
+6. When queueing posts, ensure a Laravel queue worker is actually consuming the configured queue.
+7. When scheduling posts, ensure Laravel's scheduler is actually running.
+8. Disabled platforms are outside the runtime surface.
+9. Treat create/cancel MCP tools as side effects and call them only for explicit user intent.
+10. Run php artisan larapost:doctor before real publishing after installation or significant configuration changes.
+
+## Source map
+
+- config/larapost.php — configuration and environment contract
+- src/PostBuilder.php — fluent publishing, media, queueing, scheduling, account targeting
+- src/SocialMediaManager.php — driver resolution, publishing, token refresh
+- src/Console/Commands/InstallCommand.php — installation behavior
+- src/Console/Commands/DoctorCommand.php — production diagnostics
+- routes/web.php — dashboard, connect, and callback routes
+- src/Mcp/ — optional MCP server and tools
