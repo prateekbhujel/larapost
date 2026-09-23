@@ -1,104 +1,93 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LaraPost Release Playbook</title>
-    <meta name="description" content="Release checklist for LaraPost maintainers." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <script>
-      window.tailwind = window.tailwind || {};
-      window.tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Manrope', 'ui-sans-serif', 'system-ui'],
-              mono: ['JetBrains Mono', 'ui-monospace', 'monospace']
-            },
-            colors: {
-              laravel: {
-                500: '#f7441f',
-                600: '#dc2f12'
-              }
-            }
-          }
-        }
-      };
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="bg-slate-100 text-slate-900 antialiased">
-    <header class="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 backdrop-blur">
-      <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-        <a href="../" class="text-sm font-extrabold tracking-wide sm:text-base">LaraPost Docs</a>
-        <a href="https://github.com/prateekbhujel/larapost" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold hover:bg-slate-100">GitHub</a>
-      </div>
-    </header>
+<html lang="en" data-base="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Release & maintenance | LaraPost</title>
+  <meta name="description" content="How LaraPost versions, validates, tags, releases, and backports changes without turning long-lived branches into a second source of truth.">
+  <link rel="icon" href="../favicon.ico">
+  <link rel="stylesheet" href="../assets/docs.css">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="LaraPost LLM documentation">
+</head>
+<body data-page="release">
+<header class="topbar">
+  <a class="brand" href="../"><span class="brand-mark">L</span><span>LaraPost</span></a>
+  <nav class="top-links">
+    <span class="version">2.x</span>
+    <a class="hide-mobile" href="https://packagist.org/packages/prateekbhujel/larapost">Packagist</a>
+    <a href="https://github.com/prateekbhujel/larapost">GitHub</a>
+  </nav>
+</header>
+<nav class="mobile-nav" data-docs-nav></nav>
+<div class="shell">
+  <aside class="sidebar" data-docs-nav></aside>
+  <main class="content">
+    <article class="article">
+      <div class="eyebrow">Reference</div>
+      <h1>Release & maintenance</h1>
+      <p class="lead">How LaraPost versions, validates, tags, releases, and backports changes without turning long-lived branches into a second source of truth.</p>
 
-    <main class="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-      <section class="rounded-3xl border border-laravel-500/20 bg-gradient-to-br from-white to-laravel-500/5 p-6">
-        <p class="text-xs font-extrabold uppercase tracking-[0.16em] text-laravel-600">Maintainer Workflow</p>
-        <h1 class="mt-2 text-3xl font-extrabold tracking-tight">Release Playbook</h1>
-        <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
-          Use this checklist for every stable release to keep tags, docs, and package metadata aligned.
-        </p>
-      </section>
+      <h2 id="versioning">Versioning</h2>
+      <p>LaraPost follows semantic versioning. Release tags are the source of truth for shipped versions, while <code>main</code> is the only standing development branch.</p>
 
-      <section class="mt-5 rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 class="text-2xl font-extrabold tracking-tight">1. Prepare</h2>
-        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
-          <li>Run tests and confirm green CI baseline.</li>
-          <li>Update README, docs portal, and changelog entries.</li>
-          <li>Check `composer.json` metadata and support URLs.</li>
-        </ul>
-        <pre class="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>composer test
-composer validate --strict --no-check-lock</code></pre>
-      </section>
+      <h2 id="branches">Branch model</h2>
+      <ul>
+        <li><code>main</code> is current development and the active 2.x line.</li>
+        <li>Feature, fix, and release-preparation branches are short lived and deleted after merge.</li>
+        <li>Older maintenance branches are created from the relevant release tag only when a real backport is needed.</li>
+      </ul>
 
-      <section class="mt-5 rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 class="text-2xl font-extrabold tracking-tight">2. Create Release Commit</h2>
-        <pre class="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>git add .
-git commit -m "chore(release): prepare vX.Y.Z"</code></pre>
-      </section>
+      <h2 id="before-tagging">Before tagging</h2>
+      <ol>
+        <li>Run the full CI matrix.</li>
+        <li>Run Composer validation, security audit, and the package test suite.</li>
+        <li>Smoke-test installation in a fresh supported Laravel application.</li>
+        <li>Run <code>php artisan larapost:doctor</code>.</li>
+        <li>Verify dashboard access remains protected.</li>
+        <li>If MCP changed, test authenticated read and write tools with an MCP client.</li>
+        <li>If provider code changed, test against provider development credentials when available.</li>
+        <li>Update the changelog, README, docs, and upgrade guide when applicable.</li>
+      </ol>
+      <pre><code>composer validate --strict --no-check-lock
+composer audit
+composer test
+php artisan larapost:doctor</code></pre>
 
-      <section class="mt-5 rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 class="text-2xl font-extrabold tracking-tight">3. Tag and Push</h2>
-        <pre class="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>git tag vX.Y.Z
-git push origin HEAD
+      <h2 id="stable-release">Stable release</h2>
+      <p>Tag the exact green <code>main</code> commit and create the GitHub release from that tag.</p>
+      <pre><code>git checkout main
+git pull --ff-only
+git tag vX.Y.Z
 git push origin vX.Y.Z</code></pre>
-      </section>
+      <div class="callout note"><strong>v2.0.0:</strong> the v2 release used a guarded workflow that created the release only after the final main CI run succeeded.</div>
 
-      <section class="mt-5 rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 class="text-2xl font-extrabold tracking-tight">4. Publish Release Notes</h2>
-        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
-          <li>Create GitHub Release from the tag.</li>
-          <li>Copy key changes from `CHANGELOG.md`.</li>
-          <li>Add upgrade notes for user-facing changes.</li>
-        </ul>
-      </section>
+      <h2 id="packagist">Packagist verification</h2>
+      <p>Confirm the tag appears on Packagist and that a clean supported Laravel application can resolve and install the tagged package.</p>
 
-      <section class="mt-5 rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 class="text-2xl font-extrabold tracking-tight">5. Packagist Sync</h2>
-        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
-          <li>If webhook is configured, Packagist updates automatically.</li>
-          <li>Otherwise trigger manual update in Packagist package dashboard.</li>
-        </ul>
-      </section>
+      <h2 id="backports">Backport policy</h2>
+      <p>A fix is considered for an older major only when it fixes a real bug or security issue, preserves that release line's documented public contract, includes regression coverage where practical, and does not pull new architecture or features backward.</p>
+      <p>New providers, new MCP functionality, new queue architecture, and new public APIs are not backported.</p>
+      <ol>
+        <li>Fix and test the issue on <code>main</code> when it still applies there.</li>
+        <li>Create a maintenance branch from the latest affected release tag.</li>
+        <li>Cherry-pick or reimplement the minimal fix.</li>
+        <li>Run the older line's supported CI matrix.</li>
+        <li>Tag the patch release.</li>
+        <li>Remove the temporary maintenance branch when it no longer has active work.</li>
+      </ol>
 
-      <section class="mt-5 rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 class="text-2xl font-extrabold tracking-tight">6. Post-Release Validation</h2>
-        <pre class="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px] text-slate-100"><code>composer show prateekbhujel/larapost --all</code></pre>
-        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
-          <li>Install in a clean Laravel app and run `php artisan larapost:install`.</li>
-          <li>Run one smoke publish flow for a real connected account.</li>
-        </ul>
-      </section>
+      <h2 id="post-release">Post-release checks</h2>
+      <ul>
+        <li>Verify the GitHub Pages deployment.</li>
+        <li>Verify Packagist metadata and requirements.</li>
+        <li>Install the tagged package in a clean supported Laravel application.</li>
+        <li>Delete merged preparation branches.</li>
+      </ul>
 
-      <footer class="py-6 text-sm text-slate-500">
-        <a href="../" class="font-semibold text-laravel-600 hover:text-laravel-500">Back to docs home</a>
-      </footer>
-    </main>
-  </body>
+      <footer class="footer">LaraPost is MIT licensed. Documentation tracks the current 2.x line.</footer>
+    </article>
+  </main>
+</div>
+<script src="../assets/docs.js"></script>
+</body>
 </html>
