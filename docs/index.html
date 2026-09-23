@@ -6,7 +6,7 @@
   <title>Social publishing infrastructure for Laravel | LaraPost</title>
   <meta name="description" content="Connect only the networks you need, publish immediately or on a schedule, and optionally expose the same workflow to MCP clients without handing your social credentials to an AI provider.">
   <link rel="icon" href="./favicon.ico">
-  <link rel="stylesheet" href="./assets/docs.css">
+  <link rel="stylesheet" href="./assets/docs.css">\n  <link rel="alternate" type="text/plain" href="./llms.txt" title="LaraPost LLM documentation">
 </head>
 <body data-page="home">
 <header class="topbar">
@@ -28,7 +28,7 @@
       
 <div class="grid">
   <a class="card" href="./getting-started/"><h3>Start in ten minutes</h3><p>Install the package, choose your platforms, connect one account, and publish your first post.</p></a>
-  <a class="card" href="./ai-mcp/"><h3>Use ChatGPT, Claude, Codex, or another MCP client</h3><p>Enable a standard remote MCP server only when you want AI-assisted content operations.</p></a>
+  <a class="card" href="./ai-mcp/"><h3>Use ChatGPT, Claude, Codex, or another MCP client</h3><p>Enable a standard remote MCP server only when you want AI-assisted content operations.</p></a>\n  <a class="card" href="./agents/"><h3>Give coding agents the exact contract</h3><p>Use the agent guide and llms.txt for version-aware setup, supported capabilities, safety rules, and source-of-truth files.</p></a>
   <a class="card" href="./platforms/"><h3>Facebook, X, LinkedIn, TikTok</h3><p>Enable one platform, several, or all of them. Disabled drivers stay out of the runtime surface.</p></a>
   <a class="card" href="./publishing/"><h3>Queues and schedules</h3><p>Persist first, avoid duplicate claims, retry failures, and let Laravel's scheduler and queue do the operational work.</p></a>
 </div>
@@ -37,7 +37,7 @@
 <p>LaraPost is not a separate social media SaaS. It is infrastructure that lives inside your Laravel application. Your application keeps the account records, provider tokens, publishing history, queue configuration, and business rules.</p>
 <p>That makes it useful for SaaS products, CRMs, content systems, marketplaces, agency tools, and internal applications that need social publishing as a product capability rather than another browser tab.</p>
 
-<h2 id="install">Installation</h2>
+<h2 id="agents-and-humans">Documentation for developers and agents</h2>\n<p>The same docs are designed to be readable by humans and predictable for coding agents. Stable headings, explicit capability boundaries, copyable examples, an <a href="./agents/">agent guide</a>, and <a href="./llms.txt"><code>llms.txt</code></a> reduce guesswork when LaraPost is integrated through Codex, Claude Code, Copilot, or another agent.</p>\n\n<h2 id="install">Installation</h2>
 <pre><code>composer require prateekbhujel/larapost
 php artisan larapost:install</code></pre>
 <p>The installer asks which platforms you want and whether you want the optional MCP server. Nothing requires you to configure every provider.</p>
