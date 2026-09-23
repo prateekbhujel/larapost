@@ -1,25 +1,34 @@
 {
     "name": "prateekbhujel/larapost",
-    "description": "Laravel-native social publishing infrastructure for Facebook, X, LinkedIn, TikTok, queues, scheduling, and optional MCP clients",
+    "description": "Laravel-native social publishing for Facebook, X, LinkedIn & TikTok with OAuth, queues, scheduling, retries, multi-account publishing, and optional MCP.",
     "type": "library",
     "license": "MIT",
     "homepage": "https://github.com/prateekbhujel/larapost",
     "readme": "README.md",
     "keywords": [
         "laravel",
+        "laravel-package",
+        "php",
         "social-media",
+        "social-media-api",
         "social-publishing",
+        "content-publishing",
+        "content-scheduling",
+        "social-automation",
         "facebook",
         "twitter",
         "x",
         "linkedin",
         "tiktok",
-        "scheduling",
+        "oauth",
+        "oauth2",
         "queue",
+        "scheduling",
+        "multi-account",
         "mcp",
+        "mcp-server",
         "model-context-protocol",
-        "chatgpt",
-        "claude"
+        "ai-agents"
     ],
     "authors": [
         {
